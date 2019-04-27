@@ -1,19 +1,20 @@
 use chrono::NaiveDateTime;
 use postgres::{rows::Row, Connection, TlsMode};
 
+#[derive(Debug)]
 pub struct Proxy {
-    insert: bool,
-    update: bool,
-    work: bool,
-    anon: bool,
-    checks: i64,
-    hostname: String,
-    host: String,
-    port: String,
-    scheme: String,
-    create_at: NaiveDateTime,
-    update_at: NaiveDateTime,
-    response: i64,
+    pub insert: bool,
+    pub update: bool,
+    pub work: bool,
+    pub anon: bool,
+    pub checks: i64,
+    pub hostname: String,
+    pub host: String,
+    pub port: String,
+    pub scheme: String,
+    pub create_at: NaiveDateTime,
+    pub update_at: NaiveDateTime,
+    pub response: i64,
 }
 
 fn full_from_row(row: Row) -> Result<Proxy, &str> {
@@ -85,6 +86,26 @@ pub fn get_all_proxy(conn: Connection) -> Vec<Proxy> {
     proxies
 }
 
+pub fn get_all_n_proxy(conn: Connection, n: i64) -> Vec<Proxy> {
+    let mut proxies = Vec::new();
+    if let Ok(rows) = &conn.query(
+        "SELECT
+			work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
+		FROM
+			proxies
+        LIMIT
+            $1",
+        &[&n],
+    ) {
+        for row in rows {
+            if let Ok(proxy) = full_from_row(row) {
+                proxies.push(proxy);
+            }
+        }
+    };
+    proxies
+}
+
 pub fn get_all_work_proxy(conn: Connection) -> Vec<Proxy> {
     let mut proxies = Vec::new();
     if let Ok(rows) = &conn.query(
@@ -101,6 +122,31 @@ pub fn get_all_work_proxy(conn: Connection) -> Vec<Proxy> {
                 proxies.push(proxy);
             }
         }
+    };
+    proxies
+}
+
+pub fn get_n_work_proxy(conn: Connection, n: i64) -> Vec<Proxy> {
+    let mut proxies = Vec::new();
+    match &conn.query(
+        "SELECT
+			work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
+		FROM
+			proxies
+		WHERE
+			work = true
+        LIMIT
+            $1",
+        &[&n],
+    ) {
+        Ok(rows) => {
+            for row in rows {
+                if let Ok(proxy) = full_from_row(row) {
+                    proxies.push(proxy);
+                }
+            }
+        }
+        Err(e) => println!("{}", e.to_string()),
     };
     proxies
 }

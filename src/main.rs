@@ -1,8 +1,14 @@
+#![allow(unused_imports)]
+#![allow(dead_code)]
+#![allow(unused_variables)]
 use futures::future::lazy;
 use futures::Future;
 //use std::time::Duration;
-use tokio_threadpool::Builder;
+use crossbeam::channel::unbounded;
+use crossbeam::channel::TryRecvError;
 
+use std::{thread, time};
+// use tokio_threadpool::Builder;
 mod db;
 mod netutils;
 
@@ -37,67 +43,100 @@ fn get_config() -> Config {
 //    })
 //}
 
+fn start_worker(
+    id: usize,
+    tx: crossbeam::channel::Sender<String>,
+    rx: crossbeam::channel::Receiver<String>,
+    target: &str,
+    my_ip: &str,
+) {
+    loop {
+        match rx.try_recv() {
+            Ok(value) => {
+                println!("worker {} get {}", id, value);
+                match netutils::get_checked_proxy(&value, target, my_ip) {
+                    Ok(p) => {
+                        println!("receive {:?}", p);
+                        tx.send(p.hostname).unwrap();
+                    }
+                    Err(e) => println!("error in get_checked_proxy {}", e.to_string()),
+                }
+
+            }
+            Err(err) => match err {
+                TryRecvError::Disconnected => {
+                    println!("disconnected");
+                    break;
+                }
+                TryRecvError::Empty => (),
+            },
+        }
+    }
+}
+
 fn main() {
-    //    let pool = ThreadPool::new();
-    //    let (tx, rx) = oneshot::channel();
-    //
-    //    pool.spawn(lazy(|| {
-    //        println!("Running on the pool");
-    //        tx.send("complete")
-    //            .map_err(|e| println!("send error, {}", e))
-    //    }));
+    let config = get_config();
+    let my_ip = netutils::my_ip().unwrap();
+    println!("my ip is {}", &my_ip);
+    let conn = db::get_connection(&config.db);
 
-    //    println!("Result: {:?}", rx.wait());
-    //    pool.shutdown().wait().unwrap();
-    //
-    //    tokio::run(lazy(|| {
-    //        tokio::spawn(lazy(move || bg_task()));
-    //        for i in 0..40 {
-    //            tokio::spawn(lazy(move || {
-    //                println!("Hello from task {}", i);
-    //                Ok(())
-    //            }));
-    //        }
-    //
-    //        Ok(())
-    //    }));
+    let n_workers = 4;
+    // let n_jobs = 40;
 
-    //    let pool = ThreadPool::new();
-    //    let tx = pool.sender().clone();
-    //
-    //    let res = oneshot::spawn(
-    //        future::lazy(|| {
-    //            println!("Running on the pool");
-    //            Ok::<_, ()>("complete")
-    //        }),
-    //        &tx,
-    //    );
-    //
-    //    println!("Result: {:?}", res.wait());
-
-    let thread_pool = Builder::new()
-        .pool_size(4)
-        //        .keep_alive(Some(Duration::from_secs(30)))
-        .around_worker(|worker, _| {
-            println!("worker {:?} is starting up", worker.id());
-            worker.run();
-            println!("worker {:?} is shutting down", worker.id());
-        })
-        .after_start(|| {
-            println!("thread started");
-        })
-        .before_stop(|| {
-            println!("thread stopping");
-        })
+    let thread_pool = tokio_threadpool::Builder::new()
+        .pool_size(n_workers)
+        // .keep_alive(Some(time::Duration::from_secs(30)))
         .build();
 
-    for i in 0..40 {
+    let (tx, rx) = unbounded();
+
+    for i in 0..n_workers {
+        let rx = rx.clone();
+        let tx = tx.clone();
+        let target = config.target.clone();
+        let my_ip = my_ip.clone();
         thread_pool.spawn(lazy(move || {
-            println!("Hello from task {}", i);
+            println!("worker {} started", i);
+            start_worker(i, tx, rx, &target, &my_ip);
             Ok(())
         }));
     }
 
-    // Gracefully shutdown the threadpool
+    let proxies = db::get_all_n_proxy(conn, 20);
+    println!("get proxy {:?}", proxies);
+    for proxy in proxies {
+        println!("send {}", &proxy.hostname);
+        tx.send(proxy.hostname).unwrap();
+    }
+    // for i in 0..n_jobs {
+    //     tx.send(i).unwrap();
+    // }
+
+    // let t_pool = tokio_threadpool::Builder::new()
+    // .pool_size(n_workers)
+    // .keep_alive(Some(time::Duration::from_secs(30)))
+    // .build();
+
+    // t_pool.spawn(lazy(|| {
+    //     println!("start sleep");
+    //     thread::sleep(time::Duration::from_secs(11));
+    //     println!("end sleep");
+    //     // thread_pool.shutdown_now();
+    //     drop(tx);
+    //     Ok(())
+    // }));
+
+    // loop {
+    //     match rx.try_recv() {
+    //         Ok(value) => println!("received a message: {}", value),
+    //         Err(err) => match err {
+    //             TryRecvError::Disconnected => {
+    //                 println!("disconnected");
+    //                 break;
+    //             }
+    //             _ => (),
+    //         },
+    //     }
+    // }
     thread_pool.shutdown().wait().unwrap();
 }

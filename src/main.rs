@@ -1,16 +1,24 @@
 // #![allow(unused_imports)]
 // #![allow(dead_code)]
 // #![allow(unused_variables)]
-use futures::future::lazy;
-use futures::Future;
-//use std::time::Duration;
-use crossbeam::channel::unbounded;
-use crossbeam::channel::TryRecvError;
+#[macro_use]
+extern crate crossbeam_channel;
 
-// use std::{thread, time};
+use crossbeam_channel::{bounded, Receiver, Sender, TryRecvError};
+use futures::future::lazy;
+// use futures::Future;
+use std::time::Duration;
+
+use std::thread;
 // use tokio_threadpool::Builder;
 mod db;
 mod netutils;
+
+enum Msg {
+    Data(String),
+    Error(String),
+    // Terminate,
+}
 
 struct Config {
     db: String,
@@ -43,33 +51,24 @@ fn get_config() -> Config {
 //    })
 //}
 
-fn start_worker(
-    id: usize,
-    tx: crossbeam::channel::Sender<String>,
-    rx: crossbeam::channel::Receiver<String>,
-    target: &str,
-    my_ip: &str,
-) {
+fn start_worker(id: usize, sx: Sender<Msg>, rx: Receiver<Msg>, target: &str, my_ip: &str) {
     loop {
         match rx.try_recv() {
-            Ok(value) => {
-                println!("worker {} get {}", id, value);
-                match netutils::get_checked_proxy(&value, target, my_ip) {
+            Ok(Msg::Data(s)) => {
+                // println!("worker {} get {}", id, value);
+                match netutils::get_checked_proxy(&s, target, my_ip) {
                     Ok(p) => {
-                        println!("receive {:?}", p);
-                        tx.send(p.hostname).unwrap();
+                        // println!("receive {:?}", p);
+                        sx.send(Msg::Data(p.hostname)).unwrap();
                     }
-                    Err(e) => println!("error in get_checked_proxy {}", e.to_string()),
+                    Err(e) => {
+                        println!("worker {} in get_checked_proxy {}", id, e.to_string());
+                        sx.send(Msg::Error(e.to_string())).unwrap();
+                    }
                 }
-
             }
-            Err(err) => match err {
-                TryRecvError::Disconnected => {
-                    println!("disconnected");
-                    break;
-                }
-                TryRecvError::Empty => (),
-            },
+            Err(TryRecvError::Disconnected) => break,
+            _ => (),
         }
     }
 }
@@ -85,29 +84,38 @@ fn main() {
 
     let thread_pool = tokio_threadpool::Builder::new()
         .pool_size(n_workers)
+        .before_stop(|| {
+            println!("thread stopping");
+        })
         //     // .keep_alive(Some(time::Duration::from_secs(30)))
         .build();
 
-    let (tx, rx) = unbounded();
+    let (sw, rw) = bounded(20);
+    let (sr, rr) = bounded(20);
 
     for i in 0..n_workers {
-        let rx = rx.clone();
-        let tx = tx.clone();
+        let sr = sr.clone();
+        let rw = rw.clone();
         let target = config.target.clone();
         let my_ip = my_ip.clone();
         thread_pool.spawn(lazy(move || {
             println!("worker {} started", i);
-            start_worker(i, tx, rx, &target, &my_ip);
+            start_worker(i, sr, rw, &target, &my_ip);
             Ok(())
         }));
     }
 
     let proxies = db::get_all_n_proxy(conn, 20).unwrap();
-    println!("get proxy {:?}", proxies);
+    // println!("get proxy {:?}", proxies);
     for proxy in proxies {
-        println!("send {}", &proxy.hostname);
-        tx.send(proxy.hostname).unwrap();
+        // println!("send {}", &proxy.hostname);
+        sw.send(Msg::Data(proxy.hostname)).unwrap();
     }
+    // sw.send(Msg::Terminate).unwrap();
+    // sw.send(Msg::Terminate).unwrap();
+    // sw.send(Msg::Terminate).unwrap();
+    // sw.send(Msg::Terminate).unwrap();
+    drop(sw);
     // for i in 0..n_jobs {
     //     tx.send(i).unwrap();
     // }
@@ -126,17 +134,32 @@ fn main() {
     //     Ok(())
     // }));
 
-    // loop {
-    //     match rx.try_recv() {
-    //         Ok(value) => println!("received a message: {}", value),
-    //         Err(err) => match err {
-    //             TryRecvError::Disconnected => {
-    //                 println!("disconnected");
-    //                 break;
-    //             }
-    //             _ => (),
-    //         },
-    //     }
+    // let mut sel = Select::new();
+    // let roper = sel.recv(&rr);
+
+    let mut i = 1;
+    let c: Vec<_> = rr
+        .iter()
+        .filter_map(|msg| match msg {
+            Msg::Data(s) => {
+                i += 1;
+                println!("{} received a message: {:?}", i, s);
+                Some(s)
+            }
+            Msg::Error(s) => {
+                i += 1;
+                println!("{} received error: {:?}", i, s);
+                None
+            }
+        })
+        .collect();
+    // match err {
+    // TryRecvError::Disconnected => {
+    // println!("disconnected");
+    // break;
     // }
-    thread_pool.shutdown().wait().unwrap();
+    // thread::sleep(Duration::from_millis(500));
+    // },
+    // }
+    // thread_pool.shutdown().wait().unwrap();
 }

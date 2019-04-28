@@ -1,13 +1,13 @@
-#![allow(unused_imports)]
-#![allow(dead_code)]
-#![allow(unused_variables)]
+// #![allow(unused_imports)]
+// #![allow(dead_code)]
+// #![allow(unused_variables)]
 use futures::future::lazy;
 use futures::Future;
 //use std::time::Duration;
 use crossbeam::channel::unbounded;
 use crossbeam::channel::TryRecvError;
 
-use std::{thread, time};
+// use std::{thread, time};
 // use tokio_threadpool::Builder;
 mod db;
 mod netutils;
@@ -85,7 +85,7 @@ fn main() {
 
     let thread_pool = tokio_threadpool::Builder::new()
         .pool_size(n_workers)
-    //     // .keep_alive(Some(time::Duration::from_secs(30)))
+        //     // .keep_alive(Some(time::Duration::from_secs(30)))
         .build();
 
     let (tx, rx) = unbounded();

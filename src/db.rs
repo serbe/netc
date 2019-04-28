@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local, TimeZone};
+use chrono::{DateTime, Local};
 use postgres::{rows::Row, Connection, TlsMode};
 
 #[derive(Debug)]

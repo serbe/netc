@@ -1,4 +1,4 @@
-use chrono::{Local, DateTime, TimeZone};
+use chrono::{DateTime, Local, TimeZone};
 use postgres::{rows::Row, Connection, TlsMode};
 
 #[derive(Debug)]
@@ -70,61 +70,64 @@ pub fn get_connection(params: &str) -> Connection {
 
 pub fn get_all_proxy(conn: Connection) -> Result<Vec<Proxy>, String> {
     let mut proxies = Vec::new();
-    let rows = &conn.query(
-        "SELECT
+    let rows = &conn
+        .query(
+            "SELECT
 			work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
 		FROM
 			proxies",
-        &[],
-    ).map_err(|e| format!("error query {}", e.to_string()))?;
-        for row in rows {
-                proxies.push(full_from_row(row)?);
-        }
+            &[],
+        )
+        .map_err(|e| format!("error query {}", e.to_string()))?;
+    for row in rows {
+        proxies.push(full_from_row(row)?);
+    }
     Ok(proxies)
 }
 
 pub fn get_all_n_proxy(conn: Connection, n: i64) -> Result<Vec<Proxy>, String> {
     let mut proxies = Vec::new();
-    let rows =  &conn.query(
-        "SELECT
+    let rows = &conn
+        .query(
+            "SELECT
 			work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
 		FROM
 			proxies
         LIMIT
             $1",
-        &[&n],
-    ).map_err(|e| format!("error query {}", e.to_string()))?;
-        for row in rows {
-            proxies.push(full_from_row(row)?);
-        }
-    };
+            &[&n],
+        )
+        .map_err(|e| format!("error query {}", e.to_string()))?;
+    for row in rows {
+        proxies.push(full_from_row(row)?);
+    }
     Ok(proxies)
 }
 
-pub fn get_all_work_proxy(conn: Connection) -> Vec<Proxy> {
+pub fn get_all_work_proxy(conn: Connection) -> Result<Vec<Proxy>, String> {
     let mut proxies = Vec::new();
-    if let Ok(rows) = &conn.query(
-        "SELECT
+    let rows = &conn
+        .query(
+            "SELECT
 			work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
 		FROM
 			proxies
 		WHERE
 			work = true",
-        &[],
-    ) {
-        for row in rows {
-            if let Ok(proxy) = full_from_row(row) {
-                proxies.push(proxy);
-            }
-        }
-    };
-    proxies
+            &[],
+        )
+        .map_err(|e| format!("error query {}", e.to_string()))?;
+    for row in rows {
+        proxies.push(full_from_row(row)?);
+    }
+    Ok(proxies)
 }
 
-pub fn get_n_work_proxy(conn: Connection, n: i64) -> Vec<Proxy> {
+pub fn get_n_work_proxy(conn: Connection, n: i64) -> Result<Vec<Proxy>, String> {
     let mut proxies = Vec::new();
-    match &conn.query(
-        "SELECT
+    let rows = &conn
+        .query(
+            "SELECT
 			work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
 		FROM
 			proxies
@@ -132,56 +135,49 @@ pub fn get_n_work_proxy(conn: Connection, n: i64) -> Vec<Proxy> {
 			work = true
         LIMIT
             $1",
-        &[&n],
-    ) {
-        Ok(rows) => {
-            for row in rows {
-                if let Ok(proxy) = full_from_row(row) {
-                    proxies.push(proxy);
-                }
-            }
-        }
-        Err(e) => println!("{}", e.to_string()),
-    };
-    proxies
+            &[&n],
+        )
+        .map_err(|e| format!("error query {}", e.to_string()))?;
+    for row in rows {
+        proxies.push(full_from_row(row)?);
+    }
+    Ok(proxies)
 }
 
-pub fn get_all_work_anon_proxy(conn: Connection) -> Vec<Proxy> {
+pub fn get_all_work_anon_proxy(conn: Connection) -> Result<Vec<Proxy>, String> {
     let mut proxies = Vec::new();
-    if let Ok(rows) = &conn.query(
-        "SELECT
+    let rows = &conn
+        .query(
+            "SELECT
 			work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
 		FROM
 			proxies
 		WHERE
 			work = true AND anon = true",
-        &[],
-    ) {
-        for row in rows {
-            if let Ok(proxy) = full_from_row(row) {
-                proxies.push(proxy);
-            }
-        }
-    };
-    proxies
+            &[],
+        )
+        .map_err(|e| format!("error query {}", e.to_string()))?;
+    for row in rows {
+        proxies.push(full_from_row(row)?);
+    }
+    Ok(proxies)
 }
 
-pub fn get_all_old_proxy(conn: Connection) -> Vec<Proxy> {
+pub fn get_all_old_proxy(conn: Connection) -> Result<Vec<Proxy>, String> {
     let mut proxies = Vec::new();
-    if let Ok(rows) = &conn.query(
-        "SELECT
+    let rows = &conn
+        .query(
+            "SELECT
 			work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
 		FROM
 			proxies
 		WHERE
 			work = true OR update_at < NOW() - (INTERVAL '3 days') * checks",
-        &[],
-    ) {
-        for row in rows {
-            if let Ok(proxy) = full_from_row(row) {
-                proxies.push(proxy);
-            }
-        }
-    };
-    proxies
+            &[],
+        )
+        .map_err(|e| format!("error query {}", e.to_string()))?;
+    for row in rows {
+        proxies.push(full_from_row(row)?);
+    }
+    Ok(proxies)
 }

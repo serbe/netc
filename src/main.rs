@@ -80,34 +80,34 @@ fn main() {
     println!("my ip is {}", &my_ip);
     let conn = db::get_connection(&config.db);
 
-    let n_workers = 4;
-    // let n_jobs = 40;
+    // let n_workers = 4;
+    // // let n_jobs = 40;
 
-    let thread_pool = tokio_threadpool::Builder::new()
-        .pool_size(n_workers)
-        // .keep_alive(Some(time::Duration::from_secs(30)))
-        .build();
+    // let thread_pool = tokio_threadpool::Builder::new()
+    //     .pool_size(n_workers)
+    //     // .keep_alive(Some(time::Duration::from_secs(30)))
+    //     .build();
 
-    let (tx, rx) = unbounded();
+    // let (tx, rx) = unbounded();
 
-    for i in 0..n_workers {
-        let rx = rx.clone();
-        let tx = tx.clone();
-        let target = config.target.clone();
-        let my_ip = my_ip.clone();
-        thread_pool.spawn(lazy(move || {
-            println!("worker {} started", i);
-            start_worker(i, tx, rx, &target, &my_ip);
-            Ok(())
-        }));
-    }
+    // for i in 0..n_workers {
+    //     let rx = rx.clone();
+    //     let tx = tx.clone();
+    //     let target = config.target.clone();
+    //     let my_ip = my_ip.clone();
+    //     thread_pool.spawn(lazy(move || {
+    //         println!("worker {} started", i);
+    //         start_worker(i, tx, rx, &target, &my_ip);
+    //         Ok(())
+    //     }));
+    // }
 
     let proxies = db::get_all_n_proxy(conn, 20);
     println!("get proxy {:?}", proxies);
-    for proxy in proxies {
-        println!("send {}", &proxy.hostname);
-        tx.send(proxy.hostname).unwrap();
-    }
+    // for proxy in proxies {
+    //     println!("send {}", &proxy.hostname);
+    //     tx.send(proxy.hostname).unwrap();
+    // }
     // for i in 0..n_jobs {
     //     tx.send(i).unwrap();
     // }
@@ -138,5 +138,5 @@ fn main() {
     //         },
     //     }
     // }
-    thread_pool.shutdown().wait().unwrap();
+    // thread_pool.shutdown().wait().unwrap();
 }

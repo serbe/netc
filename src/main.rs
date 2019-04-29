@@ -2,11 +2,12 @@
 // #![allow(dead_code)]
 // #![allow(unused_variables)]
 
-use futures::future::Future;
 use crossbeam_channel::{unbounded, Receiver, Sender, TryRecvError};
+use db::Proxy;
 use futures::future::lazy;
-use std::time::Duration;
+use futures::future::Future;
 use std::thread;
+use std::time::Duration;
 
 mod db;
 mod netutils;
@@ -14,7 +15,7 @@ mod netutils;
 enum Msg {
     Data(String),
     Error(String),
-    // Terminate,
+    Terminate,
 }
 
 struct Config {
@@ -29,19 +30,28 @@ fn get_config() -> Config {
     let target = dotenv::var("target")
         .expect("No found variable target like http://targethost:433/path in environment");
     let workers = dotenv::var("workers")
-        .expect("No found variable workers like 4 in environment").parse::<usize>().expect("wrong variable workers in environment");
-    Config { db, target, workers }
+        .expect("No found variable workers like 4 in environment")
+        .parse::<usize>()
+        .expect("wrong variable workers in environment");
+    Config {
+        db,
+        target,
+        workers,
+    }
 }
 
-fn worker(id: usize, sr: Sender<Msg>, rw: Receiver<Msg>, target: &str, my_ip: &str) {
+fn worker(
+    id: usize,
+    sr: Sender<Result<Proxy, String>>,
+    rw: Receiver<Msg>,
+    target: &str,
+    my_ip: &str,
+) {
     loop {
         match rw.try_recv() {
-            Ok(Msg::Data(s)) => match netutils::get_checked_proxy(&s, target, my_ip) {
-                Ok(p) => sr.send(Msg::Data(p.hostname)).unwrap(),
-                Err(e) => sr.send(Msg::Error(e.to_string())).unwrap(),
-            },
+            Ok(Msg::Data(s)) => sr.send(netutils::check_proxy(&s, target, my_ip)).unwrap(),
             Ok(Msg::Error(e)) => println!("{} rw recv {}", id, e),
-            // Ok(Msg::Terminate) => break,
+            Ok(Msg::Terminate) => break,
             Err(TryRecvError::Disconnected) => break,
             Err(TryRecvError::Empty) => (),
         }
@@ -49,14 +59,12 @@ fn worker(id: usize, sr: Sender<Msg>, rw: Receiver<Msg>, target: &str, my_ip: &s
     }
 }
 
-fn getter(rr: Receiver<Msg>) {
+fn getter(rr: Receiver<Result<Proxy, String>>) {
     loop {
         match rr.try_recv() {
-            Ok(Msg::Data(s)) => {
-                println!("received a message: {:?}", s);
-            },
-            Ok(Msg::Error(s)) => {
-                println!("received error: {:?}", s);
+            Ok(data) => match data {
+                Ok(proxy) => println!("received proxy: {:?}", proxy),
+                Err(s) => println!("received error: {:?}", s),
             },
             _ => (),
         }
@@ -71,10 +79,10 @@ fn main() {
     let conn = db::get_connection(&config.db);
 
     let thread_pool = tokio_threadpool::Builder::new()
-        // .pool_size(config.workers)
-        .before_stop(|| {
-            println!("thread stopping");
-        })
+        .pool_size(config.workers + 1)
+        // .before_stop(|| {
+        //     println!("thread stopping");
+        // })
         //     // .keep_alive(Some(time::Duration::from_secs(30)))
         .build();
 
@@ -87,7 +95,6 @@ fn main() {
         let target = config.target.clone();
         let my_ip = my_ip.clone();
         thread_pool.spawn(lazy(move || {
-            println!("worker {} started", i);
             worker(i, sr, rw, &target, &my_ip);
             Ok(())
         }));

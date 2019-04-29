@@ -1,3 +1,5 @@
+// use reqwest::r#async::{Client, Response};
+
 use crate::db::Proxy;
 
 impl Proxy {
@@ -6,8 +8,8 @@ impl Proxy {
 
         if raw.contains('#') {
             Err(format!("hostname contain fragment {}", raw))?
-        } 
-        
+        }
+
         if raw.contains('?') {
             Err(format!("hostname contain query {}", raw))?
         }
@@ -16,7 +18,9 @@ impl Proxy {
             (
                 raw.get(pos + 3..)
                     .ok_or_else(|| format!("not parse scheme {}", raw))?,
-                raw.get(..pos).ok_or_else(|| format!("not parse scheme {}", raw))?.to_string(),
+                raw.get(..pos)
+                    .ok_or_else(|| format!("not parse scheme {}", raw))?
+                    .to_string(),
             )
         } else {
             Err(format!("hostname not contain scheme {}", raw))?
@@ -35,8 +39,12 @@ impl Proxy {
                 if let Some(end) = raw.find(']') {
                     if start == 0 && pos == end + 1 {
                         (
-                            raw.get(..pos).ok_or_else(|| format!("not parse host {}", raw))?.to_string(),
-                            raw.get(pos + 1..).ok_or_else(|| format!("not parse port {}", raw))?.to_string(),
+                            raw.get(..pos)
+                                .ok_or_else(|| format!("not parse host {}", raw))?
+                                .to_string(),
+                            raw.get(pos + 1..)
+                                .ok_or_else(|| format!("not parse port {}", raw))?
+                                .to_string(),
                         )
                     } else {
                         Err(format!("not parse ipv6 {}", raw))?
@@ -46,15 +54,21 @@ impl Proxy {
                 }
             } else {
                 (
-                    raw.get(..pos).ok_or_else(|| format!("not parse host {}", raw))?.to_string(),
-                    raw.get(pos + 1..).ok_or_else(|| format!("not parse port {}", raw))?.to_string(),
+                    raw.get(..pos)
+                        .ok_or_else(|| format!("not parse host {}", raw))?
+                        .to_string(),
+                    raw.get(pos + 1..)
+                        .ok_or_else(|| format!("not parse port {}", raw))?
+                        .to_string(),
                 )
             }
         } else {
             Err(format!("not parse port {}", raw))?
         };
-        
-        let _ = port.parse::<u32>().map_err(|_| format!("not parse port {}", port))?;
+
+        let _ = port
+            .parse::<u32>()
+            .map_err(|_| format!("not parse port {}", port))?;
 
         Ok(Proxy {
             insert: false,
@@ -73,22 +87,11 @@ impl Proxy {
     }
 }
 
-#[derive(Debug)]
-pub struct CheckedProxy {
-    pub hostname: String,
-    pub work: bool,
-    pub anon: bool,
-}
-
 pub fn my_ip() -> Result<String, reqwest::Error> {
     reqwest::get("https://api.ipify.org")?.text()
 }
 
-pub fn get_checked_proxy(
-    proxy_url: &str,
-    target_url: &str,
-    my_ip: &str,
-) -> Result<CheckedProxy, String> {
+pub fn check_proxy(proxy_url: &str, target_url: &str, my_ip: &str) -> Result<Proxy, String> {
     let proxy = reqwest::Proxy::all(proxy_url)
         .map_err(|e| format!("set proxy {} error: {}", proxy_url, e.to_string()))?;
     let client: reqwest::Client = reqwest::Client::builder()
@@ -101,25 +104,16 @@ pub fn get_checked_proxy(
         .map_err(|e| format!("get via {} {}", proxy_url, e.to_string()))?
         .text()
         .map_err(|e| format!("convert to text error {}", e.to_string()))?;
+    let mut proxy = Proxy::from(proxy_url)?;
     if !body.contains(my_ip) {
+        proxy.work = true;
         if body.matches("<p>").count() == 1 {
-            Ok(CheckedProxy {
-                hostname: proxy_url.to_string(),
-                work: true,
-                anon: true,
-            })
+            proxy.anon = true;
+            Ok(proxy)
         } else {
-            Ok(CheckedProxy {
-                hostname: proxy_url.to_string(),
-                work: true,
-                anon: false,
-            })
+            Ok(proxy)
         }
     } else {
-        Ok(CheckedProxy {
-            hostname: proxy_url.to_string(),
-            work: false,
-            anon: false,
-        })
+        Ok(proxy)
     }
 }

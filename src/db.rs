@@ -85,7 +85,7 @@ pub fn get_all_proxy(conn: Connection) -> Result<Vec<Proxy>, String> {
     Ok(proxies)
 }
 
-pub fn get_all_n_proxy(conn: Connection, n: i64) -> Result<Vec<Proxy>, String> {
+pub fn get_n_proxy(conn: Connection, n: i64) -> Result<Vec<Proxy>, String> {
     let mut proxies = Vec::new();
     let rows = &conn
         .query(

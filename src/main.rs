@@ -61,12 +61,11 @@ fn worker(
 
 fn getter(rr: Receiver<Result<Proxy, String>>) {
     loop {
-        match rr.try_recv() {
-            Ok(data) => match data {
+        if let Ok(data) = rr.try_recv() {
+            match data {
                 Ok(proxy) => println!("received proxy: {:?}", proxy),
                 Err(s) => println!("received error: {:?}", s),
-            },
-            _ => (),
+            }
         }
         thread::sleep(Duration::new(0, 50000));
     }

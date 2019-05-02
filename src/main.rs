@@ -6,6 +6,9 @@ use crossbeam_channel::{unbounded, Receiver, Sender, TryRecvError};
 use db::Proxy;
 use futures::future::lazy;
 use futures::future::Future;
+// use hyper::rt::Future;
+use hyper::service::service_fn_ok;
+use hyper::{Body, Response, Server};
 use std::thread;
 use std::time::Duration;
 
@@ -20,6 +23,7 @@ enum Msg {
 
 struct Config {
     db: String,
+    port: u16,
     target: String,
     workers: usize,
 }
@@ -27,6 +31,10 @@ struct Config {
 fn get_config() -> Config {
     let db = dotenv::var("db")
         .expect("No found variable db like postgres://postgres@localhost:5433 in environment");
+    let port = dotenv::var("port")
+        .expect("No found variable port like 8080 in environment")
+        .parse::<u16>()
+        .expect("wrong variable port in environment");
     let target = dotenv::var("target")
         .expect("No found variable target like http://targethost:433/path in environment");
     let workers = dotenv::var("workers")
@@ -35,6 +43,7 @@ fn get_config() -> Config {
         .expect("wrong variable workers in environment");
     Config {
         db,
+        port,
         target,
         workers,
     }
@@ -73,6 +82,7 @@ fn getter(rr: Receiver<Result<Proxy, String>>) {
 
 fn main() {
     let config = get_config();
+
     let my_ip = netutils::my_ip().unwrap();
     println!("my ip is {}", &my_ip);
     let conn = db::get_connection(&config.db);
@@ -114,6 +124,15 @@ fn main() {
         getter(rr);
         Ok(())
     }));
+
+    let addr = ([127, 0, 0, 1], config.port).into();
+    let new_svc = || service_fn_ok(|_req| Response::new(Body::from("Hello, World!")));
+
+    let server = Server::bind(&addr)
+        .serve(new_svc)
+        .map_err(|e| eprintln!("server error: {}", e));
+
+    hyper::rt::run(server);
 
     thread_pool.shutdown().wait().unwrap();
 }

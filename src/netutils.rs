@@ -94,7 +94,7 @@ pub fn my_ip() -> Result<String, reqwest::Error> {
 pub fn check_proxy(proxy_url: &str, target_url: &str, my_ip: &str) -> Result<Proxy, String> {
     let proxy = reqwest::Proxy::all(proxy_url)
         .map_err(|e| format!("set proxy {} error: {}", proxy_url, e.to_string()))?;
-    let client: reqwest::Client = reqwest::Client::builder()
+    let client = reqwest::Client::builder()
         .proxy(proxy)
         .build()
         .map_err(|e| format!("client builder error {}", e.to_string()))?;
@@ -105,15 +105,9 @@ pub fn check_proxy(proxy_url: &str, target_url: &str, my_ip: &str) -> Result<Pro
         .text()
         .map_err(|e| format!("convert to text error {}", e.to_string()))?;
     let mut proxy = Proxy::from(proxy_url)?;
-    if !body.contains(my_ip) {
-        proxy.work = true;
-        if body.matches("<p>").count() == 1 {
-            proxy.anon = true;
-            Ok(proxy)
-        } else {
-            Ok(proxy)
-        }
-    } else {
-        Ok(proxy)
+    proxy.work = true;
+    if !body.contains(my_ip) && body.matches("<p>").count() == 1 {
+        proxy.anon = true;
     }
+    Ok(proxy)
 }

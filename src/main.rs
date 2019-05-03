@@ -2,15 +2,15 @@
 // #![allow(dead_code)]
 // #![allow(unused_variables)]
 
-use crossbeam_channel::{unbounded, Receiver, Sender, TryRecvError};
+use crossbeam_channel::{select, unbounded, Receiver, Sender};
 use db::Proxy;
 use futures::future::lazy;
 use futures::future::Future;
 // use hyper::rt::Future;
 use hyper::service::service_fn_ok;
 use hyper::{Body, Response, Server};
-use std::thread;
-use std::time::Duration;
+// use std::thread;
+// use std::time::Duration;
 
 mod db;
 mod netutils;
@@ -57,26 +57,28 @@ fn worker(
     my_ip: &str,
 ) {
     loop {
-        match rw.try_recv() {
-            Ok(Msg::Data(s)) => sr.send(netutils::check_proxy(&s, target, my_ip)).unwrap(),
-            Ok(Msg::Error(e)) => println!("{} rw recv {}", id, e),
-            Ok(Msg::Terminate) => break,
-            Err(TryRecvError::Disconnected) => break,
-            Err(TryRecvError::Empty) => (),
+        select! {
+            recv(rw) -> data => match data {
+                Ok(Msg::Data(s)) => sr.send(netutils::check_proxy(&s, target, my_ip)).unwrap(),
+                Ok(Msg::Error(e)) => println!("{} rw recv {}", id, e),
+                Ok(Msg::Terminate) => break,
+                // Err(TryRecvError::Disconnected) => break,
+                // Err(TryRecvError::Empty) => (),
+                _ => (),
+            }
+            // thread::sleep(Duration::new(0, 50000));
         }
-        thread::sleep(Duration::new(0, 50000));
     }
 }
 
 fn getter(rr: Receiver<Result<Proxy, String>>) {
     loop {
-        if let Ok(data) = rr.try_recv() {
-            match data {
+        select! {
+            recv(rr) -> data => match data {
                 Ok(proxy) => println!("received proxy: {:?}", proxy),
                 Err(s) => println!("received error: {:?}", s),
             }
         }
-        thread::sleep(Duration::new(0, 50000));
     }
 }
 

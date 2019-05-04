@@ -68,14 +68,23 @@ pub fn get_connection(params: &str) -> Connection {
     Connection::connect(params, TlsMode::None).unwrap()
 }
 
+fn insert(conn: Connection, proxy: Proxy) -> Result<u64, String> {
+    conn.execute(
+        "INSERT INTO
+            proxies (work, anon, checks, hostname, host, port, scheme, create_at, update_at, response)
+        VALUES
+            ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)",
+        &[&proxy.work, &proxy.anon, &proxy.checks, &proxy.hostname, &proxy.host, &proxy.port, &proxy.scheme, &proxy.create_at, &proxy.update_at, &proxy.response]).map_err(|e| format!("error insert {}", e.to_string()))
+}
+
 pub fn get_all_proxy(conn: Connection) -> Result<Vec<Proxy>, String> {
     let mut proxies = Vec::new();
     let rows = &conn
         .query(
             "SELECT
-			work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
-		FROM
-			proxies",
+                work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
+            FROM
+                proxies",
             &[],
         )
         .map_err(|e| format!("error query {}", e.to_string()))?;
@@ -90,11 +99,11 @@ pub fn get_n_proxy(conn: Connection, n: i64) -> Result<Vec<Proxy>, String> {
     let rows = &conn
         .query(
             "SELECT
-			work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
-		FROM
-			proxies
-        LIMIT
-            $1",
+                work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
+            FROM
+                proxies
+            LIMIT
+                $1",
             &[&n],
         )
         .map_err(|e| format!("error query {}", e.to_string()))?;
@@ -109,11 +118,11 @@ pub fn get_all_work_proxy(conn: Connection) -> Result<Vec<Proxy>, String> {
     let rows = &conn
         .query(
             "SELECT
-			work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
-		FROM
-			proxies
-		WHERE
-			work = true",
+                work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
+            FROM
+                proxies
+            WHERE
+                work = true",
             &[],
         )
         .map_err(|e| format!("error query {}", e.to_string()))?;
@@ -128,13 +137,13 @@ pub fn get_n_work_proxy(conn: Connection, n: i64) -> Result<Vec<Proxy>, String> 
     let rows = &conn
         .query(
             "SELECT
-			work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
-		FROM
-			proxies
-		WHERE
-			work = true
-        LIMIT
-            $1",
+                work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
+            FROM
+                proxies
+            WHERE
+                work = true
+            LIMIT
+                $1",
             &[&n],
         )
         .map_err(|e| format!("error query {}", e.to_string()))?;
@@ -149,11 +158,11 @@ pub fn get_all_work_anon_proxy(conn: Connection) -> Result<Vec<Proxy>, String> {
     let rows = &conn
         .query(
             "SELECT
-			work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
-		FROM
-			proxies
-		WHERE
-			work = true AND anon = true",
+                work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
+            FROM
+                proxies
+            WHERE
+                work = true AND anon = true",
             &[],
         )
         .map_err(|e| format!("error query {}", e.to_string()))?;
@@ -168,11 +177,11 @@ pub fn get_all_old_proxy(conn: Connection) -> Result<Vec<Proxy>, String> {
     let rows = &conn
         .query(
             "SELECT
-			work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
-		FROM
-			proxies
-		WHERE
-			work = true OR update_at < NOW() - (INTERVAL '3 days') * checks",
+                work, anon, checks, hostname, host, port, scheme, create_at, update_at, response
+            FROM
+                proxies
+            WHERE
+                work = true OR update_at < NOW() - (INTERVAL '3 days') * checks",
             &[],
         )
         .map_err(|e| format!("error query {}", e.to_string()))?;

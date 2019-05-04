@@ -4,14 +4,6 @@ version = "0.1.1"
 authors = ["Valeriy Kostikov <mkoctuk@gmail.com>"]
 edition = "2018"
 
-[dependencies.reqwest]
-version = "0.9"
-features = ["socks"]
-
-[dependencies.postgres]
-version = "0.15"
-features = ["with-chrono"]
-
 [dependencies]
 chrono = "0.4"
 crossbeam-channel = "0.3"
@@ -20,3 +12,11 @@ futures = "0.1"
 hyper = "0.12"
 tokio = "0.1"
 tokio-threadpool = "0.1"
+
+[dependencies.reqwest]
+version = "0.9"
+features = ["socks"]
+
+[dependencies.rpdb]
+version = "0.1.1"
+git = "https://github.com/serbe/rpdb"

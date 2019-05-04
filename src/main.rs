@@ -3,7 +3,7 @@
 // #![allow(unused_variables)]
 
 use crossbeam_channel::{select, unbounded, Receiver, Sender};
-use db::Proxy;
+use rpdb::Proxy;
 use futures::stream::Stream;
 use futures::{
     future,
@@ -16,7 +16,6 @@ use hyper::{header, Body, Chunk, Client, Method, Request, Response, Server, Stat
 // use std::thread;
 // use std::time::Duration;
 
-mod db;
 mod netutils;
 
 type GenericError = Box<dyn std::error::Error + Send + Sync>;
@@ -101,8 +100,8 @@ fn post_response(req: Request<Body>) -> ResponseFuture {
                 println!("{}", body);
                 let response = Response::builder()
                     .status(StatusCode::OK)
-                    .body(Body::from("моя работает"))?;
-                // .body(Body::empty())?;
+                    // .body(Body::from("моя работает"))?;
+                .body(Body::empty())?;
                 Ok(response)
             }),
     )
@@ -112,12 +111,11 @@ fn response(req: Request<Body>, client: &Client<HttpConnector>) -> ResponseFutur
     match (req.method(), req.uri().path()) {
         (&Method::POST, "/paste") => post_response(req),
         _ => {
-            // Return 404 not found response.
-            let body = Body::from("Not Found");
+            // let body = Body::from("Not Found");
             Box::new(future::ok(
                 Response::builder()
                     .status(StatusCode::NOT_FOUND)
-                    .body(body)
+                    .body(Body::empty())
                     .unwrap(),
             ))
         }
@@ -129,7 +127,7 @@ fn main() {
 
     let my_ip = netutils::my_ip().unwrap();
     println!("my ip is {}", &my_ip);
-    let conn = db::get_connection(&config.db);
+    let conn = rpdb::get_connection(&config.db);
 
     let thread_pool = tokio_threadpool::Builder::new()
         .pool_size(config.workers + 1)
@@ -153,10 +151,10 @@ fn main() {
         }));
     }
 
-    let proxies = db::get_n_work_proxy(conn, 20).unwrap();
-    for proxy in proxies {
-        sw.send(Msg::Data(proxy.hostname)).unwrap();
-    }
+    // let proxies = db::get_n_work_proxy(conn, 20).unwrap();
+    // for proxy in proxies {
+    //     sw.send(Msg::Data(proxy.hostname)).unwrap();
+    // }
 
     // let t_pool = tokio_threadpool::Builder::new()
     // .pool_size(n_workers)

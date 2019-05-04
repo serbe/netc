@@ -4,16 +4,23 @@
 
 use crossbeam_channel::{select, unbounded, Receiver, Sender};
 use db::Proxy;
-use futures::future::lazy;
-use futures::future::Future;
+use futures::stream::Stream;
+use futures::{
+    future,
+    future::{lazy, Future},
+};
 // use hyper::rt::Future;
-use hyper::service::service_fn_ok;
-use hyper::{Body, Response, Server};
+use hyper::client::HttpConnector;
+use hyper::service::service_fn;
+use hyper::{header, Body, Chunk, Client, Method, Request, Response, Server, StatusCode};
 // use std::thread;
 // use std::time::Duration;
 
 mod db;
 mod netutils;
+
+type GenericError = Box<dyn std::error::Error + Send + Sync>;
+type ResponseFuture = Box<Future<Item = Response<Body>, Error = GenericError> + Send>;
 
 enum Msg {
     Data(String),
@@ -82,6 +89,41 @@ fn getter(rr: Receiver<Result<Proxy, String>>) {
     }
 }
 
+fn post_response(req: Request<Body>) -> ResponseFuture {
+    // A web api to run against
+    Box::new(
+        req.into_body()
+            .concat2() // Concatenate all chunks in the body
+            .from_err()
+            .and_then(|entire_body| {
+                // TODO: Replace all unwraps with proper error handling
+                let body = String::from_utf8(entire_body.to_vec())?;
+                println!("{}", body);
+                let response = Response::builder()
+                    .status(StatusCode::OK)
+                    .body(Body::from("моя работает"))?;
+                // .body(Body::empty())?;
+                Ok(response)
+            }),
+    )
+}
+
+fn response(req: Request<Body>, client: &Client<HttpConnector>) -> ResponseFuture {
+    match (req.method(), req.uri().path()) {
+        (&Method::POST, "/paste") => post_response(req),
+        _ => {
+            // Return 404 not found response.
+            let body = Body::from("Not Found");
+            Box::new(future::ok(
+                Response::builder()
+                    .status(StatusCode::NOT_FOUND)
+                    .body(body)
+                    .unwrap(),
+            ))
+        }
+    }
+}
+
 fn main() {
     let config = get_config();
 
@@ -128,13 +170,23 @@ fn main() {
     }));
 
     let addr = ([127, 0, 0, 1], config.port).into();
-    let new_svc = || service_fn_ok(|_req| Response::new(Body::from("Hello, World!")));
 
-    let server = Server::bind(&addr)
-        .serve(new_svc)
-        .map_err(|e| eprintln!("server error: {}", e));
+    hyper::rt::run(future::lazy(move || {
+        // Share a `Client` with all `Service`s
+        let client = Client::new();
 
-    hyper::rt::run(server);
+        let service = move || {
+            // Move a clone of `client` into the `service_fn`.
+            let client = client.clone();
+            service_fn(move |req| response(req, &client))
+        };
+
+        let server = Server::bind(&addr)
+            .serve(service)
+            .map_err(|e| eprintln!("server error: {}", e));
+
+        server
+    }));
 
     thread_pool.shutdown().wait().unwrap();
 }

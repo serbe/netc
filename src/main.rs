@@ -1,92 +1,49 @@
 //use actix::dev::{MessageResponse, ResponseChannel};
 use actix::prelude::*;
-//use core::borrow::Borrow;
-//use futures::Future;
+use actix::prelude::*;
+use futures::Stream;
+use manager::Manager;
+use std::net;
+use std::str::FromStr;
+use tokio_codec::FramedRead;
+use tokio_io::AsyncRead;
+use tokio_tcp::{TcpListener, TcpStream};
 
-struct Msg(String);
+mod manager;
+mod utils;
+mod worker;
 
-impl Message for Msg {
-    type Result = ();
-}
-
-struct Command;
-
-impl Message for Command {
-    type Result = ();
-}
-
-struct Manager {
-    childs: Vec<Addr<Worker>>,
-}
-
-impl Actor for Manager {
-    type Context = Context<Self>;
-
-    fn started(&mut self, ctx: &mut Self::Context) {
-        for i in (0..5) {
-            let worker = Worker::new(i, ctx.address()).start();
-            self.childs.push(worker);
-        }
-    }
-}
-
-impl Manager {
-    fn new() -> Self {
-        Manager { childs: Vec::new() }
-    }
-}
-
-impl Handler<Msg> for Manager {
-    type Result = ();
-
-    fn handle(&mut self, msg: Msg, _ctx: &mut Context<Manager>) {
-        println!("msg: {}", msg.0);
-    }
-}
-
-impl Handler<Command> for Manager {
-    type Result = ();
-
-    fn handle(&mut self, _msg: Command, ctx: &mut Context<Manager>) {
-        for worker in self.childs.iter() {
-            worker.do_send(Msg(format!("hello from manager")));
-        }
-    }
-}
-
-struct Worker {
-    id: usize,
+struct Server {
     manager: Addr<Manager>,
 }
 
-impl Actor for Worker {
+impl Actor for Server {
     type Context = Context<Self>;
-
-    fn started(&mut self, _ctx: &mut Self::Context) {
-        println!("worker {} started", self.id);
-        self.manager
-            .do_send(Msg(format!("hello from {} worker", self.id)));
-    }
 }
 
-impl Worker {
-    fn new(id: usize, manager: Addr<Manager>) -> Self {
-        Worker { id, manager }
-    }
-}
+fn main() -> std::io::Result<()> {
+    let cfg = utils::get_config();
 
-impl Handler<Msg> for Worker {
-    type Result = ();
+    let bind_addr = cfg.server.clone();
+    let num_workers = cfg.workers.clone();
 
-    fn handle(&mut self, msg: Msg, _ctx: &mut Context<Worker>) {
-        println!("msg: {}", msg.0);
-    }
-}
+    System::run(move || {
+        let manager = Manager::new(num_workers);
+        let addr = net::SocketAddr::from_str(&bind_addr).unwrap();
+        let listener = TcpListener::bind(&addr).unwrap();
 
-fn main() {
-    System::run(|| {
-        let manager = Manager::new();
-        let addr = manager.start();
-        addr.do_send(Command);
-    });
+        // Server::create(|ctx| {
+        //     ctx.add_message_stream(listener.incoming().map_err(|_| ()).map(|st| {
+        //         let addr = st.peer_addr().unwrap();
+        //         TcpConnect(st, addr)
+        //     }));
+        //     Server { manager }
+        // });
+    })
+
+    // System::run(|| {
+    //     let manager = Manager::new();
+    //     let addr = manager.start();
+    //     addr.do_send(Command);
+    // })
 }

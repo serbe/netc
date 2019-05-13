@@ -44,7 +44,7 @@ impl Manager {
             let mut workers: HashMap<usize, Addr<Worker>> = HashMap::new();
             for i in 0..num_workers {
                 let worker = Worker::new(i, ctx.address()).start();
-                worker.send(worker::Message("heLLo".to_string()));
+                worker.do_send(worker::Message("heLLo".to_string()));
                 workers.insert(i, worker);
             }
             Manager { workers }

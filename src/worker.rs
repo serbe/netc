@@ -1,6 +1,6 @@
 //! `ClientSession` is an actor, it manages peer tcp connection and
 //! proxies commands from peer to `ChatServer`.
-use actix::prelude::*;
+use actix_web::actix::*;
 use std::io;
 use std::time::{Duration, Instant};
 use tokio_io::io::WriteHalf;
@@ -9,9 +9,11 @@ use tokio_tcp::TcpStream;
 //use crate::codec::{ClientCodec, ClientRequest, ClientResponse};
 use crate::manager::{self, Manager};
 
-/// Chat server sends this messages to session
-#[derive(Message)]
-pub struct Message(pub String);
+pub struct ManagerMsg(pub String);
+
+impl Message for ManagerMsg {
+    type Result = ();
+}
 
 pub struct Worker {
     id: usize,
@@ -20,7 +22,7 @@ pub struct Worker {
 }
 
 impl Actor for Worker {
-    type Context = actix::Context<Self>;
+    type Context = Context<Self>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
         println!("worker {} started", self.id);
@@ -88,10 +90,10 @@ impl Actor for Worker {
 
 /// Handler for Message, chat server sends this message, we just send string to
 /// peer
-impl Handler<Message> for Worker {
+impl Handler<ManagerMsg> for Worker {
     type Result = ();
 
-    fn handle(&mut self, msg: Message, _: &mut Self::Context) {
+    fn handle(&mut self, msg: ManagerMsg, _: &mut Self::Context) {
         println!("message worker {} msg ( {} )", self.id, msg.0);
         // send message to peer
         //        self.framed.write(ChatResponse::Message(msg.0));

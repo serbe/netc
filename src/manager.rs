@@ -1,31 +1,27 @@
-use actix::prelude::*;
+use actix_web::actix::*;
 use rand::{self, Rng};
 use std::collections::{HashMap, HashSet};
 
 use crate::worker;
 use crate::worker::Worker;
 
-pub struct Connect {
-    pub addr: HashMap<usize, Addr<worker::Worker>>,
-}
-
-impl actix::Message for Connect {
-    type Result = usize;
-}
-
-#[derive(Message)]
-pub struct Disconnect {
-    pub id: usize,
-}
-
-#[derive(Message)]
 pub struct Msg {
     pub id: usize,
     pub msg: String,
 }
 
-/// `ChatServer` manages chat rooms and responsible for coordinating chat
-/// session. implementation is super primitive
+impl Message for Msg {
+    type Result = ();
+}
+
+pub struct Text {
+    pub msg: String,
+}
+
+impl Message for Text {
+    type Result = ();
+}
+
 pub struct Manager {
     workers: HashMap<usize, Addr<worker::Worker>>,
 }
@@ -44,7 +40,7 @@ impl Manager {
             let mut workers: HashMap<usize, Addr<Worker>> = HashMap::new();
             for i in 0..num_workers {
                 let worker = Worker::new(i, ctx.address()).start();
-                worker.do_send(worker::Message("heLLo".to_string()));
+                worker.do_send(worker::ManagerMsg("heLLo".to_string()));
                 workers.insert(i, worker);
             }
             Manager { workers }
@@ -70,29 +66,13 @@ impl Actor for Manager {
     type Context = Context<Self>;
 }
 
-/// Handler for Connect message.
-///
-/// Register new session and assign unique id to this session
-//impl Handler<Connect> for Manager {
-//    type Result = usize;
-//
-//    fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
-//        println!("Someone joined");
-//
-//        // notify all users in same room
-//        //        self.send_message(&"Main".to_owned(), "Someone joined", 0);
-//
-//        // register session with random id
-//        let id = rand::thread_rng().gen::<usize>();
-//        self.workers.insert(id, msg.addr);
-//
-//        //        // auto join session to Main room
-//        //        self.rooms.get_mut(&"Main".to_owned()).unwrap().insert(id);
-//
-//        // send id back
-//        id
-//    }
-//}
+impl Handler<Text> for Manager {
+    type Result = ();
+
+    fn handle(&mut self, msg: Text, _: &mut Context<Self>) {
+        println!("get text: {}", msg.msg);
+    }
+}
 
 /// Handler for Disconnect message.
 //impl Handler<Disconnect> for Manager {

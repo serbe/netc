@@ -1,5 +1,3 @@
-// use reqwest::r#async::{Client, Response};
-
 use rpdb::Proxy;
 
 pub fn my_ip() -> Result<String, reqwest::Error> {

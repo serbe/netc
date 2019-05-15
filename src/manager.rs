@@ -1,7 +1,8 @@
 use actix_web::actix::*;
-use rand::{self, Rng};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
+//use crate::netutils::Url;
+use crate::saver::DBSaver;
 use crate::worker;
 use crate::worker::Worker;
 
@@ -14,11 +15,11 @@ impl Message for Msg {
     type Result = ();
 }
 
-pub struct Text {
-    pub msg: String,
+pub struct UrlList {
+    pub list: Vec<String>,
 }
 
-impl Message for Text {
+impl Message for UrlList {
     type Result = ();
 }
 
@@ -35,12 +36,12 @@ impl Default for Manager {
 }
 
 impl Manager {
-    pub fn new(num_workers: usize) -> Addr<Manager> {
+    pub fn new(saver: Addr<DBSaver>, ip: String, num_workers: usize) -> Addr<Manager> {
         Manager::create(move |ctx| {
             let mut workers: HashMap<usize, Addr<Worker>> = HashMap::new();
             for i in 0..num_workers {
-                let worker = Worker::new(i, ctx.address()).start();
-                worker.do_send(worker::ManagerMsg("heLLo".to_string()));
+                let worker = Worker::new(i, ctx.address(), saver, ip).start();
+                //                worker.do_send(worker::ManagerMsg("heLLo".to_string()));
                 workers.insert(i, worker);
             }
             Manager { workers }
@@ -66,11 +67,11 @@ impl Actor for Manager {
     type Context = Context<Self>;
 }
 
-impl Handler<Text> for Manager {
+impl Handler<UrlList> for Manager {
     type Result = ();
 
-    fn handle(&mut self, msg: Text, _: &mut Context<Self>) {
-        println!("get text: {}", msg.msg);
+    fn handle(&mut self, msg: UrlList, _: &mut Context<Self>) {
+        println!("get {} urls", msg.list.len());
     }
 }
 

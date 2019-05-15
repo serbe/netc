@@ -1,8 +1,7 @@
 use actix_web::actix::*;
 use std::collections::HashMap;
 
-//use crate::netutils::Url;
-use crate::saver::DBSaver;
+use crate::db::DBSaver;
 use crate::worker;
 use crate::worker::Worker;
 
@@ -40,8 +39,7 @@ impl Manager {
         Manager::create(move |ctx| {
             let mut workers: HashMap<usize, Addr<Worker>> = HashMap::new();
             for i in 0..num_workers {
-                let worker = Worker::new(i, ctx.address(), saver, ip).start();
-                //                worker.do_send(worker::ManagerMsg("heLLo".to_string()));
+                let worker = Worker::new(i, ctx.address(), saver.clone(), ip.clone()).start();
                 workers.insert(i, worker);
             }
             Manager { workers }
@@ -84,7 +82,6 @@ impl Handler<UrlList> for Manager {
 //    }
 //}
 
-/// Handler for Message message.
 impl Handler<Msg> for Manager {
     type Result = ();
 

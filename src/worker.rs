@@ -1,8 +1,8 @@
 use actix_web::actix::*;
 use std::time::Instant;
 
+use crate::db::DBSaver;
 use crate::manager::Manager;
-use crate::saver::DBSaver;
 
 pub struct ManagerMsg(pub String);
 

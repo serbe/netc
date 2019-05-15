@@ -1,18 +1,18 @@
+use crate::db::{get_connection, DBSaver};
 use crate::manager::Manager;
 use crate::netutils::my_ip;
-use crate::saver::DBSaver;
+
 use actix_web::{
     actix::*, http::Method, server, App, AsyncResponder, Error, HttpMessage, HttpRequest,
     HttpResponse,
 };
 use bytes::Bytes;
 use futures::future::Future;
-use rpdb::get_connection;
 use std::borrow::Cow;
 
+mod db;
 mod manager;
 mod netutils;
-mod saver;
 mod utils;
 mod worker;
 
@@ -37,21 +37,21 @@ fn paste(req: &HttpRequest<State>) -> Box<Future<Item = HttpResponse, Error = Er
         .responder()
 }
 
-fn main() -> std::io::Result<()> {
+fn main() {
     let cfg = utils::get_config();
     let db = get_connection(&cfg.db);
+    let ip = my_ip().unwrap();
     let saver = DBSaver::new(db).start();
     let bind_addr = cfg.server;
     let num_workers = cfg.workers;
-    let ip = my_ip()?;
     let manager = Manager::new(saver, ip, num_workers);
-    let server = server::new(move || {
+    server::new(move || {
         App::with_state(State {
             manager: manager.clone(),
         })
         .resource("/paste", |r| r.method(Method::POST).f(paste))
     })
-    .bind(bind_addr)?;
-    server.run();
-    Ok(())
+    .bind(bind_addr)
+    .unwrap()
+    .run();
 }

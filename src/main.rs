@@ -44,7 +44,8 @@ fn main() {
     let saver = DBSaver::new(db).start();
     let bind_addr = cfg.server;
     let num_workers = cfg.workers;
-    let manager = Manager::new(saver, ip, num_workers);
+    let target = cfg.target;
+    let manager = Manager::new(saver, ip, target, num_workers);
     server::new(move || {
         App::with_state(State {
             manager: manager.clone(),

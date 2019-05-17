@@ -1,52 +1,54 @@
 use actix_web::actix::*;
-use std::time::Instant;
+// use std::time::Instant;
 
 use crate::db::DBSaver;
-use crate::manager::Manager;
+// use crate::manager::Manager;
+use crate::netutils::check_proxy;
 
-pub struct ManagerMsg(pub String);
+pub struct Job {
+    pub db: Addr<DBSaver>,
+    pub proxy_url: String,
+    pub target_url: String,
+    pub ip: String,
+}
 
-impl Message for ManagerMsg {
+impl Message for Job {
     type Result = ();
 }
 
-pub struct Worker {
-    id: usize,
-    addr: Addr<Manager>,
-    saver: Addr<DBSaver>,
-    ip: String,
-    hb: Instant,
-}
+pub struct Worker;
+//  {
+//     id: usize,
+//     addr: Addr<Manager>,
+//     saver: Addr<DBSaver>,
+//     ip: String,
+//     hb: Instant,
+// }
 
 impl Actor for Worker {
-    type Context = Context<Self>;
-
-    fn started(&mut self, _ctx: &mut Self::Context) {
-        println!("worker {} started", self.id);
-    }
+    type Context = SyncContext<Self>;
 }
 
-impl Handler<ManagerMsg> for Worker {
+impl Handler<Job> for Worker {
     type Result = ();
 
-    fn handle(&mut self, msg: ManagerMsg, _: &mut Self::Context) {
-        println!("message worker {} msg ( {} )", self.id, msg.0);
-        // send message to peer
-        //        self.framed.write(ChatResponse::Message(msg.0));
+    fn handle(&mut self, job: Job, _: &mut Self::Context) {
+        if let Ok(proxy) = check_proxy(&job.proxy_url, &job.target_url, &job.ip) {
+            job.db.do_send(proxy);
+        }
     }
 }
 
-/// Helper methods
-impl Worker {
-    pub fn new(id: usize, addr: Addr<Manager>, saver: Addr<DBSaver>, ip: String) -> Worker {
-        Worker {
-            id,
-            addr,
-            saver,
-            ip,
-            hb: Instant::now(),
-        }
-    }
+// impl Worker {
+    // pub fn new(id: usize, addr: Addr<Manager>, saver: Addr<DBSaver>, ip: String) -> Worker {
+    //     Worker {
+    //         id,
+    //         addr,
+    //         saver,
+    //         ip,
+    //         hb: Instant::now(),
+    //     }
+    // }
 
     // helper method that sends ping to client every second.
     //
@@ -69,4 +71,4 @@ impl Worker {
     //            act.hb(ctx);
     //        });
     //    }
-}
+// }

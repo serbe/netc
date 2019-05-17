@@ -1,9 +1,7 @@
 use actix_web::actix::*;
-use std::collections::HashMap;
 
 use crate::db::DBSaver;
-use crate::worker;
-use crate::worker::Worker;
+use crate::worker::{Worker, Job};
 
 pub struct Msg {
     pub id: usize,
@@ -23,41 +21,19 @@ impl Message for UrlList {
 }
 
 pub struct Manager {
-    workers: HashMap<usize, Addr<worker::Worker>>,
-}
-
-impl Default for Manager {
-    fn default() -> Manager {
-        Manager {
-            workers: HashMap::new(),
-        }
-    }
+    workers: Addr<Worker>,
+    db: Addr<DBSaver>,
+    ip: String,
+    target: String,
 }
 
 impl Manager {
-    pub fn new(saver: Addr<DBSaver>, ip: String, num_workers: usize) -> Addr<Manager> {
-        Manager::create(move |ctx| {
-            let mut workers: HashMap<usize, Addr<Worker>> = HashMap::new();
-            for i in 0..num_workers {
-                let worker = Worker::new(i, ctx.address(), saver.clone(), ip.clone()).start();
-                workers.insert(i, worker);
-            }
-            Manager { workers }
+    pub fn new(db: Addr<DBSaver>, ip: String, target: String, num_workers: usize) -> Addr<Manager> {
+        Manager::create(move |_| {
+            let workers = SyncArbiter::start(num_workers, || Worker);
+            Manager { workers, db, ip, target }
         })
     }
-
-    // Send message to all users in the room
-    //    fn send_message(message: &str, skip_id: usize) {
-    //        if let Some(sessions) = self.rooms.get(room) {
-    //            for id in sessions {
-    //                if *id != skip_id {
-    //                    if let Some(addr) = self.sessions.get(id) {
-    //                        addr.do_send(worker::Message(message.to_owned()))
-    //                    }
-    //                }
-    //            }
-    //        }
-    //    }
 }
 
 /// Make actor from `ChatServer`
@@ -69,7 +45,9 @@ impl Handler<UrlList> for Manager {
     type Result = ();
 
     fn handle(&mut self, msg: UrlList, _: &mut Context<Self>) {
-        println!("get {} urls", msg.list.len());
+        for url in msg.list {
+            self.workers.do_send(Job{ db: self.db.clone(), proxy_url: url, target_url: self.target.clone(), ip: self.ip.clone() })
+        }
     }
 }
 

@@ -29,8 +29,8 @@ pub struct Manager {
 
 impl Manager {
     pub fn new(db: Addr<DBSaver>, ip: String, target: String, num_workers: usize) -> Addr<Manager> {
+        let workers: Addr<Worker> = SyncArbiter::start(num_workers, || Worker);
         Manager::create(move |_| {
-            let workers = SyncArbiter::start(num_workers, || Worker);
             Manager { workers, db, ip, target }
         })
     }

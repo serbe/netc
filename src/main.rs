@@ -38,6 +38,7 @@ fn paste(req: &HttpRequest<State>) -> Box<Future<Item = HttpResponse, Error = Er
 }
 
 fn main() {
+    let sys = System::new("Actix");
     let cfg = utils::get_config();
     let db = get_connection(&cfg.db);
     let ip = my_ip().unwrap();
@@ -53,6 +54,6 @@ fn main() {
         .resource("/paste", |r| r.method(Method::POST).f(paste))
     })
     .bind(bind_addr)
-    .unwrap()
-    .run();
+    .unwrap().start();
+    sys.run();
 }

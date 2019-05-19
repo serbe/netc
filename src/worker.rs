@@ -1,7 +1,6 @@
-use actix_web::actix::*;
-
 use crate::db::DBSaver;
 use crate::netutils::check_proxy;
+use actix_web::actix::{Actor, Addr, Handler, Message, SyncContext};
 
 pub struct Job {
     pub db: Addr<DBSaver>,
@@ -24,8 +23,14 @@ impl Handler<Job> for Worker {
     type Result = ();
 
     fn handle(&mut self, job: Job, _: &mut Self::Context) {
-        if let Ok(proxy) = check_proxy(&job.proxy_url, &job.target_url, &job.ip) {
-            job.db.do_send(proxy);
+        match check_proxy(&job.proxy_url, &job.target_url, &job.ip) {
+            Ok(proxy) => {
+                println!("ok: {}", proxy.hostname);
+                job.db.do_send(proxy);
+            }
+            Err(_) => {
+                println!("err: {}", job.proxy_url);
+            }
         }
     }
 }

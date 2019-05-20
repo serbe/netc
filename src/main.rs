@@ -32,7 +32,7 @@ fn paste(req: &HttpRequest<State>) -> Box<Future<Item = HttpResponse, Error = Er
                 let list = utf8_string
                     .split('\n')
                     .filter_map(|s| match db.set(s, b"") {
-                        Ok(None) => Some(s.to_string()),
+                        Ok(None) => Some(s.trim().to_string()),
                         _ => None,
                     })
                     .collect();

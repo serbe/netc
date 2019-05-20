@@ -11,20 +11,20 @@ impl Message for UrlList {
 }
 
 pub struct Manager {
-    workers: Addr<Worker>,
     db: Addr<DBSaver>,
     ip: String,
     target: String,
+    workers: Addr<Worker>,
 }
 
 impl Manager {
     pub fn new(db: Addr<DBSaver>, ip: String, target: String, num_workers: usize) -> Addr<Manager> {
         let workers: Addr<Worker> = SyncArbiter::start(num_workers, || Worker);
         Manager::create(move |_| Manager {
-            workers,
             db,
             ip,
             target,
+            workers,
         })
     }
 }
@@ -41,22 +41,22 @@ impl Handler<UrlList> for Manager {
             if url.contains("://") {
                 self.workers.do_send(Job {
                     db: self.db.clone(),
+                    ip: self.ip.clone(),
                     proxy_url: url,
                     target_url: self.target.clone(),
-                    ip: self.ip.clone(),
                 });
             } else {
                 self.workers.do_send(Job {
                     db: self.db.clone(),
+                    ip: self.ip.clone(),
                     proxy_url: format!("http://{}", url),
                     target_url: self.target.clone(),
-                    ip: self.ip.clone(),
                 });
                 self.workers.do_send(Job {
                     db: self.db.clone(),
+                    ip: self.ip.clone(),
                     proxy_url: format!("socks5://{}", url),
                     target_url: self.target.clone(),
-                    ip: self.ip.clone(),
                 });
             }
         }

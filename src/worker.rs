@@ -23,14 +23,8 @@ impl Handler<Job> for Worker {
     type Result = ();
 
     fn handle(&mut self, job: Job, _: &mut Self::Context) {
-        match check_proxy(&job.proxy_url, &job.target_url, &job.ip) {
-            Ok(proxy) => {
-                // println!("ok: {}", proxy.hostname);
-                job.db.do_send(proxy);
-            }
-            Err(_) => {
-                // println!("err: {}", job.proxy_url);
-            }
+        if let Ok(proxy) = check_proxy(&job.proxy_url, &job.target_url, &job.ip) {
+            job.db.do_send(proxy);
         }
     }
 }

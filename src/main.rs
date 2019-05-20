@@ -29,13 +29,14 @@ fn paste(req: &HttpRequest<State>) -> Box<Future<Item = HttpResponse, Error = Er
         .from_err()
         .and_then(move |bytes: Bytes| {
             if let Cow::Borrowed(utf8_string) = String::from_utf8_lossy(&bytes.to_vec()) {
-                let list = utf8_string
+                let list: Vec<String> = utf8_string
                     .split('\n')
                     .filter_map(|s| match db.set(s, b"") {
                         Ok(None) => Some(s.trim().to_string()),
                         _ => None,
                     })
                     .collect();
+                println!("send {} proxies", list.len());
                 addr.do_send(manager::UrlList { list })
             }
             Ok(HttpResponse::Ok().finish())

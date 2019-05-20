@@ -1,4 +1,5 @@
 use crate::db::Proxy;
+use chrono::Local;
 
 pub fn my_ip() -> Result<String, reqwest::Error> {
     reqwest::get("https://api.ipify.org")?.text()
@@ -22,5 +23,7 @@ pub fn check_proxy(proxy_url: &str, target_url: &str, my_ip: &str) -> Result<Pro
     if !body.contains(my_ip) && body.matches("<p>").count() == 1 {
         proxy.anon = true;
     }
+    proxy.create_at = Local::now();
+    proxy.update_at = Local::now();
     Ok(proxy)
 }

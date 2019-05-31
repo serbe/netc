@@ -1,11 +1,13 @@
 use crate::db::Proxy;
 use chrono::Local;
+use std::time::Instant;
 
 pub fn my_ip() -> Result<String, reqwest::Error> {
     reqwest::get("https://api.ipify.org")?.text()
 }
 
 pub fn check_proxy(proxy_url: &str, target_url: &str, my_ip: &str) -> Result<Proxy, String> {
+    let dur = Instant::now();
     let proxy = reqwest::Proxy::all(proxy_url)
         .map_err(|e| format!("set proxy {} error: {}", proxy_url, e.to_string()))?;
     let client = reqwest::Client::builder()
@@ -25,5 +27,6 @@ pub fn check_proxy(proxy_url: &str, target_url: &str, my_ip: &str) -> Result<Pro
     }
     proxy.create_at = Local::now();
     proxy.update_at = Local::now();
+    proxy.response = dur.elapsed().as_micros() as i64;
     Ok(proxy)
 }

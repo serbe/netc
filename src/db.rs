@@ -1,6 +1,7 @@
 use chrono::{DateTime, Local};
 use crossbeam::channel::{select, Receiver};
 use postgres::{Connection, TlsMode};
+use std::thread;
 
 #[derive(Debug)]
 pub struct Proxy {
@@ -109,11 +110,16 @@ pub struct DBSaver {
 }
 
 impl DBSaver {
-    pub fn new(db: Connection, workers: Receiver<Proxy>) -> Self {
+    fn new(db: Connection, workers: Receiver<Proxy>) -> Self {
         DBSaver { db, workers }
     }
 
-    pub fn run(&self) {
+    pub fn start(db: Connection, workers: Receiver<Proxy>) {
+        let db_saver = DBSaver::new(db, workers);
+        thread::spawn(move || db_saver.run());
+    }
+
+    fn run(&self) {
         loop {
             select! {
                 recv(self.workers) -> msg => {

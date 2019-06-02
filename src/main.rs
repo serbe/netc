@@ -21,7 +21,6 @@ type ResponseFuture = Box<dyn Future<Item = Response<Body>, Error = GenericError
 fn serve(req: Request<Body>, manager: Sender<Vec<String>>) -> ResponseFuture {
     match (req.method(), req.uri().path()) {
         (&Method::POST, "/paste") => {
-            println!("bingo!\n {:?}", req.headers());
             Box::new(
                 req.into_body()
                     .concat2()

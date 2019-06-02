@@ -1,6 +1,7 @@
 #[derive(Clone)]
 pub struct Config {
     pub db: String,
+    pub sled: String,
     pub server: String,
     pub target: String,
     pub workers: usize,
@@ -9,6 +10,8 @@ pub struct Config {
 pub fn get_config() -> Config {
     let db = dotenv::var("db")
         .expect("No found variable db like postgres://postgres@localhost:5433 in environment");
+    let sled =
+        dotenv::var("sled").expect("No found variable sled like sled_db_name in environment");
     let server =
         dotenv::var("server").expect("No found variable server like 0.0.0.0:8080 in environment");
     let target = dotenv::var("target")
@@ -19,6 +22,7 @@ pub fn get_config() -> Config {
         .expect("wrong variable workers in environment");
     Config {
         db,
+        sled,
         server,
         target,
         workers,

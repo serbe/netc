@@ -1,30 +1,43 @@
-use crate::db::DBSaver;
+use crate::db::Proxy;
 use crate::netutils::check_proxy;
-use actix_web::actix::{Actor, Addr, Handler, Message, SyncContext};
+use crossbeam::channel::{select, Receiver, Sender};
 
-pub struct Job {
-    pub db: Addr<DBSaver>,
-    pub proxy_url: String,
-    pub target_url: String,
+pub struct Worker {
+    pub id: usize,
     pub ip: String,
+    pub target: String,
+    pub manager: Receiver<String>,
+    pub db_saver: Sender<Proxy>,
 }
 
-impl Message for Job {
-    type Result = ();
-}
+impl Worker {
+    pub fn new(
+        id: usize,
+        ip: String,
+        target: String,
+        manager: Receiver<String>,
+        db_saver: Sender<Proxy>,
+    ) -> Self {
+        Worker {
+            id,
+            ip,
+            target,
+            manager,
+            db_saver,
+        }
+    }
 
-pub struct Worker;
-
-impl Actor for Worker {
-    type Context = SyncContext<Self>;
-}
-
-impl Handler<Job> for Worker {
-    type Result = ();
-
-    fn handle(&mut self, job: Job, _: &mut Self::Context) {
-        if let Ok(proxy) = check_proxy(&job.proxy_url, &job.target_url, &job.ip) {
-            job.db.do_send(proxy);
+    pub fn run(&self) {
+        loop {
+            select! {
+                recv(self.manager) -> msg => {
+                    if let Ok(proxy_url) = msg {
+                        if let Ok(proxy) = check_proxy(&proxy_url, &self.target, &self.ip) {
+                            self.db_saver.send(proxy);
+                        }
+                    }
+                }
+            }
         }
     }
 }

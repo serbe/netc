@@ -1,5 +1,5 @@
-use actix_web::actix::*;
 use chrono::{DateTime, Local};
+use crossbeam::channel::{select, Receiver};
 use postgres::{Connection, TlsMode};
 
 #[derive(Debug)]
@@ -105,27 +105,24 @@ impl Proxy {
 
 pub struct DBSaver {
     pub db: Connection,
-}
-
-impl Actor for DBSaver {
-    type Context = Context<Self>;
+    pub workers: Receiver<Proxy>,
 }
 
 impl DBSaver {
-    pub fn new(db: Connection) -> Self {
-        DBSaver { db }
+    pub fn new(db: Connection, workers: Receiver<Proxy>) -> Self {
+        DBSaver { db, workers }
     }
-}
 
-impl Message for Proxy {
-    type Result = ();
-}
-
-impl Handler<Proxy> for DBSaver {
-    type Result = ();
-
-    fn handle(&mut self, proxy: Proxy, _: &mut Self::Context) {
-        let _ = insert_or_update(&self.db, proxy);
+    pub fn run(&self) {
+        loop {
+            select! {
+                recv(self.workers) -> msg => {
+                    if let Ok(proxy) = msg {
+                        let _ = insert_or_update(&self.db, proxy);
+                    }
+                }
+            }
+        }
     }
 }
 

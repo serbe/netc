@@ -9,18 +9,27 @@ pub struct Manager {
 }
 
 impl Manager {
-    fn new(server: Receiver<Vec<String>>, workers: Sender<String>, db_name: String) -> Self {
-        let db = Db::start_default(db_name).unwrap();
-        Manager {
+    fn new(
+        server: Receiver<Vec<String>>,
+        workers: Sender<String>,
+        db_name: String,
+    ) -> Result<Manager, String> {
+        let db = Db::start_default(db_name).map_err(|e| e.to_string())?;
+        Ok(Manager {
             server,
             workers,
             db,
-        }
+        })
     }
 
-    pub fn start(server: Receiver<Vec<String>>, workers: Sender<String>, db_name: String) {
-        let manager = Manager::new(server, workers, db_name);
+    pub fn start(
+        server: Receiver<Vec<String>>,
+        workers: Sender<String>,
+        db_name: String,
+    ) -> Result<(), String> {
+        let manager = Manager::new(server, workers, db_name)?;
         thread::spawn(move || manager.run());
+        Ok(())
     }
 
     fn run(&self) {

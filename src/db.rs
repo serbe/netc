@@ -132,8 +132,8 @@ impl DBSaver {
     }
 }
 
-pub fn get_connection(params: &str) -> Connection {
-    Connection::connect(params, TlsMode::None).unwrap()
+pub fn get_connection(params: &str) -> Result<Connection, String> {
+    Connection::connect(params, TlsMode::None).map_err(|e| e.to_string())
 }
 
 pub fn insert_or_update(conn: &Connection, proxy: Proxy) -> Result<u64, String> {

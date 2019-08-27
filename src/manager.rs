@@ -14,7 +14,7 @@ impl Manager {
         workers: Sender<String>,
         db_name: String,
     ) -> Result<Manager, String> {
-        let db = Db::start_default(db_name).map_err(|e| e.to_string())?;
+        let db = Db::open(db_name).map_err(|e| e.to_string())?;
         Ok(Manager {
             server,
             workers,
@@ -38,7 +38,7 @@ impl Manager {
                 recv(self.server) -> msg => {
                     if let Ok(url_list) = msg {
                         for url in url_list {
-                            if self.db.set(url.clone(), b"") == Ok(None) {
+                            if self.db.insert(url.clone(), b"") == Ok(None) {
                                 if url.contains("://") {
                                     let _ = self.workers.send(url);
                                 } else {

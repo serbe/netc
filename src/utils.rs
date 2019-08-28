@@ -28,3 +28,7 @@ pub fn get_config() -> Result<Config, String> {
         workers,
     })
 }
+
+pub fn my_ip() -> Result<String, reqwest::Error> {
+    reqwest::get("https://api.ipify.org")?.text()
+}

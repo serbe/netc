@@ -1,6 +1,6 @@
 use crate::db::{get_connection, DBSaver};
 use crate::manager::Manager;
-use crate::netutils::my_ip;
+use crate::utils::my_ip;
 use crate::worker::Worker;
 use crossbeam::channel::{unbounded, Sender};
 use futures::future::ok;
@@ -11,7 +11,7 @@ use hyper::{Body, Method, Request, Response, Server};
 
 mod db;
 mod manager;
-mod netutils;
+mod proxy;
 mod utils;
 mod worker;
 

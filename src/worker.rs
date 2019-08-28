@@ -1,5 +1,4 @@
-use crate::db::Proxy;
-use crate::netutils::check_proxy;
+use crate::proxy::{check_proxy, Proxy};
 use crossbeam::channel::{select, Receiver, Sender};
 use std::thread;
 

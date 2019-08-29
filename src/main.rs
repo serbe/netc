@@ -43,7 +43,7 @@ fn main() -> Result<(), String> {
     let cfg = utils::get_config()?;
     let db = get_connection(&cfg.db)?;
     let ip = my_ip().map_err(|e| e.to_string())?;
-    let bind_addr = cfg.server.parse().map_err(|_| "bad addres2s".to_string())?;
+    let bind_addr = cfg.server.parse().map_err(|_| "bad address".to_string())?;
     let (server_s, manager_r) = unbounded();
     let (manager_s, worker_r) = unbounded();
     let (worker_s, saver_r) = unbounded();

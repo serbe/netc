@@ -91,7 +91,7 @@ impl Proxy {
             work: false,
             anon: false,
             checks: 0,
-            hostname: format!("{}:{}", host, port),
+            hostname: format!("{}://{}:{}", scheme, host, port),
             host,
             port,
             scheme,

@@ -1,15 +1,18 @@
 [package]
 name = "rpc"
-version = "0.2.0"
+version = "0.1.0"
 authors = ["Valeriy Kostikov <mkoctuk@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-chrono = "0.4"
-crossbeam = "0.7"
-dotenv = "0.14"
-futures = "0.1"
-hyper = "0.12"
-postgres = { version = "0.15", features = ["with-chrono"] }
-reqwest = { version = "0.9", features = ["socks"] }
-sled = "0.26"
+base64 = "0.11"
+bytes = "0.5"
+native-tls = "0.2"
+rsl = { version = "0.1.1", git = "https://github.com/serbe/rsl" }
+thiserror = "1.0"
+tokio = { version = "0.2", features = ["full"] }
+tokio-tls = "0.3"
+uri = { version = "0.1.1", git = "https://github.com/serbe/uri" }
+
+[dev-dependencies]
+lazy_static = "1.4"

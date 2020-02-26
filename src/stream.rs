@@ -37,7 +37,7 @@ impl MaybeHttpsStream {
         if uri.is_ssl() {
             let cx = TlsConnector::builder().build()?;
             let cx = tokio_tls::TlsConnector::from(cx);
-            let stream = cx.connect(&uri.origin(), stream).await?;
+            let stream = cx.connect(&uri.host(), stream).await?;
             Ok(MaybeHttpsStream::from(stream))
         } else {
             Ok(MaybeHttpsStream::from(stream))

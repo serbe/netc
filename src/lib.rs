@@ -4,13 +4,13 @@ pub mod error;
 pub mod headers;
 pub mod http;
 pub mod method;
-pub mod proxy;
+// pub mod proxy;
 pub mod request;
 pub mod response;
 // pub mod socks;
 pub mod status;
 pub mod stream;
-pub mod transport;
+// pub mod transport;
 pub mod version;
 
 #[cfg(test)]

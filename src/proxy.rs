@@ -3,18 +3,12 @@
 use tokio::net::TcpStream;
 use rsl::socks5;
 
+use crate::stream::MaybeHttpsStream;
 use crate::error::Result;
 
-#[derive(Debug)]
-pub struct ProxyStream {
-    stream: TcpStream,
-}
-
-impl ProxyStream {
-    async fn from(proxy: &str, target: &str) -> Result<Self> {
-        let stream = socks5::connect(proxy, target).await?;
-        Ok(ProxyStream { stream })
-    }
+async fn proxy_from(proxy: &str, target: &str) -> Result<MaybeHttpsStream> {
+    let stream = socks5::connect(proxy, target).await?;
+    MaybeHttpsStream::from(stream)
 }
 
 

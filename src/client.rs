@@ -4,13 +4,14 @@ use crate::client_builder::ClientBuilder;
 use crate::error::{Error, Result};
 use crate::request::Request;
 use crate::response::Response;
-use crate::transport::Transport;
+use crate::stream::MaybeHttpsStream;
 
 #[derive(Debug)]
 pub struct Client {
     request: Request,
     uri: Uri,
-    transport: Transport,
+    proxy: Option<Uri>,
+    stream: MaybeHttpsStream,
     response: Option<Response>,
 }
 
@@ -26,13 +27,15 @@ impl Client {
     pub fn from(
         request: Request,
         uri: Uri,
-        transport: Transport,
+        proxy: Option<Uri>,
+        stream: MaybeHttpsStream,
         response: Option<Response>,
     ) -> Client {
         Client {
             request,
             uri,
-            transport,
+            proxy,
+            stream,
             response,
         }
     }
@@ -41,21 +44,21 @@ impl Client {
         self.request.clone()
     }
 
-    pub fn send_request(&mut self) -> Result<()> {
-        match self.transport {
-            Transport::Proxy(ref mut proxy) => proxy.send_request(&self.request.to_vec()),
-            Transport::Stream(ref mut stream) => stream.send_request(&self.request.to_vec()),
-            Transport::None => Err(Error::WrongHttp),
-        }
+    pub async fn send_request(&mut self) -> Result<()> {
+        // if let Some(proxy) = self.proxy {
+            // if proxy.scheme() == "socks5" {
+                // self.stream.send_socks_msg(&self.request.to_vec()).await
+            // } else {
+                // self.stream.send_msg(&self.request.to_vec()).await
+            // }
+        // } else {
+            self.stream.send_msg(&self.request.to_vec()).await
+        // }
     }
 
-    pub fn send(&mut self) -> Result<Response> {
-        self.send_request()?;
-        let response = match self.transport {
-            Transport::Proxy(ref mut proxy) => proxy.get_response(),
-            Transport::Stream(ref mut stream) => stream.get_response(),
-            Transport::None => return Err(Error::WrongHttp),
-        }?;
+    pub async fn send(&mut self) -> Result<Response> {
+        self.send_request().await?;
+        let response = self.stream.get_response().await?;
         self.response = Some(response.clone());
         Ok(response)
     }
@@ -68,17 +71,13 @@ impl Client {
         }
     }
 
-    pub fn get_body(&mut self) -> Result<Vec<u8>> {
+    pub async fn get_body(&mut self) -> Result<Vec<u8>> {
         let content_len = self.content_len()?;
-        match self.transport {
-            Transport::Proxy(ref mut proxy) => proxy.get_body(content_len),
-            Transport::Stream(ref mut stream) => stream.get_body(content_len),
-            Transport::None => Err(Error::WrongHttp),
-        }
+        self.stream.get_body(content_len).await
     }
 
-    pub fn text(&mut self) -> Result<String> {
-        let body = self.get_body()?;
+    pub async fn text(&mut self) -> Result<String> {
+        let body = self.get_body().await?;
         Ok(String::from_utf8_lossy(&body).to_string())
     }
 }
@@ -87,87 +86,87 @@ impl Client {
 mod tests {
     use super::*;
 
-    #[test]
-    fn client_http() {
-        let mut client = Client::new("http://api.ipify.org").build().unwrap();
-        let response = client.send().unwrap();
+    #[tokio::test]
+    async fn client_http() {
+        let mut client = Client::new("http://api.ipify.org").build().await.unwrap();
+        let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
-        let body = client.text().unwrap();
+        let body = client.text().await.unwrap();
         assert!(&body.contains(crate::tests::IP.as_str()));
     }
 
-    #[test]
-    fn client_https() {
-        let mut client = Client::new("https://api.ipify.org").build().unwrap();
-        let response = client.send().unwrap();
+    #[tokio::test]
+    async fn client_https() {
+        let mut client = Client::new("https://api.ipify.org").build().await.unwrap();
+        let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
-        let body = client.text().unwrap();
+        let body = client.text().await.unwrap();
         assert!(&body.contains(crate::tests::IP.as_str()));
     }
 
-    #[test]
-    fn client_http_proxy() {
+    #[tokio::test]
+    async fn client_http_proxy() {
         let mut client = Client::new("http://api.ipify.org")
             .proxy("http://127.0.0.1:5858")
-            .build()
+            .build().await
             .unwrap();
-        let response = client.send().unwrap();
+        let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
-        let body = client.text().unwrap();
+        let body = client.text().await.unwrap();
         assert!(&body.contains(crate::tests::IP.as_str()));
     }
 
-    #[test]
-    fn client_http_proxy_auth() {
+    #[tokio::test]
+    async fn client_http_proxy_auth() {
         let mut client = Client::new("http://api.ipify.org")
             .proxy("http://test:tset@127.0.0.1:5656")
-            .build()
+            .build().await
             .unwrap();
-        let response = client.send().unwrap();
+        let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
-        let body = client.text().unwrap();
+        let body = client.text().await.unwrap();
         assert!(&body.contains(crate::tests::IP.as_str()));
     }
 
-    #[test]
-    fn client_http_proxy_auth_err() {
+    #[tokio::test]
+    async fn client_http_proxy_auth_err() {
         let mut client = Client::new("http://api.ipify.org")
             .proxy("http://test:test@127.0.0.1:5656")
-            .build()
+            .build().await
             .unwrap();
-        let response = client.send().unwrap();
+        let response = client.send().await.unwrap();
         assert!(!response.status_code().is_success());
     }
 
-    #[test]
-    fn client_socks_proxy() {
+    #[tokio::test]
+    async fn client_socks_proxy() {
         let mut client = Client::new("http://api.ipify.org")
             .proxy("socks5://127.0.0.1:5959")
-            .build()
+            .build().await
             .unwrap();
-        let response = client.send().unwrap();
+        let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
-        let body = client.text().unwrap();
+        let body = client.text().await.unwrap();
         assert!(&body.contains(crate::tests::IP.as_str()));
     }
 
-    #[test]
-    fn client_socks_proxy_auth() {
+    #[tokio::test]
+    async fn client_socks_proxy_auth() {
         let mut client = Client::new("http://api.ipify.org")
             .proxy("socks5://test:tset@127.0.0.1:5757")
-            .build()
+            .build().await
             .unwrap();
-        let response = client.send().unwrap();
+        let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
-        let body = client.text().unwrap();
+        let body = client.text().await.unwrap();
         assert!(&body.contains(crate::tests::IP.as_str()));
     }
 
-    #[test]
-    fn client_socks_proxy_auth_err() {
+    #[tokio::test]
+    async fn client_socks_proxy_auth_err() {
         let client = Client::new("http://api.ipify.org")
             .proxy("socks5://test:test@127.0.0.1:5757")
-            .build();
+            .build().await;
         assert!(client.is_err());
     }
 }

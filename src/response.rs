@@ -12,11 +12,11 @@ pub struct Response {
 }
 
 impl Response {
-    pub fn from_head(head: &[u8]) -> Result<Response> {
-        let mut head = str::from_utf8(head)?.splitn(2, '\n');
+    pub fn from_header(header: &[u8]) -> Result<Response> {
+        let mut header = str::from_utf8(header)?.splitn(2, '\n');
 
-        let status = head.next().ok_or(Error::StatusErr)?.parse()?;
-        let headers = head.next().ok_or(Error::HeadersErr)?.parse()?;
+        let status = header.next().ok_or(Error::StatusErr)?.parse()?;
+        let headers = header.next().ok_or(Error::HeadersErr)?.parse()?;
 
         Ok(Response { status, headers })
     }
@@ -30,7 +30,7 @@ impl Response {
                 pos = v;
             }
 
-            let response = Self::from_head(&res[..pos])?;
+            let response = Self::from_header(&res[..pos])?;
             writer.write_all(&res[pos..])?;
 
             Ok(response)

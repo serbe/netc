@@ -36,6 +36,10 @@ pub enum Error {
     NativeTls(#[from] native_tls::Error),
     #[error("Socks5")]
     Socks5(#[from] rsl::error::Error),
+    #[error("header incomplete")]
+    HeaderIncomplete,
+    #[error("header more when 1024")]
+    HeaderToBig,
 }
 
 //             EmptyScheme => write!(w, "Uri no have scheme"),

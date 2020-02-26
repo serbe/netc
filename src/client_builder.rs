@@ -6,8 +6,9 @@ use crate::error::{Error, Result};
 use crate::headers::Headers;
 use crate::method::Method;
 use crate::request::Request;
-use crate::transport::Transport;
+// use crate::proxy::proxy_from;
 use crate::version::Version;
+use crate::stream::MaybeHttpsStream;
 
 #[derive(Debug)]
 pub struct ClientBuilder {
@@ -40,23 +41,27 @@ impl ClientBuilder {
         }
     }
 
-    pub fn build(self) -> Result<Client> {
+    pub async fn build(self) -> Result<Client> {
         let uri = self.uri.ok_or(Error::EmptyUri)?;
-        let mut headers = self.headers;
-        let transport = if let Some(proxy) = &self.proxy {
-            if let Some(auth) = proxy.base64_auth() {
-                headers.insert("Proxy-Authorization", format!("Basic {}", auth).as_str());
-            };
-            Transport::proxy(&proxy, &uri)?
+        let headers = self.headers;
+        let stream = if let Some(proxy) = &self.proxy {
+            // if let Some(auth) = proxy.base64_auth() {
+            //     headers.insert("Proxy-Authorization", format!("Basic {}", auth).as_str());
+            // };
+            if proxy.scheme() == "socks5" {
+                MaybeHttpsStream::socks(&proxy, &uri).await?
+            } else {
+                MaybeHttpsStream::new(&uri).await?
+            }
         } else {
-            Transport::stream(&uri)?
+            MaybeHttpsStream::new(&uri).await?
         };
         let mut request = Request::new(&uri, self.proxy.is_some());
         request.method(self.method);
         request.headers(headers);
         request.version(self.version);
         request.body(self.body);
-        Ok(Client::from(request, uri, transport, None))
+        Ok(Client::from(request, uri, self.proxy, stream, None))
     }
 
     pub fn uri(mut self, uri: &str) -> ClientBuilder {

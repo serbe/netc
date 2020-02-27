@@ -45,15 +45,7 @@ impl Client {
     }
 
     pub async fn send_request(&mut self) -> Result<()> {
-        // if let Some(proxy) = self.proxy {
-            // if proxy.scheme() == "socks5" {
-                // self.stream.send_socks_msg(&self.request.to_vec()).await
-            // } else {
-                // self.stream.send_msg(&self.request.to_vec()).await
-            // }
-        // } else {
-            self.stream.send_msg(&self.request.to_vec()).await
-        // }
+        self.stream.send_msg(&self.request.to_vec()).await
     }
 
     pub async fn send(&mut self) -> Result<Response> {
@@ -108,7 +100,8 @@ mod tests {
     async fn client_http_proxy() {
         let mut client = Client::new("http://api.ipify.org")
             .proxy("http://127.0.0.1:5858")
-            .build().await
+            .build()
+            .await
             .unwrap();
         let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
@@ -120,7 +113,8 @@ mod tests {
     async fn client_http_proxy_auth() {
         let mut client = Client::new("http://api.ipify.org")
             .proxy("http://test:tset@127.0.0.1:5656")
-            .build().await
+            .build()
+            .await
             .unwrap();
         let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
@@ -132,7 +126,8 @@ mod tests {
     async fn client_http_proxy_auth_err() {
         let mut client = Client::new("http://api.ipify.org")
             .proxy("http://test:test@127.0.0.1:5656")
-            .build().await
+            .build()
+            .await
             .unwrap();
         let response = client.send().await.unwrap();
         assert!(!response.status_code().is_success());
@@ -142,7 +137,8 @@ mod tests {
     async fn client_socks_proxy() {
         let mut client = Client::new("http://api.ipify.org")
             .proxy("socks5://127.0.0.1:5959")
-            .build().await
+            .build()
+            .await
             .unwrap();
         let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
@@ -153,8 +149,9 @@ mod tests {
     #[tokio::test]
     async fn client_socks_proxy_auth() {
         let mut client = Client::new("http://api.ipify.org")
-            .proxy("socks5://test:tset@127.0.0.1:5757")
-            .build().await
+            .proxy("socks5://test:tset@127.0.0.1:5656")
+            .build()
+            .await
             .unwrap();
         let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
@@ -166,7 +163,8 @@ mod tests {
     async fn client_socks_proxy_auth_err() {
         let client = Client::new("http://api.ipify.org")
             .proxy("socks5://test:test@127.0.0.1:5757")
-            .build().await;
+            .build()
+            .await;
         assert!(client.is_err());
     }
 }

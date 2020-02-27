@@ -6,9 +6,8 @@ use crate::error::{Error, Result};
 use crate::headers::Headers;
 use crate::method::Method;
 use crate::request::Request;
-// use crate::proxy::proxy_from;
-use crate::version::Version;
 use crate::stream::MaybeHttpsStream;
+use crate::version::Version;
 
 #[derive(Debug)]
 pub struct ClientBuilder {
@@ -43,14 +42,14 @@ impl ClientBuilder {
 
     pub async fn build(self) -> Result<Client> {
         let uri = self.uri.ok_or(Error::EmptyUri)?;
-        let headers = self.headers;
+        let mut headers = self.headers;
         let stream = if let Some(proxy) = &self.proxy {
-            // if let Some(auth) = proxy.base64_auth() {
-            //     headers.insert("Proxy-Authorization", format!("Basic {}", auth).as_str());
-            // };
             if proxy.scheme() == "socks5" {
                 MaybeHttpsStream::socks(&proxy, &uri).await?
             } else {
+                if let Some(auth) = proxy.base64_auth() {
+                    headers.insert("Proxy-Authorization", format!("Basic {}", auth).as_str());
+                };
                 MaybeHttpsStream::new(&uri).await?
             }
         } else {

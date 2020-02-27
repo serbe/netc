@@ -1,5 +1,5 @@
-use uri::Uri;
 use base64::encode;
+use uri::Uri;
 
 use crate::headers::Headers;
 use crate::method::Method;

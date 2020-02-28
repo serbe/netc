@@ -50,7 +50,7 @@ impl ClientBuilder {
                 if let Some(auth) = proxy.base64_auth() {
                     headers.insert("Proxy-Authorization", format!("Basic {}", auth).as_str());
                 };
-                MaybeHttpsStream::new(&uri).await?
+                MaybeHttpsStream::new(&proxy).await?
             }
         } else {
             MaybeHttpsStream::new(&uri).await?

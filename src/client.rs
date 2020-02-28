@@ -125,7 +125,7 @@ mod tests {
     #[tokio::test]
     async fn client_http_proxy_auth_err() {
         let mut client = Client::new("http://api.ipify.org")
-            .proxy("http://test:test@127.0.0.1:5656")
+            .proxy("http://127.0.0.1:5656")
             .build()
             .await
             .unwrap();
@@ -148,8 +148,8 @@ mod tests {
 
     #[tokio::test]
     async fn client_socks_proxy_auth() {
-        let mut client = Client::new("http://api.ipify.org")
-            .proxy("socks5://test:tset@127.0.0.1:5656")
+        let mut client = Client::new("https://api.ipify.org")
+            .proxy("socks5://test:tset@127.0.0.1:5757")
             .build()
             .await
             .unwrap();
@@ -162,7 +162,7 @@ mod tests {
     #[tokio::test]
     async fn client_socks_proxy_auth_err() {
         let client = Client::new("http://api.ipify.org")
-            .proxy("socks5://test:test@127.0.0.1:5757")
+            .proxy("socks5://t:t@127.0.0.1:5757")
             .build()
             .await;
         assert!(client.is_err());

@@ -137,18 +137,6 @@ impl AsyncWrite for MaybeHttpsStream {
     }
 
     #[inline]
-    fn poll_write_buf<B: Buf>(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-        buf: &mut B,
-    ) -> Poll<Result<usize, io::Error>> {
-        match Pin::get_mut(self) {
-            MaybeHttpsStream::Http(s) => Pin::new(s).poll_write_buf(cx, buf),
-            MaybeHttpsStream::Https(s) => Pin::new(s).poll_write_buf(cx, buf),
-        }
-    }
-
-    #[inline]
     fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), io::Error>> {
         match Pin::get_mut(self) {
             MaybeHttpsStream::Http(s) => Pin::new(s).poll_flush(cx),
@@ -161,6 +149,18 @@ impl AsyncWrite for MaybeHttpsStream {
         match Pin::get_mut(self) {
             MaybeHttpsStream::Http(s) => Pin::new(s).poll_shutdown(cx),
             MaybeHttpsStream::Https(s) => Pin::new(s).poll_shutdown(cx),
+        }
+    }
+
+    #[inline]
+    fn poll_write_buf<B: Buf>(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        buf: &mut B,
+    ) -> Poll<Result<usize, io::Error>> {
+        match Pin::get_mut(self) {
+            MaybeHttpsStream::Http(s) => Pin::new(s).poll_write_buf(cx, buf),
+            MaybeHttpsStream::Https(s) => Pin::new(s).poll_write_buf(cx, buf),
         }
     }
 }

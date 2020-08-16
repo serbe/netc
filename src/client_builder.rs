@@ -23,6 +23,12 @@ pub struct ClientBuilder {
     // connect_timeout: Option<Duration>,
 }
 
+impl Default for ClientBuilder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl ClientBuilder {
     pub fn new() -> Self {
         let headers = Headers::new();

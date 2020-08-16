@@ -1,18 +1,18 @@
 [package]
 name = "rpc"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Valeriy Kostikov <mkoctuk@gmail.com>"]
 edition = "2018"
 
 [dependencies]
-base64 = "0.11"
+base64 = "0.12"
 bytes = "0.5"
 native-tls = "0.2"
-rsl = { version = "0.1.1", git = "https://github.com/serbe/rsl" }
+rsl = { version = "0.1", git = "https://github.com/serbe/rsl" }
 thiserror = "1.0"
 tokio = { version = "0.2", features = ["net", "tcp", "io-util"] }
 tokio-tls = "0.3"
-uri = { version = "0.1.1", git = "https://github.com/serbe/uri" }
+uri = { version = "0.1", git = "https://github.com/serbe/uri" }
 
 [dev-dependencies]
 lazy_static = "1.4"

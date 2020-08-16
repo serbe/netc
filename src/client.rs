@@ -21,7 +21,7 @@ impl Client {
     }
 
     pub fn builder() -> ClientBuilder {
-        ClientBuilder::new()
+        ClientBuilder::default()
     }
 
     pub fn from(

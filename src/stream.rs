@@ -62,7 +62,6 @@ impl MaybeHttpsStream {
     }
 
     pub async fn send_msg(&mut self, msg: &[u8]) -> Result<(), Error> {
-        dbg!(String::from_utf8_lossy(&msg).to_string());
         self.write_all(msg).await?;
         self.flush().await?;
         Ok(())

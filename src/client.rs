@@ -1,5 +1,6 @@
 use uri::Uri;
 
+use crate::client_builder::ClientBuilder;
 use crate::error::{Error, Result};
 use crate::request::Request;
 use crate::response::Response;
@@ -15,6 +16,10 @@ pub struct Client {
 }
 
 impl Client {
+    pub fn builder() -> ClientBuilder {
+        ClientBuilder::default()
+    }
+
     pub fn new(
         request: Request,
         uri: Uri,
@@ -67,7 +72,7 @@ impl Client {
 
 #[cfg(test)]
 mod tests {
-    use crate::client_builder::ClientBuilder;
+    use super::*;
 
     #[tokio::test]
     async fn client_http() {

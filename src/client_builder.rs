@@ -66,7 +66,7 @@ impl ClientBuilder {
         request.headers(headers);
         request.version(self.version);
         request.body(self.body);
-        Ok(Client::from(request, uri, self.proxy, stream, None))
+        Ok(Client::new(request, uri, self.proxy, stream, None))
     }
 
     pub fn uri(mut self, uri: &str) -> ClientBuilder {

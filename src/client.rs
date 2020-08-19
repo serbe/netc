@@ -1,6 +1,5 @@
 use uri::Uri;
 
-use crate::client_builder::ClientBuilder;
 use crate::error::{Error, Result};
 use crate::request::Request;
 use crate::response::Response;
@@ -16,15 +15,7 @@ pub struct Client {
 }
 
 impl Client {
-    pub fn new(uri: &str) -> ClientBuilder {
-        ClientBuilder::new().uri(uri)
-    }
-
-    pub fn builder() -> ClientBuilder {
-        ClientBuilder::default()
-    }
-
-    pub fn from(
+    pub fn new(
         request: Request,
         uri: Uri,
         proxy: Option<Uri>,
@@ -76,11 +67,11 @@ impl Client {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
+    use crate::client_builder::ClientBuilder;
 
     #[tokio::test]
     async fn client_http() {
-        let mut client = Client::new("http://api.ipify.org").build().await.unwrap();
+        let mut client = ClientBuilder::new().get("http://api.ipify.org").build().await.unwrap();
         let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
         let body = client.text().await.unwrap();
@@ -89,7 +80,7 @@ mod tests {
 
     #[tokio::test]
     async fn client_https() {
-        let mut client = Client::new("https://api.ipify.org").build().await.unwrap();
+        let mut client = ClientBuilder::new().get("https://api.ipify.org").build().await.unwrap();
         let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
         let body = client.text().await.unwrap();
@@ -98,7 +89,7 @@ mod tests {
 
     #[tokio::test]
     async fn client_http_proxy() {
-        let mut client = Client::new("http://api.ipify.org")
+        let mut client = ClientBuilder::new().get("http://api.ipify.org")
             .proxy("http://127.0.0.1:5858")
             .build()
             .await
@@ -111,7 +102,7 @@ mod tests {
 
     #[tokio::test]
     async fn client_http_proxy_auth() {
-        let mut client = Client::new("http://api.ipify.org")
+        let mut client = ClientBuilder::new().get("http://api.ipify.org")
             .proxy("http://test:tset@127.0.0.1:5656")
             .build()
             .await
@@ -124,7 +115,7 @@ mod tests {
 
     #[tokio::test]
     async fn client_http_proxy_auth_err() {
-        let mut client = Client::new("http://api.ipify.org")
+        let mut client = ClientBuilder::new().get("http://api.ipify.org")
             .proxy("http://127.0.0.1:5656")
             .build()
             .await
@@ -135,7 +126,7 @@ mod tests {
 
     #[tokio::test]
     async fn client_socks_proxy() {
-        let mut client = Client::new("http://api.ipify.org")
+        let mut client = ClientBuilder::new().get("http://api.ipify.org")
             .proxy("socks5://127.0.0.1:5959")
             .build()
             .await
@@ -148,7 +139,7 @@ mod tests {
 
     #[tokio::test]
     async fn client_socks_proxy_auth() {
-        let mut client = Client::new("https://api.ipify.org")
+        let mut client = ClientBuilder::new().get("https://api.ipify.org")
             .proxy("socks5://test:tset@127.0.0.1:5757")
             .build()
             .await
@@ -161,7 +152,7 @@ mod tests {
 
     #[tokio::test]
     async fn client_socks_proxy_auth_err() {
-        let client = Client::new("http://api.ipify.org")
+        let client = ClientBuilder::new().get("http://api.ipify.org")
             .proxy("socks5://t:t@127.0.0.1:5757")
             .build()
             .await;

@@ -71,6 +71,9 @@ impl Request {
     }
 
     pub fn body(&mut self, body: Option<Vec<u8>>) -> &mut Self {
+        if let Some(body) = &body {
+            self.header("Content-Length", &body.len());
+        }
         self.body = body;
         self
     }

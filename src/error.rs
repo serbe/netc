@@ -49,17 +49,29 @@ impl PartialEq for Error {
             (Error::WrongHttp, Error::WrongHttp) => true,
             (Error::EmptyResponse, Error::EmptyResponse) => true,
             (Error::ParseHeaders, Error::ParseHeaders) => true,
-            (Error::UnknownMethod(method), Error::UnknownMethod(other_method)) => method == other_method,
-            (Error::UnsupportedScheme(scheme), Error::UnsupportedScheme(other_scheme)) => scheme == other_scheme,
-            (Error::UnsupportedVersion(version), Error::UnsupportedVersion(other_version)) => version == other_version,
+            (Error::UnknownMethod(method), Error::UnknownMethod(other_method)) => {
+                method == other_method
+            }
+            (Error::UnsupportedScheme(scheme), Error::UnsupportedScheme(other_scheme)) => {
+                scheme == other_scheme
+            }
+            (Error::UnsupportedVersion(version), Error::UnsupportedVersion(other_version)) => {
+                version == other_version
+            }
             (Error::StatusErr, Error::StatusErr) => true,
             (Error::HeadersErr, Error::HeadersErr) => true,
             (Error::IO(io), Error::IO(other_io)) => io.to_string() == other_io.to_string(),
             (Error::ParseInt(int), Error::ParseInt(other_int)) => int == other_int,
             (Error::FromUtf8(utf8), Error::FromUtf8(other_utf8)) => utf8 == other_utf8,
-            (Error::UriError(uri), Error::UriError(other_uri)) => uri.to_string() == other_uri.to_string(),
-            (Error::NativeTls(tls), Error::NativeTls(other_tls)) => tls.to_string() == other_tls.to_string(),
-            (Error::Socks5(socks), Error::Socks5(other_socks)) => socks.to_string() == other_socks.to_string(),
+            (Error::UriError(uri), Error::UriError(other_uri)) => {
+                uri.to_string() == other_uri.to_string()
+            }
+            (Error::NativeTls(tls), Error::NativeTls(other_tls)) => {
+                tls.to_string() == other_tls.to_string()
+            }
+            (Error::Socks5(socks), Error::Socks5(other_socks)) => {
+                socks.to_string() == other_socks.to_string()
+            }
             (Error::HeaderIncomplete, Error::HeaderIncomplete) => true,
             (Error::HeaderToBig, Error::HeaderToBig) => true,
             _ => false,

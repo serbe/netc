@@ -72,8 +72,11 @@ impl FromStr for Headers {
 
 impl From<HashMap<String, String>> for Headers {
     fn from(map: HashMap<String, String>) -> Headers {
-        let headers = map.iter().map(())
-        Headers(map)
+        let headers = map
+            .iter()
+            .map(|(key, value)| (key.to_string().to_lowercase(), value.to_string()))
+            .collect();
+        Headers(headers)
     }
 }
 
@@ -98,9 +101,9 @@ impl Display for Headers {
 mod tests {
     use super::*;
 
-    // const HEADERS: &str = "Date: Sat, 11 Jan 2003 02:44:04 GMT\r\n\
-    //                        Content-Type: text/html\r\n\
-    //                        Content-Length: 100\r\n";
+    const HEADERS: &str = "Date: Sat, 11 Jan 2003 02:44:04 GMT\r\n\
+                           Content-Type: text/html\r\n\
+                           Content-Length: 100\r\n";
 
     #[test]
     fn headers_new() {
@@ -111,7 +114,7 @@ mod tests {
     fn headers_get() {
         let mut headers = Headers::with_capacity(2);
         headers.insert("Date", "Sat, 11 Jan 2003 02:44:04 GMT");
- 
+
         assert_eq!(
             headers.get("Date"),
             Some("Sat, 11 Jan 2003 02:44:04 GMT".to_string())
@@ -125,7 +128,7 @@ mod tests {
         let headers_expect = Headers(headers_expect);
         let mut headers = Headers::new();
         headers.insert("Connection", "Close");
-        
+
         assert_eq!(headers_expect, headers);
     }
 
@@ -139,26 +142,9 @@ mod tests {
         assert_eq!(Headers::default_http(&host), headers);
     }
 
-    // #[test]
-    // fn headers_from_str() {
-    //     let mut headers_expect = HashMap::with_capacity(2);
-    //     headers_expect.insert(
-    //         "Date".to_string(),
-    //         "Sat, 11 Jan 2003 02:44:04 GMT".to_string(),
-    //     );
-    //     headers_expect.insert(
-    //         "Content-Type".to_string(),
-    //         "text/html".to_string(),
-    //     );
-    //     headers_expect.insert("Content-Length".to_string(), "100".to_string());
-    //     let headers = HEADERS.parse::<Headers>().unwrap();
-        
-    //     assert_eq!(headers, Headers::from(headers_expect));
-    // }
-
     #[test]
-    fn headers_from() {
-        let mut headers_expect = HashMap::with_capacity(4);
+    fn headers_from_str() {
+        let mut headers_expect = HashMap::with_capacity(2);
         headers_expect.insert(
             "Date".to_string(),
             "Sat, 11 Jan 2003 02:44:04 GMT".to_string(),
@@ -168,6 +154,20 @@ mod tests {
             "text/html".to_string(),
         );
         headers_expect.insert("Content-Length".to_string(), "100".to_string());
+        let headers = HEADERS.parse::<Headers>().unwrap();
+
+        assert_eq!(headers, Headers::from(headers_expect));
+    }
+
+    #[test]
+    fn headers_from() {
+        let mut headers_expect = HashMap::with_capacity(4);
+        headers_expect.insert(
+            "date".to_string(),
+            "Sat, 11 Jan 2003 02:44:04 GMT".to_string(),
+        );
+        headers_expect.insert("content-type".to_string(), "text/html".to_string());
+        headers_expect.insert("content-length".to_string(), "100".to_string());
 
         assert_eq!(
             Headers(headers_expect.clone()),
@@ -186,24 +186,24 @@ mod tests {
         }
     }
 
-    // #[test]
-    // fn hash_map_from_headers() {
-    //     let mut headers = Headers::with_capacity(4);
-    //     headers.insert("Date", "Sat, 11 Jan 2003 02:44:04 GMT");
-    //     headers.insert("Content-Type", "text/html");
-    //     headers.insert("Content-Length", "100");
+    #[test]
+    fn hash_map_from_headers() {
+        let mut headers = Headers::with_capacity(4);
+        headers.insert("Date", "Sat, 11 Jan 2003 02:44:04 GMT");
+        headers.insert("Content-Type", "text/html");
+        headers.insert("Content-Length", "100");
 
-    //     let mut headers_expect = HashMap::with_capacity(4);
-    //     headers_expect.insert(
-    //         "Date".to_string(),
-    //         "Sat, 11 Jan 2003 02:44:04 GMT".to_string(),
-    //     );
-    //     headers_expect.insert(
-    //         "Content-Type".to_string(),
-    //         "text/html".to_string(),
-    //     );
-    //     headers_expect.insert("Content-Length".to_string(), "100".to_string());
+        let mut headers_expect = HashMap::with_capacity(4);
+        headers_expect.insert(
+            "date".to_string(),
+            "Sat, 11 Jan 2003 02:44:04 GMT".to_string(),
+        );
+        headers_expect.insert(
+            "content-type".to_string(),
+            "text/html".to_string(),
+        );
+        headers_expect.insert("content-length".to_string(), "100".to_string());
 
-    //     assert_eq!(HashMap::from(headers), headers_expect);
-    // }
+        assert_eq!(HashMap::from(headers), headers_expect);
+    }
 }

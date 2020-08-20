@@ -309,5 +309,4 @@ mod tests {
         assert_eq!(status.status_code(), CODE_S);
         assert_eq!(status.reason(), REASON);
     }
-
 }

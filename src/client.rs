@@ -92,75 +92,75 @@ mod tests {
         assert!(&body.contains(crate::tests::IP.as_str()));
     }
 
-    #[tokio::test]
-    async fn client_http_proxy() {
-        let mut client = Client::builder().get("http://api.ipify.org")
-            .proxy("http://127.0.0.1:5858")
-            .build()
-            .await
-            .unwrap();
-        let response = client.send().await.unwrap();
-        assert!(response.status_code().is_success());
-        let body = client.text().await.unwrap();
-        assert!(&body.contains(crate::tests::IP.as_str()));
-    }
+    // #[tokio::test]
+    // async fn client_http_proxy() {
+    //     let mut client = Client::builder().get("http://api.ipify.org")
+    //         .proxy("http://127.0.0.1:5858")
+    //         .build()
+    //         .await
+    //         .unwrap();
+    //     let response = client.send().await.unwrap();
+    //     assert!(response.status_code().is_success());
+    //     let body = client.text().await.unwrap();
+    //     assert!(&body.contains(crate::tests::IP.as_str()));
+    // }
 
-    #[tokio::test]
-    async fn client_http_proxy_auth() {
-        let mut client = Client::builder().get("http://api.ipify.org")
-            .proxy("http://test:tset@127.0.0.1:5656")
-            .build()
-            .await
-            .unwrap();
-        let response = client.send().await.unwrap();
-        assert!(response.status_code().is_success());
-        let body = client.text().await.unwrap();
-        assert!(&body.contains(crate::tests::IP.as_str()));
-    }
+    // #[tokio::test]
+    // async fn client_http_proxy_auth() {
+    //     let mut client = Client::builder().get("http://api.ipify.org")
+    //         .proxy("http://test:tset@127.0.0.1:5656")
+    //         .build()
+    //         .await
+    //         .unwrap();
+    //     let response = client.send().await.unwrap();
+    //     assert!(response.status_code().is_success());
+    //     let body = client.text().await.unwrap();
+    //     assert!(&body.contains(crate::tests::IP.as_str()));
+    // }
 
-    #[tokio::test]
-    async fn client_http_proxy_auth_err() {
-        let mut client = Client::builder().get("http://api.ipify.org")
-            .proxy("http://127.0.0.1:5656")
-            .build()
-            .await
-            .unwrap();
-        let response = client.send().await.unwrap();
-        assert!(!response.status_code().is_success());
-    }
+    // #[tokio::test]
+    // async fn client_http_proxy_auth_err() {
+    //     let mut client = Client::builder().get("http://api.ipify.org")
+    //         .proxy("http://127.0.0.1:5656")
+    //         .build()
+    //         .await
+    //         .unwrap();
+    //     let response = client.send().await.unwrap();
+    //     assert!(!response.status_code().is_success());
+    // }
 
-    #[tokio::test]
-    async fn client_socks_proxy() {
-        let mut client = Client::builder().get("http://api.ipify.org")
-            .proxy("socks5://127.0.0.1:5959")
-            .build()
-            .await
-            .unwrap();
-        let response = client.send().await.unwrap();
-        assert!(response.status_code().is_success());
-        let body = client.text().await.unwrap();
-        assert!(&body.contains(crate::tests::IP.as_str()));
-    }
+    // #[tokio::test]
+    // async fn client_socks_proxy() {
+    //     let mut client = Client::builder().get("http://api.ipify.org")
+    //         .proxy("socks5://127.0.0.1:5959")
+    //         .build()
+    //         .await
+    //         .unwrap();
+    //     let response = client.send().await.unwrap();
+    //     assert!(response.status_code().is_success());
+    //     let body = client.text().await.unwrap();
+    //     assert!(&body.contains(crate::tests::IP.as_str()));
+    // }
 
-    #[tokio::test]
-    async fn client_socks_proxy_auth() {
-        let mut client = Client::builder().get("https://api.ipify.org")
-            .proxy("socks5://test:tset@127.0.0.1:5757")
-            .build()
-            .await
-            .unwrap();
-        let response = client.send().await.unwrap();
-        assert!(response.status_code().is_success());
-        let body = client.text().await.unwrap();
-        assert!(&body.contains(crate::tests::IP.as_str()));
-    }
+    // #[tokio::test]
+    // async fn client_socks_proxy_auth() {
+    //     let mut client = Client::builder().get("https://api.ipify.org")
+    //         .proxy("socks5://test:tset@127.0.0.1:5757")
+    //         .build()
+    //         .await
+    //         .unwrap();
+    //     let response = client.send().await.unwrap();
+    //     assert!(response.status_code().is_success());
+    //     let body = client.text().await.unwrap();
+    //     assert!(&body.contains(crate::tests::IP.as_str()));
+    // }
 
-    #[tokio::test]
-    async fn client_socks_proxy_auth_err() {
-        let client = Client::builder().get("http://api.ipify.org")
-            .proxy("socks5://t:t@127.0.0.1:5757")
-            .build()
-            .await;
-        assert!(client.is_err());
-    }
+    // #[tokio::test]
+    // async fn client_socks_proxy_auth_err() {
+    //     let client = Client::builder().get("http://api.ipify.org")
+    //         .proxy("socks5://t:t@127.0.0.1:5757")
+    //         .build()
+    //         .await;
+    //     assert!(client.is_err());
+    // }
 }

@@ -11,10 +11,6 @@ pub mod stream;
 pub mod version;
 
 #[cfg(test)]
-#[macro_use]
-extern crate lazy_static;
-
-#[cfg(test)]
 pub(crate) fn my_ip() -> String {
     use std::io::{Read, Write};
     use std::net::TcpStream;
@@ -33,6 +29,8 @@ pub(crate) fn my_ip() -> String {
 
 #[cfg(test)]
 mod tests {
+    use lazy_static::lazy_static;
+    
     lazy_static! {
         pub static ref IP: String = crate::my_ip();
     }

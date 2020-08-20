@@ -78,6 +78,15 @@ impl Request {
         self
     }
 
+    pub fn json(&mut self, body: Option<Vec<u8>>) -> &mut Self {
+        if let Some(body) = &body {
+            self.header("Content-Length", &body.len());
+        }
+        self.header("Content-Type", "application/json");
+        self.body = body;
+        self
+    }
+
     pub fn set_basic_auth(&mut self, username: &str, password: &str) -> &mut Self {
         self.header(
             "Authorization",

@@ -3,7 +3,7 @@ use std::str::FromStr;
 
 use crate::error::{Error, Result};
 
-#[derive(PartialEq, PartialOrd, Copy, Clone, Eq, Ord, Hash)]
+#[derive(PartialEq, Copy, Clone)]
 pub enum Version {
     Http09,
     Http10,
@@ -48,5 +48,24 @@ impl fmt::Display for Version {
         };
 
         write!(f, "{}", version)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn version_parse() {
+        let version09 = Version::Http09;
+        let version09_expect: Version = "HTTP/0.9".parse().unwrap();
+        let version10 = Version::Http10;
+        let version10_expect: Version = "HTTP/1.0".parse().unwrap();
+        let version11 = Version::Http11;
+        let version11_expect: Version = "HTTP/1.1".parse().unwrap();
+
+        assert_eq!(version09_expect, version09);
+        assert_eq!(version10_expect, version10);
+        assert_eq!(version11_expect, version11);
     }
 }

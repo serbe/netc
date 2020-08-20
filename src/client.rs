@@ -75,31 +75,31 @@ mod tests {
     use super::*;
     use dotenv;
 
-    // #[tokio::test]
-    // async fn client_http() {
-    //     let mut client = Client::builder()
-    //         .get("http://api.ipify.org")
-    //         .build()
-    //         .await
-    //         .unwrap();
-    //     let response = client.send().await.unwrap();
-    //     assert!(response.status_code().is_success());
-    //     let body = client.text().await.unwrap();
-    //     assert!(&body.contains(crate::tests::IP.as_str()));
-    // }
+    #[tokio::test]
+    async fn client_http() {
+        let mut client = Client::builder()
+            .get("http://api.ipify.org")
+            .build()
+            .await
+            .unwrap();
+        let response = client.send().await.unwrap();
+        assert!(response.status_code().is_success());
+        let body = client.text().await.unwrap();
+        assert!(&body.contains(crate::tests::IP.as_str()));
+    }
 
-    // #[tokio::test]
-    // async fn client_https() {
-    //     let mut client = Client::builder()
-    //         .get("https://api.ipify.org")
-    //         .build()
-    //         .await
-    //         .unwrap();
-    //     let response = client.send().await.unwrap();
-    //     assert!(response.status_code().is_success());
-    //     let body = client.text().await.unwrap();
-    //     assert!(&body.contains(crate::tests::IP.as_str()));
-    // }
+    #[tokio::test]
+    async fn client_https() {
+        let mut client = Client::builder()
+            .get("https://api.ipify.org")
+            .build()
+            .await
+            .unwrap();
+        let response = client.send().await.unwrap();
+        assert!(response.status_code().is_success());
+        let body = client.text().await.unwrap();
+        assert!(&body.contains(crate::tests::IP.as_str()));
+    }
 
     #[tokio::test]
     async fn client_http_proxy() {

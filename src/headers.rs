@@ -72,6 +72,7 @@ impl FromStr for Headers {
 
 impl From<HashMap<String, String>> for Headers {
     fn from(map: HashMap<String, String>) -> Headers {
+        let headers = map.iter().map(())
         Headers(map)
     }
 }
@@ -117,26 +118,26 @@ mod tests {
         );
     }
 
-    // #[test]
-    // fn headers_insert() {
-    //     let mut headers_expect = HashMap::new();
-    //     headers_expect.insert("Connection".to_string(), "Close".to_string());
-    //     let headers_expect = Headers(headers_expect);
-    //     let mut headers = Headers::new();
-    //     headers.insert("Connection", "Close");
+    #[test]
+    fn headers_insert() {
+        let mut headers_expect = HashMap::new();
+        headers_expect.insert("connection".to_string(), "Close".to_string());
+        let headers_expect = Headers(headers_expect);
+        let mut headers = Headers::new();
+        headers.insert("Connection", "Close");
         
-    //     assert_eq!(headers_expect, headers);
-    // }
+        assert_eq!(headers_expect, headers);
+    }
 
-    // #[test]
-    // fn headers_default_http() {
-    //     let uri = "http://doc.rust-lang.org/std/string/index.html";
-    //     let mut headers = Headers::with_capacity(2);
-    //     headers.insert("Host", "doc.rust-lang.org");
+    #[test]
+    fn headers_default_http() {
+        let host = "doc.rust-lang.org";
+        let mut headers = Headers::with_capacity(2);
+        headers.insert("Host", "doc.rust-lang.org");
+        headers.insert("Connection", "Close");
 
-
-    //     assert_eq!(Headers::default_http(&uri), headers);
-    // }
+        assert_eq!(Headers::default_http(&host), headers);
+    }
 
     // #[test]
     // fn headers_from_str() {

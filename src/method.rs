@@ -3,7 +3,7 @@ use std::str::FromStr;
 
 use crate::error::{Error, Result};
 
-#[derive(Debug, Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum Method {
     CONNECT,
     DELETE,

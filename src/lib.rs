@@ -30,7 +30,7 @@ pub(crate) fn my_ip() -> String {
 #[cfg(test)]
 mod tests {
     use lazy_static::lazy_static;
-    
+
     lazy_static! {
         pub static ref IP: String = crate::my_ip();
     }

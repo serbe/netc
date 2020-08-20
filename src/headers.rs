@@ -92,3 +92,117 @@ impl Display for Headers {
         write!(f, "{{\r\n{}}}", headers)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // const HEADERS: &str = "Date: Sat, 11 Jan 2003 02:44:04 GMT\r\n\
+    //                        Content-Type: text/html\r\n\
+    //                        Content-Length: 100\r\n";
+
+    #[test]
+    fn headers_new() {
+        assert_eq!(Headers::new(), Headers(HashMap::new()));
+    }
+
+    #[test]
+    fn headers_get() {
+        let mut headers = Headers::with_capacity(2);
+        headers.insert("Date", "Sat, 11 Jan 2003 02:44:04 GMT");
+ 
+        assert_eq!(
+            headers.get("Date"),
+            Some("Sat, 11 Jan 2003 02:44:04 GMT".to_string())
+        );
+    }
+
+    // #[test]
+    // fn headers_insert() {
+    //     let mut headers_expect = HashMap::new();
+    //     headers_expect.insert("Connection".to_string(), "Close".to_string());
+    //     let headers_expect = Headers(headers_expect);
+    //     let mut headers = Headers::new();
+    //     headers.insert("Connection", "Close");
+        
+    //     assert_eq!(headers_expect, headers);
+    // }
+
+    // #[test]
+    // fn headers_default_http() {
+    //     let uri = "http://doc.rust-lang.org/std/string/index.html";
+    //     let mut headers = Headers::with_capacity(2);
+    //     headers.insert("Host", "doc.rust-lang.org");
+
+
+    //     assert_eq!(Headers::default_http(&uri), headers);
+    // }
+
+    // #[test]
+    // fn headers_from_str() {
+    //     let mut headers_expect = HashMap::with_capacity(2);
+    //     headers_expect.insert(
+    //         "Date".to_string(),
+    //         "Sat, 11 Jan 2003 02:44:04 GMT".to_string(),
+    //     );
+    //     headers_expect.insert(
+    //         "Content-Type".to_string(),
+    //         "text/html".to_string(),
+    //     );
+    //     headers_expect.insert("Content-Length".to_string(), "100".to_string());
+    //     let headers = HEADERS.parse::<Headers>().unwrap();
+        
+    //     assert_eq!(headers, Headers::from(headers_expect));
+    // }
+
+    #[test]
+    fn headers_from() {
+        let mut headers_expect = HashMap::with_capacity(4);
+        headers_expect.insert(
+            "Date".to_string(),
+            "Sat, 11 Jan 2003 02:44:04 GMT".to_string(),
+        );
+        headers_expect.insert(
+            "Content-Type".to_string(),
+            "text/html".to_string(),
+        );
+        headers_expect.insert("Content-Length".to_string(), "100".to_string());
+
+        assert_eq!(
+            Headers(headers_expect.clone()),
+            Headers::from(headers_expect)
+        );
+    }
+
+    #[test]
+    fn headers_case_insensitive() {
+        let header_names = ["Host", "host", "HOST", "HoSt"];
+        let mut headers = Headers::with_capacity(1);
+        headers.insert("Host", "doc.rust-lang.org");
+
+        for name in header_names.iter() {
+            assert_eq!(headers.get(name), Some("doc.rust-lang.org".to_string()));
+        }
+    }
+
+    // #[test]
+    // fn hash_map_from_headers() {
+    //     let mut headers = Headers::with_capacity(4);
+    //     headers.insert("Date", "Sat, 11 Jan 2003 02:44:04 GMT");
+    //     headers.insert("Content-Type", "text/html");
+    //     headers.insert("Content-Length", "100");
+
+    //     let mut headers_expect = HashMap::with_capacity(4);
+    //     headers_expect.insert(
+    //         "Date".to_string(),
+    //         "Sat, 11 Jan 2003 02:44:04 GMT".to_string(),
+    //     );
+    //     headers_expect.insert(
+    //         "Content-Type".to_string(),
+    //         "text/html".to_string(),
+    //     );
+    //     headers_expect.insert("Content-Length".to_string(), "100".to_string());
+
+    //     assert_eq!(HashMap::from(headers), headers_expect);
+    // }
+}

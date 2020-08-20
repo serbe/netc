@@ -9,7 +9,7 @@ use crate::request::Request;
 use crate::stream::MaybeHttpsStream;
 use crate::version::Version;
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct ClientBuilder {
     uri: Option<Uri>,
     headers: Headers,
@@ -93,10 +93,10 @@ impl ClientBuilder {
     }
 
     pub fn header<T: ToString + ?Sized, U: ToString + ?Sized>(
-        mut self,
+        &mut self,
         key: &T,
         value: &U,
-    ) -> ClientBuilder {
+    ) -> &mut ClientBuilder {
         self.headers.insert(key, value);
         self
     }
@@ -165,6 +165,16 @@ impl ClientBuilder {
 
     pub fn body(mut self, body: &[u8]) -> ClientBuilder {
         self.body = Some(body.to_vec());
+        self.header("Content-Length", &body.len());
+        self
+    }
+
+    pub fn json(&mut self, body: Option<Vec<u8>>) -> &mut Self {
+        if let Some(body) = &body {
+            self.header("Content-Length", &body.len());
+        }
+        self.header("Content-Type", "application/json");
+        self.body = body;
         self
     }
 

@@ -40,6 +40,8 @@ pub enum Error {
     HeaderIncomplete,
     #[error("header more when 1024")]
     HeaderToBig,
+    #[error("invalid status code {0}")]
+    InvalidStatusCode(u16),
 }
 
 impl PartialEq for Error {
@@ -74,6 +76,7 @@ impl PartialEq for Error {
             }
             (Error::HeaderIncomplete, Error::HeaderIncomplete) => true,
             (Error::HeaderToBig, Error::HeaderToBig) => true,
+            (Error::InvalidStatusCode(code), Error::InvalidStatusCode(other_code)) => code == other_code,
             _ => false,
         }
     }

@@ -120,7 +120,7 @@ mod tests {
 
     #[test]
     fn res_status_code() {
-        let code: StatusCode = StatusCode::new(200);
+        let code: StatusCode = StatusCode::from_u16(200).unwrap();
         let mut writer = Vec::new();
         let res = Response::try_from(RESPONSE, &mut writer).unwrap();
 

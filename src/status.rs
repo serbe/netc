@@ -59,8 +59,12 @@ impl FromStr for Status {
 pub struct StatusCode(u16);
 
 impl StatusCode {
-    pub fn new(code: u16) -> StatusCode {
-        StatusCode(code)
+    pub fn from_u16(code: u16) -> Result<StatusCode> {
+        if code < 100 || code >= 600 {
+            return Err(Error::InvalidStatusCode(code));
+        }
+
+        Ok(StatusCode(code))
     }
 
     pub fn is_info(self) -> bool {
@@ -176,7 +180,7 @@ impl FromStr for StatusCode {
     type Err = Error;
 
     fn from_str(s: &str) -> Result<StatusCode> {
-        Ok(StatusCode::new(s.parse()?))
+        StatusCode::from_u16(s.parse()?)
     }
 }
 
@@ -192,62 +196,62 @@ mod tests {
 
     #[test]
     fn status_code_new() {
-        assert_eq!(StatusCode::new(200), StatusCode::new(200));
-        assert_ne!(StatusCode::new(400), StatusCode(404));
+        assert_eq!(StatusCode::from_u16(200), StatusCode::from_u16(200));
+        assert_ne!(StatusCode::from_u16(400), Ok(StatusCode(404)));
     }
 
     #[test]
     fn status_code_info() {
         for i in 100..200 {
-            assert!(StatusCode::new(i).is_info())
+            assert!(StatusCode(i).is_info())
         }
 
         for i in (0..1000).filter(|&i| i < 100 || i >= 200) {
-            assert!(!StatusCode::new(i).is_info())
+            assert!(!StatusCode(i).is_info())
         }
     }
 
     #[test]
     fn status_code_success() {
         for i in 200..300 {
-            assert!(StatusCode::new(i).is_success())
+            assert!(StatusCode(i).is_success())
         }
 
         for i in (0..1000).filter(|&i| i < 200 || i >= 300) {
-            assert!(!StatusCode::new(i).is_success())
+            assert!(!StatusCode(i).is_success())
         }
     }
 
     #[test]
     fn status_code_redirect() {
         for i in 300..400 {
-            assert!(StatusCode::new(i).is_redirect())
+            assert!(StatusCode(i).is_redirect())
         }
 
         for i in (0..1000).filter(|&i| i < 300 || i >= 400) {
-            assert!(!StatusCode::new(i).is_redirect())
+            assert!(!StatusCode(i).is_redirect())
         }
     }
 
     #[test]
     fn status_code_client_err() {
         for i in 400..500 {
-            assert!(StatusCode::new(i).is_client_err())
+            assert!(StatusCode(i).is_client_err())
         }
 
         for i in (0..1000).filter(|&i| i < 400 || i >= 500) {
-            assert!(!StatusCode::new(i).is_client_err())
+            assert!(!StatusCode(i).is_client_err())
         }
     }
 
     #[test]
     fn status_code_server_err() {
         for i in 500..600 {
-            assert!(StatusCode::new(i).is_server_err())
+            assert!(StatusCode(i).is_server_err())
         }
 
         for i in (0..1000).filter(|&i| i < 500 || i >= 600) {
-            assert!(!StatusCode::new(i).is_server_err())
+            assert!(!StatusCode(i).is_server_err())
         }
     }
 
@@ -255,8 +259,8 @@ mod tests {
     fn status_code_is() {
         let check = |i| i % 3 == 0;
 
-        let code_1 = StatusCode::new(200);
-        let code_2 = StatusCode::new(300);
+        let code_1 = StatusCode(200);
+        let code_2 = StatusCode(300);
 
         assert!(!code_1.is(check));
         assert!(code_2.is(check));
@@ -280,7 +284,7 @@ mod tests {
 
     #[test]
     fn status_code_display() {
-        let code = format!("Status Code: {}", StatusCode::new(200));
+        let code = format!("Status Code: {}", StatusCode(200));
         const CODE_EXPECT: &str = "Status Code: 200";
 
         assert_eq!(code, CODE_EXPECT);

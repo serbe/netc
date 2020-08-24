@@ -1,4 +1,7 @@
+use std::convert::TryInto;
+
 use base64::encode;
+use bytes::Bytes;
 use uri::Uri;
 
 use crate::headers::Headers;
@@ -13,7 +16,7 @@ pub struct Request {
     headers: Headers,
     host: String,
     content_len: usize,
-    body: Option<Vec<u8>>,
+    body: Option<Bytes>,
     using_proxy: bool,
 }
 
@@ -70,8 +73,17 @@ impl Request {
         self
     }
 
-    pub fn body(&mut self, body: Option<Vec<u8>>) -> &mut Self {
-        self.body = body;
+    pub fn body<B>(&mut self, value: Option<B>) -> &mut Self
+    where
+        B: TryInto<Bytes>,
+    {
+        match value {
+            Some(some_value) => match some_value.try_into() {
+                Ok(body) => self.body = Some(body),
+                _ => self.body = None,
+            },
+            None => self.body = None,
+        }
         self
     }
 

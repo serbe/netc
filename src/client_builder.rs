@@ -1,5 +1,6 @@
 use std::convert::TryInto;
 
+use bytes::Bytes;
 // use std::time::Duration;
 use uri::Uri;
 
@@ -17,7 +18,7 @@ pub struct ClientBuilder {
     headers: Headers,
     method: Method,
     version: Version,
-    body: Option<Vec<u8>>,
+    body: Option<Bytes>,
     referer: bool,
     proxy: Option<Uri>,
     nodelay: bool,
@@ -109,6 +110,11 @@ impl ClientBuilder {
         self
     }
 
+    pub fn header_remove<T: ToString + ?Sized>(mut self, key: &T) -> ClientBuilder {
+        self.headers.remove(key);
+        self
+    }
+
     pub fn method<M>(mut self, value: M) -> ClientBuilder
     where
         M: TryInto<Method>,
@@ -191,18 +197,37 @@ impl ClientBuilder {
         self
     }
 
-    pub fn body(mut self, body: &[u8]) -> ClientBuilder {
-        self.body = Some(body.to_vec());
-        self.header("Content-Length", &body.len())
+    pub fn body<B>(mut self, value: B) -> ClientBuilder
+    where
+        B: TryInto<Bytes>,
+    {
+        match value.try_into() {
+            Ok(body) => {
+                let length = &body.len();
+                self.body = Some(body);
+                self.header("Content-Length", length)
+            }
+            Err(_) => {
+                self.body = None;
+                self.header_remove("Content-Length")
+            }
+        }
     }
 
-    pub fn json(self, body: Option<Vec<u8>>) -> ClientBuilder {
-        if let Some(body) = &body {
-            self.header("Content-Length", &body.len())
+    pub fn json<B>(mut self, value: B) -> ClientBuilder
+    where
+        B: TryInto<Bytes>,
+    {
+        match value.try_into() {
+            Ok(body) => self
+                .header("Content-Length", &body.len())
                 .body(body)
-                .header("Content-Type", "application/json")
-        } else {
-            self.header("Content-Type", "application/json")
+                .header("Content-Type", "application/json"),
+            Err(_) => {
+                self.body = None;
+                self.header_remove("Content-Length")
+                    .header_remove("Content-Type")
+            }
         }
     }
 

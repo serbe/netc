@@ -72,7 +72,8 @@ impl ClientBuilder {
     }
 
     pub fn uri<U>(mut self, value: U) -> ClientBuilder
-    where U: TryInto<Uri>
+    where
+        U: TryInto<Uri>,
     {
         match value.try_into() {
             Ok(uri) => self.uri = Some(uri),
@@ -81,7 +82,10 @@ impl ClientBuilder {
         self
     }
 
-    pub fn proxy<P>(mut self, value: P) -> ClientBuilder where P: TryInto<Uri> {
+    pub fn proxy<P>(mut self, value: P) -> ClientBuilder
+    where
+        P: TryInto<Uri>,
+    {
         match value.try_into() {
             Ok(uri) => self.proxy = Some(uri),
             _ => self.proxy = None,
@@ -105,7 +109,10 @@ impl ClientBuilder {
         self
     }
 
-    pub fn method<M>(mut self, value: M) -> ClientBuilder where M: TryInto<Method> {
+    pub fn method<M>(mut self, value: M) -> ClientBuilder
+    where
+        M: TryInto<Method>,
+    {
         match value.try_into() {
             Ok(method) => self.method = method,
             _ => (),
@@ -113,57 +120,73 @@ impl ClientBuilder {
         self
     }
 
-    pub fn get(mut self, uri: &str) -> ClientBuilder {
-        if let Ok(uri) = uri.parse() {
-            self.uri = Some(uri);
+    pub fn get<U>(mut self, value: U) -> ClientBuilder
+    where
+        U: TryInto<Uri>,
+    {
+        match value.try_into() {
+            Ok(uri) => self.uri = Some(uri),
+            _ => self.uri = None,
         }
         self.method = Method::GET;
         self
     }
 
-    pub fn post(mut self, uri: &str) -> ClientBuilder {
-        if let Ok(uri) = uri.parse() {
-            self.uri = Some(uri);
+    pub fn post<U>(mut self, value: U) -> ClientBuilder
+    where
+        U: TryInto<Uri>,
+    {
+        match value.try_into() {
+            Ok(uri) => self.uri = Some(uri),
+            _ => self.uri = None,
         }
         self.method = Method::POST;
         self
     }
 
-    pub fn put(mut self, uri: &str) -> ClientBuilder {
-        if let Ok(uri) = uri.parse() {
-            self.uri = Some(uri);
+    pub fn put<U>(mut self, value: U) -> ClientBuilder
+    where
+        U: TryInto<Uri>,
+    {
+        match value.try_into() {
+            Ok(uri) => self.uri = Some(uri),
+            _ => self.uri = None,
         }
         self.method = Method::PUT;
         self
     }
 
-    pub fn patch(mut self, uri: &str) -> ClientBuilder {
-        if let Ok(uri) = uri.parse() {
-            self.uri = Some(uri);
+    pub fn patch<U>(mut self, value: U) -> ClientBuilder
+    where
+        U: TryInto<Uri>,
+    {
+        match value.try_into() {
+            Ok(uri) => self.uri = Some(uri),
+            _ => self.uri = None,
         }
         self.method = Method::PATCH;
         self
     }
 
-    pub fn delete(mut self, uri: &str) -> ClientBuilder {
-        if let Ok(uri) = uri.parse() {
-            self.uri = Some(uri);
+    pub fn delete<U>(mut self, value: U) -> ClientBuilder
+    where
+        U: TryInto<Uri>,
+    {
+        match value.try_into() {
+            Ok(uri) => self.uri = Some(uri),
+            _ => self.uri = None,
         }
         self.method = Method::DELETE;
         self
     }
 
-    pub fn head(mut self, uri: &str) -> ClientBuilder {
-        if let Ok(uri) = uri.parse() {
-            self.uri = Some(uri);
-        }
-        self.method = Method::HEAD;
-        self
-    }
-
-    pub fn version(mut self, version: &str) -> ClientBuilder {
-        if let Ok(version) = version.parse() {
-            self.version = version;
+    pub fn version<V>(mut self, value: V) -> ClientBuilder
+    where
+        V: TryInto<Version>,
+    {
+        match value.try_into() {
+            Ok(version) => self.version = version,
+            _ => (),
         }
         self
     }

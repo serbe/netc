@@ -4,7 +4,7 @@ use std::str::FromStr;
 
 use crate::error::{Error, Result};
 
-#[derive(Debug, PartialEq, Clone, Default)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Headers(HashMap<String, String>);
 
 impl Headers {

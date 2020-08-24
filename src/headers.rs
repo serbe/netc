@@ -36,6 +36,10 @@ impl Headers {
             .insert(key.to_string().to_lowercase(), val.to_string())
     }
 
+    pub fn remove<T: ToString + ?Sized>(&mut self, key: &T) -> Option<String> {
+        self.0.remove(&key.to_string().to_lowercase())
+    }
+
     pub fn default_http(host: &str) -> Headers {
         let mut headers = Headers::with_capacity(2);
         headers.insert("Host", host);

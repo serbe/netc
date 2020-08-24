@@ -1,3 +1,5 @@
+use std::convert::TryInto;
+
 // use std::time::Duration;
 use uri::Uri;
 
@@ -69,16 +71,18 @@ impl ClientBuilder {
         Ok(Client::new(request, uri, self.proxy, stream, None))
     }
 
-    pub fn uri(mut self, uri: &str) -> ClientBuilder {
-        match uri.parse() {
+    pub fn uri<U>(mut self, value: U) -> ClientBuilder
+    where U: TryInto<Uri>
+    {
+        match value.try_into() {
             Ok(uri) => self.uri = Some(uri),
             _ => self.uri = None,
         }
         self
     }
 
-    pub fn proxy(mut self, proxy: &str) -> ClientBuilder {
-        match proxy.parse() {
+    pub fn proxy<P>(mut self, value: P) -> ClientBuilder where P: TryInto<Uri> {
+        match value.try_into() {
             Ok(uri) => self.proxy = Some(uri),
             _ => self.proxy = None,
         }
@@ -93,17 +97,18 @@ impl ClientBuilder {
     }
 
     pub fn header<T: ToString + ?Sized, U: ToString + ?Sized>(
-        &mut self,
+        mut self,
         key: &T,
         value: &U,
-    ) -> &mut ClientBuilder {
+    ) -> ClientBuilder {
         self.headers.insert(key, value);
         self
     }
 
-    pub fn method(mut self, method: &str) -> ClientBuilder {
-        if let Ok(method) = method.parse() {
-            self.method = method;
+    pub fn method<M>(mut self, value: M) -> ClientBuilder where M: TryInto<Method> {
+        match value.try_into() {
+            Ok(method) => self.method = method,
+            _ => (),
         }
         self
     }
@@ -165,17 +170,17 @@ impl ClientBuilder {
 
     pub fn body(mut self, body: &[u8]) -> ClientBuilder {
         self.body = Some(body.to_vec());
-        self.header("Content-Length", &body.len());
-        self
+        self.header("Content-Length", &body.len())
     }
 
-    pub fn json(&mut self, body: Option<Vec<u8>>) -> &mut Self {
+    pub fn json(self, body: Option<Vec<u8>>) -> ClientBuilder {
         if let Some(body) = &body {
-            self.header("Content-Length", &body.len());
+            self.header("Content-Length", &body.len())
+                .body(body)
+                .header("Content-Type", "application/json")
+        } else {
+            self.header("Content-Type", "application/json")
         }
-        self.header("Content-Type", "application/json");
-        self.body = body;
-        self
     }
 
     pub fn tcp_nodelay(mut self) -> ClientBuilder {

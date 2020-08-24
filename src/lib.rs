@@ -22,7 +22,6 @@ pub use crate::status::{Status, StatusCode};
 pub use crate::stream::MaybeHttpsStream;
 pub use crate::version::Version;
 
-
 #[cfg(test)]
 pub(crate) fn my_ip() -> String {
     use std::io::{Read, Write};

@@ -76,7 +76,9 @@ impl PartialEq for Error {
             }
             (Error::HeaderIncomplete, Error::HeaderIncomplete) => true,
             (Error::HeaderToBig, Error::HeaderToBig) => true,
-            (Error::InvalidStatusCode(code), Error::InvalidStatusCode(other_code)) => code == other_code,
+            (Error::InvalidStatusCode(code), Error::InvalidStatusCode(other_code)) => {
+                code == other_code
+            }
             _ => false,
         }
     }

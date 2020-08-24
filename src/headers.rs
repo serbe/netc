@@ -149,10 +149,7 @@ mod tests {
             "Date".to_string(),
             "Sat, 11 Jan 2003 02:44:04 GMT".to_string(),
         );
-        headers_expect.insert(
-            "Content-Type".to_string(),
-            "text/html".to_string(),
-        );
+        headers_expect.insert("Content-Type".to_string(), "text/html".to_string());
         headers_expect.insert("Content-Length".to_string(), "100".to_string());
         let headers = HEADERS.parse::<Headers>().unwrap();
 
@@ -198,10 +195,7 @@ mod tests {
             "date".to_string(),
             "Sat, 11 Jan 2003 02:44:04 GMT".to_string(),
         );
-        headers_expect.insert(
-            "content-type".to_string(),
-            "text/html".to_string(),
-        );
+        headers_expect.insert("content-type".to_string(), "text/html".to_string());
         headers_expect.insert("content-length".to_string(), "100".to_string());
 
         assert_eq!(HashMap::from(headers), headers_expect);

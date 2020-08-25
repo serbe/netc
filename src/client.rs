@@ -36,16 +36,8 @@ impl Client {
         }
     }
 
-    // pub fn request(&self) -> Request {
-    //     self.request.clone()
-    // }
-
-    pub async fn send_request(&mut self) -> Result<()> {
-        self.stream.send_msg(&self.request.to_vec()).await
-    }
-
     pub async fn send(&mut self) -> Result<Response> {
-        self.send_request().await?;
+        self.stream.send_msg(&self.request.to_vec()).await?;
         let response = self.stream.get_response().await?;
         self.response = Some(response.clone());
         Ok(response)
@@ -189,11 +181,7 @@ mod tests {
     async fn client_content_len() {
         let client = Client::builder().build().await;
         assert!(client.is_err());
-        // let client = Client::builder().get("http://api.ipify.org").build().await;
-        // assert!(client.is_ok());
-        // let client = client.unwrap();
-        // assert_eq!(client.content_len(), Err(Error::EmptyResponse));
-        // let client = Client::builder().get("http://api.ipify.org").body(b"2020").build().await.unwrap();
-        // assert_eq!(dbg!(client.content_len()), dbg!(Ok(4)));
+        let client = Client::builder().get("http://api.ipify.org").build().await;
+        assert!(client.is_ok());
     }
 }

@@ -43,7 +43,7 @@ impl Request {
         self.headers.get("User-Agent")
     }
 
-    pub fn refferer(&self) -> Option<String> {
+    pub fn referer(&self) -> Option<String> {
         self.headers.get("Referer")
     }
 

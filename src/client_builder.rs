@@ -1,7 +1,7 @@
 use std::convert::TryInto;
 
 use bytes::Bytes;
-// use std::time::Duration;
+use std::time::Duration;
 use uri::Uri;
 
 use crate::client::Client;
@@ -21,9 +21,8 @@ pub struct ClientBuilder {
     body: Option<Bytes>,
     proxy: Option<Uri>,
     nodelay: bool,
-    // referer: bool,
-    // timeout: Option<Duration>,
-    // connect_timeout: Option<Duration>,
+    timeout: Option<Duration>,
+    connect_timeout: Option<Duration>,
 }
 
 impl Default for ClientBuilder {
@@ -43,9 +42,8 @@ impl ClientBuilder {
             body: None,
             proxy: None,
             nodelay: false,
-            // referer: true,
-            // timeout: None,
-            // connect_timeout: None,
+            timeout: None,
+            connect_timeout: None,
         }
     }
 
@@ -236,18 +234,23 @@ impl ClientBuilder {
         self
     }
 
-    // pub fn referer(mut self, enable: bool) -> ClientBuilder {
-    //     self.referer = enable;
-    //     self
-    // }
+    pub fn timeout(mut self, timeout: Duration) -> ClientBuilder {
+        self.timeout = Some(timeout);
+        self
+    }
 
-    // pub fn timeout(mut self, timeout: Duration) -> ClientBuilder {
-    //     self.timeout = Some(timeout);
-    //     self
-    // }
+    pub fn connect_timeout(mut self, timeout: Duration) -> ClientBuilder {
+        self.connect_timeout = Some(timeout);
+        self
+    }
 
-    // pub fn connect_timeout(mut self, timeout: Duration) -> ClientBuilder {
-    //     self.connect_timeout = Some(timeout);
-    //     self
-    // }
+    pub fn referer<U>(self, value: U) -> ClientBuilder
+    where
+        U: TryInto<Uri>,
+    {
+        match value.try_into() {
+            Ok(uri) => self.header("Referer", &uri),
+            _ => self,
+        }
+    }
 }

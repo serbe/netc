@@ -1,7 +1,7 @@
 use uri::Uri;
 
 use crate::client_builder::ClientBuilder;
-use crate::error::{Error, Result};
+use crate::error::Result;
 use crate::request::Request;
 use crate::response::Response;
 use crate::stream::MaybeHttpsStream;
@@ -50,24 +50,6 @@ impl Client {
         self.response = Some(response.clone());
         Ok(response)
     }
-
-    fn content_len(&self) -> Result<usize> {
-        if let Some(response) = &self.response {
-            response.content_len()
-        } else {
-            Err(Error::EmptyResponse)
-        }
-    }
-
-    pub async fn get_body(&mut self) -> Result<Vec<u8>> {
-        let content_len = self.content_len()?;
-        self.stream.get_body(content_len).await
-    }
-
-    pub async fn text(&mut self) -> Result<String> {
-        let body = self.get_body().await?;
-        Ok(String::from_utf8_lossy(&body).to_string())
-    }
 }
 
 #[cfg(test)]
@@ -84,7 +66,7 @@ mod tests {
             .unwrap();
         let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
-        let body = client.text().await.unwrap();
+        let body = response.text().unwrap();
         assert!(&body.contains(crate::tests::IP.as_str()));
     }
 
@@ -97,7 +79,7 @@ mod tests {
             .unwrap();
         let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
-        let body = client.text().await.unwrap();
+        let body = response.text().unwrap();
         assert!(&body.contains(crate::tests::IP.as_str()));
     }
 
@@ -113,7 +95,7 @@ mod tests {
                 .unwrap();
             let response = client.send().await.unwrap();
             assert!(response.status_code().is_success());
-            let body = client.text().await.unwrap();
+            let body = response.text().unwrap();
             assert!(&body.contains(crate::tests::IP.as_str()));
         }
     }
@@ -130,7 +112,7 @@ mod tests {
                 .unwrap();
             let response = client.send().await.unwrap();
             assert!(response.status_code().is_success());
-            let body = client.text().await.unwrap();
+            let body = response.text().unwrap();
             assert!(&body.contains(crate::tests::IP.as_str()));
         }
     }
@@ -162,7 +144,7 @@ mod tests {
                 .unwrap();
             let response = client.send().await.unwrap();
             assert!(response.status_code().is_success());
-            let body = client.text().await.unwrap();
+            let body = response.text().unwrap();
             assert!(&body.contains(crate::tests::IP.as_str()));
         }
     }
@@ -179,7 +161,7 @@ mod tests {
                 .unwrap();
             let response = client.send().await.unwrap();
             assert!(response.status_code().is_success());
-            let body = client.text().await.unwrap();
+            let body = response.text().unwrap();
             assert!(&body.contains(crate::tests::IP.as_str()));
         }
     }

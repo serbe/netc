@@ -8,6 +8,8 @@ pub enum Version {
     Http09,
     Http10,
     Http11,
+    H2,
+    H3,
 }
 
 impl Default for Version {
@@ -24,6 +26,8 @@ impl FromStr for Version {
             "HTTP/0.9" => Ok(Version::Http09),
             "HTTP/1.0" => Ok(Version::Http10),
             "HTTP/1.1" => Ok(Version::Http11),
+            "HTTP/2.0" => Ok(Version::H2),
+            "HTTP/3.0" => Ok(Version::H3),
             _ => Err(Error::UnsupportedVersion(s.to_owned())),
         }
     }
@@ -35,6 +39,8 @@ impl fmt::Debug for Version {
             Version::Http09 => "HTTP/0.9",
             Version::Http10 => "HTTP/1.0",
             Version::Http11 => "HTTP/1.1",
+            Version::H2 => "HTTP/2.0",
+            Version::H3 => "HTTP/3.0",
         })
     }
 }
@@ -45,6 +51,8 @@ impl fmt::Display for Version {
             Version::Http09 => "HTTP/0.9",
             Version::Http10 => "HTTP/1.0",
             Version::Http11 => "HTTP/1.1",
+            Version::H2 => "HTTP/2.0",
+            Version::H3 => "HTTP/3.0",
         };
 
         write!(f, "{}", version)
@@ -63,9 +71,15 @@ mod tests {
         let version10_expect: Version = "HTTP/1.0".parse().unwrap();
         let version11 = Version::Http11;
         let version11_expect: Version = "HTTP/1.1".parse().unwrap();
+        let version2 = Version::H2;
+        let version2_expect: Version = "HTTP/2.0".parse().unwrap();
+        let version3 = Version::H3;
+        let version3_expect: Version = "HTTP/3.0".parse().unwrap();
 
         assert_eq!(version09_expect, version09);
         assert_eq!(version10_expect, version10);
         assert_eq!(version11_expect, version11);
+        assert_eq!(version2_expect, version2);
+        assert_eq!(version3_expect, version3);
     }
 }

@@ -1,14 +1,17 @@
 use std::io::Write;
 use std::str;
 
+use bytes::Bytes;
+
 use crate::error::{Error, Result};
 use crate::headers::Headers;
 use crate::status::{Status, StatusCode};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Response {
-    status: Status,
-    headers: Headers,
+    pub status: Status,
+    pub headers: Headers,
+    pub body: Bytes,
 }
 
 impl Response {
@@ -17,8 +20,13 @@ impl Response {
 
         let status = header.next().ok_or(Error::StatusErr)?.parse()?;
         let headers = header.next().ok_or(Error::HeadersErr)?.parse()?;
+        let body = Bytes::new();
 
-        Ok(Response { status, headers })
+        Ok(Response {
+            status,
+            headers,
+            body,
+        })
     }
 
     pub fn try_from<T: Write>(res: &[u8], writer: &mut T) -> Result<Response> {
@@ -58,6 +66,14 @@ impl Response {
             Some(p) => Ok(p.parse()?),
             None => Ok(0),
         }
+    }
+
+    pub fn body(&self) -> Bytes {
+        self.body.clone()
+    }
+
+    pub fn text(&self) -> Result<String> {
+        Ok(String::from_utf8_lossy(&self.body).to_string())
     }
 }
 

@@ -3,7 +3,7 @@ use std::io;
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
-use bytes::{Buf, BufMut};
+use bytes::{Buf, BufMut, Bytes};
 use native_tls::TlsConnector;
 use rsl::socks5;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
@@ -15,9 +15,7 @@ use crate::error::Error;
 use crate::response::Response;
 
 pub enum MaybeHttpsStream {
-    /// A stream over plain text.
     Http(TcpStream),
-    /// A stream protected with TLS.
     Https(TlsStream<TcpStream>),
 }
 
@@ -44,10 +42,10 @@ impl MaybeHttpsStream {
         }
     }
 
-    pub async fn get_body(&mut self, content_len: usize) -> Result<Vec<u8>, Error> {
+    pub async fn get_body(&mut self, content_len: usize) -> Result<Bytes, Error> {
         let mut body = vec![0u8; content_len];
         self.read_exact(&mut body).await?;
-        Ok(body)
+        Ok(body.into())
     }
 
     pub async fn get_response(&mut self) -> Result<Response, Error> {
@@ -58,7 +56,14 @@ impl MaybeHttpsStream {
                 return Err(Error::HeaderToBig);
             }
         }
-        Response::from_header(&header)
+        let response = Response::from_header(&header)?;
+        let content_len = response.content_len()?;
+        let body = self.get_body(content_len).await?;
+        Ok(Response {
+            status: response.status,
+            headers: response.headers,
+            body: body,
+        })
     }
 
     pub async fn send_msg(&mut self, msg: &[u8]) -> Result<(), Error> {

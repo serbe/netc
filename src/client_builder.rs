@@ -19,9 +19,9 @@ pub struct ClientBuilder {
     method: Method,
     version: Version,
     body: Option<Bytes>,
-    referer: bool,
     proxy: Option<Uri>,
     nodelay: bool,
+    // referer: bool,
     // timeout: Option<Duration>,
     // connect_timeout: Option<Duration>,
 }
@@ -41,9 +41,9 @@ impl ClientBuilder {
             method: Method::GET,
             version: Version::Http11,
             body: None,
-            referer: true,
             proxy: None,
             nodelay: false,
+            // referer: true,
             // timeout: None,
             // connect_timeout: None,
         }
@@ -236,10 +236,10 @@ impl ClientBuilder {
         self
     }
 
-    pub fn referer(mut self, enable: bool) -> ClientBuilder {
-        self.referer = enable;
-        self
-    }
+    // pub fn referer(mut self, enable: bool) -> ClientBuilder {
+    //     self.referer = enable;
+    //     self
+    // }
 
     // pub fn timeout(mut self, timeout: Duration) -> ClientBuilder {
     //     self.timeout = Some(timeout);

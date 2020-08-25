@@ -36,9 +36,9 @@ impl Client {
         }
     }
 
-    pub fn request(&self) -> Request {
-        self.request.clone()
-    }
+    // pub fn request(&self) -> Request {
+    //     self.request.clone()
+    // }
 
     pub async fn send_request(&mut self) -> Result<()> {
         self.stream.send_msg(&self.request.to_vec()).await

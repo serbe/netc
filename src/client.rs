@@ -6,6 +6,7 @@ use crate::error::Result;
 use crate::request::Request;
 use crate::response::Response;
 use crate::stream::MaybeHttpsStream;
+use crate::headers::Headers;
 
 #[derive(Debug)]
 pub struct Client {
@@ -48,8 +49,12 @@ impl Client {
         self.request.content_length()
     }
 
-    pub fn get_body(&self) -> Option<Bytes> {
+    pub fn body(&self) -> Option<Bytes> {
         self.request.get_body()
+    }
+
+    pub fn headers(&self) -> Headers {
+        self.request.get_headers()
     }
 }
 

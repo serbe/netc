@@ -144,6 +144,10 @@ impl Request {
     pub fn get_body(&self) -> Option<Bytes> {
         self.body.clone()
     }
+
+    pub fn get_headers(&self) -> Headers {
+        self.headers.clone()
+    }
 }
 
 #[cfg(test)]

@@ -115,4 +115,12 @@ impl Request {
 
         request_msg
     }
+
+    pub fn get_content_length(&self) -> usize {
+        self.content_len
+    }
+
+    pub fn get_body(&self) -> Option<Bytes> {
+        self.body.clone()
+    }
 }

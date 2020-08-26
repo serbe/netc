@@ -15,7 +15,6 @@ pub struct Request {
     version: Version,
     headers: Headers,
     host: String,
-    content_len: usize,
     body: Option<Bytes>,
     using_proxy: bool,
 }
@@ -33,7 +32,6 @@ impl Request {
             version: Version::Http11,
             headers: Headers::default_http(&uri.host_header()),
             host: uri.host_port(),
-            content_len: 0,
             body: None,
             using_proxy,
         }
@@ -63,6 +61,11 @@ impl Request {
         self
     }
 
+    pub fn header_remove<T: ToString + ?Sized>(&mut self, key: &T) -> &mut Self {
+        self.headers.remove(key);
+        self
+    }
+
     pub fn method(&mut self, method: Method) -> &mut Self {
         self.method = method;
         self
@@ -73,18 +76,34 @@ impl Request {
         self
     }
 
-    pub fn body<B>(&mut self, value: Option<B>) -> &mut Self
+    pub fn body<B>(&mut self, value: B) -> &mut Self
+    where
+        B: TryInto<Bytes>,
+    {
+        match value.try_into() {
+                Ok(body) => {
+                    let content_len = body.len();
+                    self.body = Some(body);
+                    self.header("Content-Length", &content_len)
+                }
+                _ => {
+                    self.body = None;
+                    self.header_remove("Content-Length")
+                }
+            }
+    }
+
+    pub fn opt_body<B>(&mut self, value: Option<B>) -> &mut Self
     where
         B: TryInto<Bytes>,
     {
         match value {
-            Some(some_value) => match some_value.try_into() {
-                Ok(body) => self.body = Some(body),
-                _ => self.body = None,
-            },
-            None => self.body = None,
+            Some(body) => self.body(body),
+            None => {
+                self.body = None;
+                self.header_remove("Content-Length")
+            }
         }
-        self
     }
 
     pub fn set_basic_auth(&mut self, username: &str, password: &str) -> &mut Self {
@@ -116,11 +135,30 @@ impl Request {
         request_msg
     }
 
-    pub fn get_content_length(&self) -> usize {
-        self.content_len
+    pub fn content_length(&self) -> usize {
+        self.headers
+            .get("Content-Length")
+            .map_or(0, |v| v.parse().map_or(0, |v| v))
     }
 
     pub fn get_body(&self) -> Option<Bytes> {
         self.body.clone()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const BODY: &str = "<html>hello</html>\r\n\r\nhello";
+    const CONTENT_LENGTH: usize = 27;
+    
+    #[test]
+    fn new_request() {
+        let uri = "https://api.ipify.org".parse().unwrap();
+        let mut request = Request::new(&uri, false);
+        request.body(BODY);
+        assert_eq!(CONTENT_LENGTH, request.content_length());
+        assert_eq!(BODY, request.get_body().unwrap().to_owned());
     }
 }

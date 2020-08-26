@@ -66,7 +66,7 @@ impl ClientBuilder {
         request.method(self.method);
         request.headers(headers);
         request.version(self.version);
-        request.body(self.body);
+        request.opt_body(self.body);
         Ok(Client::new(request, uri, self.proxy, stream, None))
     }
 
@@ -201,13 +201,12 @@ impl ClientBuilder {
     {
         match value.try_into() {
             Ok(body) => {
-                let length = &body.len();
                 self.body = Some(body);
-                self.header("Content-Length", length)
+                self
             }
             Err(_) => {
                 self.body = None;
-                self.header_remove("Content-Length")
+                self
             }
         }
     }
@@ -217,14 +216,10 @@ impl ClientBuilder {
         B: TryInto<Bytes>,
     {
         match value.try_into() {
-            Ok(body) => self
-                .header("Content-Length", &body.len())
-                .body(body)
-                .header("Content-Type", "application/json"),
+            Ok(body) => self.body(body).header("Content-Type", "application/json"),
             Err(_) => {
                 self.body = None;
-                self.header_remove("Content-Length")
-                    .header_remove("Content-Type")
+                self.header_remove("Content-Type")
             }
         }
     }

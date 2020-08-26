@@ -1,5 +1,5 @@
-use uri::Uri;
 use bytes::Bytes;
+use uri::Uri;
 
 use crate::client_builder::ClientBuilder;
 use crate::error::Result;
@@ -44,8 +44,8 @@ impl Client {
         Ok(response)
     }
 
-    pub fn get_content_length(&self) -> usize {
-        self.request.get_content_length()
+    pub fn content_length(&self) -> usize {
+        self.request.content_length()
     }
 
     pub fn get_body(&self) -> Option<Bytes> {

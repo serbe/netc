@@ -56,6 +56,10 @@ impl Client {
     pub fn headers(&self) -> Headers {
         self.request.get_headers()
     }
+
+    pub fn uri(&self) -> Uri {
+        self.uri.clone()
+    }
 }
 
 #[cfg(test)]

@@ -60,6 +60,10 @@ impl Client {
     pub fn uri(&self) -> Uri {
         self.uri.clone()
     }
+
+    pub fn request(&self) -> Request {
+        self.request.clone()
+    }
 }
 
 #[cfg(test)]

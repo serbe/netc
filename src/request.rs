@@ -22,9 +22,9 @@ pub struct Request {
 impl Request {
     pub fn new(uri: &Uri, using_proxy: bool) -> Request {
         let request_uri = if using_proxy {
-            uri.request_uri().to_string()
-        } else {
             uri.proxy_request_uri()
+        } else {
+            uri.request_uri().to_string()
         };
         Request {
             method: Method::GET,
@@ -159,10 +159,11 @@ mod tests {
     
     #[test]
     fn new_request() {
-        let uri = "https://api.ipify.org".parse().unwrap();
+        let uri = "https://api.ipify.org:1234/123/as".parse().unwrap();
         let mut request = Request::new(&uri, false);
         request.body(BODY);
         assert_eq!(CONTENT_LENGTH, request.content_length());
         assert_eq!(BODY, request.get_body().unwrap().to_owned());
+        assert_eq!("/123/as", &request.request_uri);
     }
 }

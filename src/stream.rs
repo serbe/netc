@@ -215,18 +215,20 @@ impl AsyncWrite for MaybeHttpsStream {
 //         assert!(&body.contains(crate::tests::IP.as_str()));
 //     }
 
-//     // #[test]
-//     // fn http_stream_http_proxy() {
-//     //     let mut client =
-//     //         HttpStream::connect_proxy(&"http://127.0.0.1:5858".parse::<Uri>().unwrap()).unwrap();
-//     //     client
-//     //         .send_request(b"GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
-//     //         .unwrap();
-//     //     let response = client.get_response().unwrap();
-//     //     let body = client.get_body(response.content_len().unwrap()).unwrap();
-//     //     let body = String::from_utf8(body).unwrap();
-//     //     assert!(&body.contains(crate::tests::IP.as_str()));
-//     // }
+#[tokio::test]
+    async fn http_stream_http_proxy() {
+        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+
+        let mut client =
+        MaybeHttpsStream::new(&"http://127.0.0.1:5858".parse::<Uri>().unwrap()).await.unwrap();
+        client.write_all(b"GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n").await
+            .unwrap();
+            client.flush().await.unwrap();
+        let mut buf = Vec::new();
+        client.read_to_end(&mut buf).await.unwrap();
+        let body = String::from_utf8(buf).unwrap();
+        assert!(&body.contains(crate::tests::IP.as_str()));
+    }
 
 //     #[tokio::test]
 //     async fn http_stream_auth_http_proxy() {

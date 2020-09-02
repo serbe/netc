@@ -62,7 +62,7 @@ impl ClientBuilder {
         } else {
             MaybeHttpsStream::new(&uri).await?
         };
-        let mut request = Request::new(&uri, self.proxy.is_some());
+        let mut request = Request::new(&uri, self.proxy.as_ref());
         request.method(self.method);
         request.headers(headers);
         request.version(self.version);

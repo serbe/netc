@@ -16,15 +16,18 @@ pub struct Request {
     headers: Headers,
     host: String,
     body: Option<Bytes>,
-    using_proxy: bool,
 }
 
 impl Request {
-    pub fn new(uri: &Uri, using_proxy: bool) -> Request {
-        let request_uri = if using_proxy {
-            uri.proxy_request_uri()
-        } else {
-            uri.request_uri().to_string()
+    pub fn new(uri: &Uri, proxy: Option<&Uri>) -> Request {
+        let request_uri = match proxy {
+            Some(proxy) => {
+                match proxy.scheme() {
+                    "http" | "https" => uri.proxy_request_uri(),
+                    _ => uri.request_uri().to_string(),
+                }
+            }
+            None => uri.request_uri().to_string(),
         };
         Request {
             method: Method::GET,
@@ -33,7 +36,6 @@ impl Request {
             headers: Headers::default_http(&uri.host_header()),
             host: uri.host_port(),
             body: None,
-            using_proxy,
         }
     }
 
@@ -148,6 +150,10 @@ impl Request {
     pub fn get_headers(&self) -> Headers {
         self.headers.clone()
     }
+
+    pub fn request_uri(&self) -> String {
+        self.request_uri.clone()
+    }
 }
 
 #[cfg(test)]
@@ -160,7 +166,7 @@ mod tests {
     #[test]
     fn new_request() {
         let uri = "https://api.ipify.org:1234/123/as".parse().unwrap();
-        let mut request = Request::new(&uri, false);
+        let mut request = Request::new(&uri, None);
         request.body(BODY);
         assert_eq!(CONTENT_LENGTH, request.content_length());
         assert_eq!(BODY, request.get_body().unwrap().to_owned());

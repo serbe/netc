@@ -71,10 +71,13 @@ mod tests {
     use super::*;
     use dotenv;
 
+    const SIMPLE_URL: &'static str = "http://api.ipify.org";
+    const SECURE_URL: &'static str = "https://api.ipify.org";
+
     #[tokio::test]
     async fn client_http() {
         let mut client = Client::builder()
-            .get("http://api.ipify.org")
+            .get(SIMPLE_URL)
             .build()
             .await
             .unwrap();
@@ -87,7 +90,7 @@ mod tests {
     #[tokio::test]
     async fn client_https() {
         let mut client = Client::builder()
-            .get("https://api.ipify.org")
+            .get(SECURE_URL)
             .build()
             .await
             .unwrap();
@@ -102,11 +105,13 @@ mod tests {
         dotenv::dotenv().ok();
         if let Ok(http_proxy) = dotenv::var("HTTP_PROXY") {
             let mut client = Client::builder()
-                .get("http://api.ipify.org")
+                .get(SIMPLE_URL)
                 .proxy(&http_proxy)
                 .build()
                 .await
                 .unwrap();
+            let request = client.request();
+            assert_eq!(&request.request_uri(), "GET http://api.ipify.org/ HTTP/1.0\r\n");
             let response = client.send().await.unwrap();
             assert!(response.status_code().is_success());
             let body = response.text().unwrap();
@@ -119,7 +124,7 @@ mod tests {
         dotenv::dotenv().ok();
         if let Ok(http_auth_proxy) = dotenv::var("HTTP_AUTH_PROXY") {
             let mut client = Client::builder()
-                .get("http://api.ipify.org")
+                .get(SIMPLE_URL)
                 .proxy(&http_auth_proxy)
                 .build()
                 .await
@@ -136,7 +141,7 @@ mod tests {
         dotenv::dotenv().ok();
         if let Ok(http_auth_proxy) = dotenv::var("HTTP_AUTH_PROXY") {
             let mut client = Client::builder()
-                .get("http://api.ipify.org")
+                .get(SIMPLE_URL)
                 .proxy(&http_auth_proxy)
                 .build()
                 .await
@@ -151,7 +156,7 @@ mod tests {
         dotenv::dotenv().ok();
         if let Ok(socks5_proxy) = dotenv::var("SOCKS5_PROXY") {
             let mut client = Client::builder()
-                .get("http://api.ipify.org")
+                .get(SIMPLE_URL)
                 .proxy(&socks5_proxy)
                 .build()
                 .await
@@ -168,7 +173,7 @@ mod tests {
         dotenv::dotenv().ok();
         if let Ok(socks5_auth_proxy) = dotenv::var("SOCKS5_AUTH_PROXY") {
             let mut client = Client::builder()
-                .get("https://api.ipify.org")
+                .get(SIMPLE_URL)
                 .proxy(&socks5_auth_proxy)
                 .build()
                 .await
@@ -185,7 +190,7 @@ mod tests {
         dotenv::dotenv().ok();
         if let Ok(socks5_auth_proxy) = dotenv::var("SOCKS5_AUTH_PROXY") {
             let client = Client::builder()
-                .get("http://api.ipify.org")
+                .get(SIMPLE_URL)
                 .proxy(&socks5_auth_proxy)
                 .build()
                 .await;
@@ -203,7 +208,7 @@ mod tests {
     async fn client_content_len() {
         let client = Client::builder().build().await;
         assert!(client.is_err());
-        let client = Client::builder().get("http://api.ipify.org").build().await;
+        let client = Client::builder().get(SIMPLE_URL).build().await;
         assert!(client.is_ok());
     }
 }

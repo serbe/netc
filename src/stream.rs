@@ -216,19 +216,25 @@ impl AsyncWrite for MaybeHttpsStream {
 //     }
 
 #[tokio::test]
-    async fn http_stream_http_proxy() {
-        use tokio::io::{AsyncReadExt, AsyncWriteExt};
+async fn http_stream_http_proxy() {
+    use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-        let mut client =
-        MaybeHttpsStream::new(&"http://127.0.0.1:5858".parse::<Uri>().unwrap()).await.unwrap();
-        client.write_all(b"GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n").await
+    dotenv::dotenv().ok();
+    if let Ok(http_proxy) = dotenv::var("HTTP_PROXY") {
+        let mut client = MaybeHttpsStream::new(&http_proxy.parse::<Uri>().unwrap())
+            .await
             .unwrap();
-            client.flush().await.unwrap();
+        client
+            .write_all(b"GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
+            .await
+            .unwrap();
+        client.flush().await.unwrap();
         let mut buf = Vec::new();
         client.read_to_end(&mut buf).await.unwrap();
         let body = String::from_utf8(buf).unwrap();
         assert!(&body.contains(crate::tests::IP.as_str()));
     }
+}
 
 //     #[tokio::test]
 //     async fn http_stream_auth_http_proxy() {

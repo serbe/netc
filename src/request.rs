@@ -21,12 +21,10 @@ pub struct Request {
 impl Request {
     pub fn new(uri: &Uri, proxy: Option<&Uri>) -> Request {
         let request_uri = match proxy {
-            Some(proxy) => {
-                match proxy.scheme() {
-                    "http" | "https" => uri.proxy_request_uri(),
-                    _ => uri.request_uri().to_string(),
-                }
-            }
+            Some(proxy) => match proxy.scheme() {
+                "http" | "https" => uri.proxy_request_uri(),
+                _ => uri.request_uri().to_string(),
+            },
             None => uri.request_uri().to_string(),
         };
         Request {
@@ -83,16 +81,16 @@ impl Request {
         B: TryInto<Bytes>,
     {
         match value.try_into() {
-                Ok(body) => {
-                    let content_len = body.len();
-                    self.body = Some(body);
-                    self.header("Content-Length", &content_len)
-                }
-                _ => {
-                    self.body = None;
-                    self.header_remove("Content-Length")
-                }
+            Ok(body) => {
+                let content_len = body.len();
+                self.body = Some(body);
+                self.header("Content-Length", &content_len)
             }
+            _ => {
+                self.body = None;
+                self.header_remove("Content-Length")
+            }
+        }
     }
 
     pub fn opt_body<B>(&mut self, value: Option<B>) -> &mut Self
@@ -162,7 +160,7 @@ mod tests {
 
     const BODY: &str = "<html>hello</html>\r\n\r\nhello";
     const CONTENT_LENGTH: usize = 27;
-    
+
     #[test]
     fn new_request() {
         let uri = "https://api.ipify.org:1234/123/as".parse().unwrap();

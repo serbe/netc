@@ -3,10 +3,10 @@ use uri::Uri;
 
 use crate::client_builder::ClientBuilder;
 use crate::error::Result;
+use crate::headers::Headers;
 use crate::request::Request;
 use crate::response::Response;
 use crate::stream::MaybeHttpsStream;
-use crate::headers::Headers;
 
 #[derive(Debug)]
 pub struct Client {
@@ -76,11 +76,7 @@ mod tests {
 
     #[tokio::test]
     async fn client_http() {
-        let mut client = Client::builder()
-            .get(SIMPLE_URL)
-            .build()
-            .await
-            .unwrap();
+        let mut client = Client::builder().get(SIMPLE_URL).build().await.unwrap();
         let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
         let body = response.text().unwrap();
@@ -89,11 +85,7 @@ mod tests {
 
     #[tokio::test]
     async fn client_https() {
-        let mut client = Client::builder()
-            .get(SECURE_URL)
-            .build()
-            .await
-            .unwrap();
+        let mut client = Client::builder().get(SECURE_URL).build().await.unwrap();
         let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
         let body = response.text().unwrap();
@@ -111,7 +103,7 @@ mod tests {
                 .await
                 .unwrap();
             let request = client.request();
-            assert_eq!(&request.request_uri(), "GET http://api.ipify.org/ HTTP/1.0\r\n");
+            assert_eq!(&request.request_uri(), "http://api.ipify.org:80/");
             let response = client.send().await.unwrap();
             assert!(response.status_code().is_success());
             let body = response.text().unwrap();
@@ -139,7 +131,7 @@ mod tests {
     #[tokio::test]
     async fn client_http_proxy_auth_err() {
         dotenv::dotenv().ok();
-        if let Ok(http_auth_proxy) = dotenv::var("HTTP_AUTH_PROXY") {
+        if let Ok(http_auth_proxy) = dotenv::var("HTTP_AUTH_ERR_PROXY") {
             let mut client = Client::builder()
                 .get(SIMPLE_URL)
                 .proxy(&http_auth_proxy)
@@ -147,7 +139,7 @@ mod tests {
                 .await
                 .unwrap();
             let response = client.send().await.unwrap();
-            assert!(!response.status_code().is_success());
+            assert!(response.status_code().is_client_err());
         }
     }
 
@@ -188,7 +180,7 @@ mod tests {
     #[tokio::test]
     async fn client_socks_proxy_auth_err() {
         dotenv::dotenv().ok();
-        if let Ok(socks5_auth_proxy) = dotenv::var("SOCKS5_AUTH_PROXY") {
+        if let Ok(socks5_auth_proxy) = dotenv::var("SOCKS5_AUTH_ERR_PROXY") {
             let client = Client::builder()
                 .get(SIMPLE_URL)
                 .proxy(&socks5_auth_proxy)

@@ -50,18 +50,19 @@ impl ClientBuilder {
     pub async fn build(self) -> Result<Client> {
         let uri = self.uri.ok_or(Error::EmptyUri)?;
         let mut headers = self.headers;
-        let stream = if let Some(proxy) = &self.proxy {
-            if proxy.scheme() == "socks5" {
-                MaybeHttpsStream::socks(&proxy, &uri).await?
-            } else {
-                if let Some(auth) = proxy.base64_auth() {
-                    headers.insert("Proxy-Authorization", format!("Basic {}", auth).as_str());
-                };
-                MaybeHttpsStream::new(&proxy).await?
-            }
-        } else {
-            MaybeHttpsStream::new(&uri).await?
-        };
+        let stream = match &self.proxy {
+            Some(proxy) => match proxy.scheme() {
+                "socks5" | "socks5h" => Ok(MaybeHttpsStream::socks(&proxy, &uri).await?),
+                "http" | "https" => {
+                    if let Some(auth) = proxy.base64_auth() {
+                        headers.insert("Proxy-Authorization", format!("Basic {}", auth).as_str());
+                    };
+                    Ok(MaybeHttpsStream::new(&proxy).await?)
+                }
+                scheme => Err(Error::UnsupportedProxyScheme(scheme.to_owned())),
+            },
+            None => Ok(MaybeHttpsStream::new(&uri).await?),
+        }?;
         let mut request = Request::new(&uri, self.proxy.as_ref());
         request.method(self.method);
         request.headers(headers);

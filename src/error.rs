@@ -42,6 +42,8 @@ pub enum Error {
     HeaderToBig,
     #[error("invalid status code {0}")]
     InvalidStatusCode(u16),
+    #[error("unsupported proxyscheme {0}")]
+    UnsupportedProxyScheme(String),
 }
 
 impl PartialEq for Error {

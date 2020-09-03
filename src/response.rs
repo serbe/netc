@@ -169,7 +169,7 @@ mod tests {
         headers.insert("Content-Type", "text/html");
         headers.insert("Content-Length", "100");
 
-        assert_eq!(res.headers(), &Headers::from(headers));
+        assert_eq!(res.headers(), &headers);
     }
 
     #[test]

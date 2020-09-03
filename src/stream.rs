@@ -62,7 +62,7 @@ impl MaybeHttpsStream {
         Ok(Response {
             status: response.status,
             headers: response.headers,
-            body: body,
+            body,
         })
     }
 

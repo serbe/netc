@@ -220,20 +220,22 @@ async fn http_stream_http_proxy() {
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
     dotenv::dotenv().ok();
-    if let Ok(http_proxy) = dotenv::var("HTTP_PROXY") {
-        let mut client = MaybeHttpsStream::new(&http_proxy.parse::<Uri>().unwrap())
-            .await
-            .unwrap();
-        client
-            .write_all(b"GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
-            .await
-            .unwrap();
-        client.flush().await.unwrap();
-        let mut buf = Vec::new();
-        client.read_to_end(&mut buf).await.unwrap();
-        let body = String::from_utf8(buf).unwrap();
-        assert!(&body.contains(crate::tests::IP.as_str()));
-    }
+    let http_proxy = match dotenv::var("HTTP_PROXY") {
+        Ok(it) => it,
+        _ => return,
+    };
+    let mut client = MaybeHttpsStream::new(&http_proxy.parse::<Uri>().unwrap())
+        .await
+        .unwrap();
+    client
+        .write_all(b"GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
+        .await
+        .unwrap();
+    client.flush().await.unwrap();
+    let mut buf = Vec::new();
+    client.read_to_end(&mut buf).await.unwrap();
+    let body = String::from_utf8(buf).unwrap();
+    assert!(&body.contains(crate::tests::IP.as_str()));
 }
 
 //     #[tokio::test]

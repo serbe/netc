@@ -95,7 +95,7 @@ mod tests {
     #[tokio::test]
     async fn client_http_proxy() {
         dotenv::dotenv().ok();
-        let http_proxy = match dotenv::var("HTTP_PROXY") {
+        let http_proxy = match dotenv::var("TEST_HTTP_PROXY") {
             Ok(it) => it,
             _ => return,
         };
@@ -116,7 +116,7 @@ mod tests {
     #[tokio::test]
     async fn client_http_proxy_auth() {
         dotenv::dotenv().ok();
-        let http_auth_proxy = match dotenv::var("HTTP_AUTH_PROXY") {
+        let http_auth_proxy = match dotenv::var("TEST_HTTP_AUTH_PROXY") {
             Ok(it) => it,
             _ => return,
         };
@@ -135,7 +135,7 @@ mod tests {
     #[tokio::test]
     async fn client_http_proxy_auth_err() {
         dotenv::dotenv().ok();
-        let http_auth_proxy = match dotenv::var("HTTP_AUTH_ERR_PROXY") {
+        let http_auth_proxy = match dotenv::var("TEST_HTTP_AUTH_ERR_PROXY") {
             Ok(it) => it,
             _ => return,
         };
@@ -152,7 +152,7 @@ mod tests {
     #[tokio::test]
     async fn client_socks_proxy() {
         dotenv::dotenv().ok();
-        let socks5_proxy = match dotenv::var("SOCKS5_PROXY") {
+        let socks5_proxy = match dotenv::var("TEST_SOCKS5_PROXY") {
             Ok(it) => it,
             _ => return,
         };
@@ -171,7 +171,7 @@ mod tests {
     #[tokio::test]
     async fn client_socks_proxy_auth() {
         dotenv::dotenv().ok();
-        let socks5_auth_proxy = match dotenv::var("SOCKS5_AUTH_PROXY") {
+        let socks5_auth_proxy = match dotenv::var("TEST_SOCKS5_AUTH_PROXY") {
             Ok(it) => it,
             _ => return,
         };
@@ -190,7 +190,7 @@ mod tests {
     #[tokio::test]
     async fn client_socks_proxy_auth_err() {
         dotenv::dotenv().ok();
-        let socks5_auth_proxy = match dotenv::var("SOCKS5_AUTH_ERR_PROXY") {
+        let socks5_auth_proxy = match dotenv::var("TEST_SOCKS5_AUTH_ERR_PROXY") {
             Ok(it) => it,
             _ => return,
         };

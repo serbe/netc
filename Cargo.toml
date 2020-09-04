@@ -1,18 +1,18 @@
 [package]
 name = "netc"
-version = "0.3.1"
+version = "0.4.0"
 authors = ["Valeriy Kostikov <mkoctuk@gmail.com>"]
 edition = "2018"
 
 [dependencies]
 base64 = "0.12"
 bytes = "0.5"
-native-tls = "0.2"
 rsl = { version = "0.2", git = "https://github.com/serbe/rsl" }
 thiserror = "1.0"
 tokio = { version = "0.2", features = ["net", "tcp", "io-util"] }
-tokio-tls = "0.3"
+tokio-rustls = "0.14"
 uri = { version = "0.1", git = "https://github.com/serbe/uri" }
+webpki-roots = "0.20"
 
 [dev-dependencies]
 dotenv = "0.15"

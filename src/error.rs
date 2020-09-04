@@ -32,8 +32,6 @@ pub enum Error {
     FromUtf8(#[from] str::Utf8Error),
     #[error("uri")]
     UriError(#[from] uri::Error),
-    #[error("NativeTls")]
-    NativeTls(#[from] native_tls::Error),
     #[error("Socks5")]
     Socks5(#[from] rsl::error::Error),
     #[error("header incomplete")]
@@ -44,6 +42,8 @@ pub enum Error {
     InvalidStatusCode(u16),
     #[error("unsupported proxyscheme {0}")]
     UnsupportedProxyScheme(String),
+    #[error("InvalidDNSNameError")]
+    InvalidDNSNameError(#[from] tokio_rustls::webpki::InvalidDNSNameError),
 }
 
 impl PartialEq for Error {
@@ -70,9 +70,6 @@ impl PartialEq for Error {
             (Error::UriError(uri), Error::UriError(other_uri)) => {
                 uri.to_string() == other_uri.to_string()
             }
-            (Error::NativeTls(tls), Error::NativeTls(other_tls)) => {
-                tls.to_string() == other_tls.to_string()
-            }
             (Error::Socks5(socks), Error::Socks5(other_socks)) => {
                 socks.to_string() == other_socks.to_string()
             }
@@ -81,6 +78,7 @@ impl PartialEq for Error {
             (Error::InvalidStatusCode(code), Error::InvalidStatusCode(other_code)) => {
                 code == other_code
             }
+            // (Error::InvalidDNSNameError, Error::InvalidDNSNameError) => true,
             _ => false,
         }
     }

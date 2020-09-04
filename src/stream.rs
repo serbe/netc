@@ -1,14 +1,14 @@
 use std::fmt;
 use std::io;
 use std::pin::Pin;
+use std::sync::Arc;
 use std::task::{Context, Poll};
 
 use bytes::{Buf, BufMut, Bytes};
-use native_tls::TlsConnector;
 use rsl::socks5;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt};
 use tokio::net::TcpStream;
-use tokio_tls::TlsStream;
+use tokio_rustls::{client::TlsStream, rustls::ClientConfig, webpki::DNSNameRef, TlsConnector};
 use uri::Uri;
 
 use crate::error::Error;
@@ -33,9 +33,13 @@ impl MaybeHttpsStream {
 
     async fn maybe_ssl(uri: &Uri, stream: TcpStream) -> Result<Self, Error> {
         if uri.is_ssl() {
-            let cx = TlsConnector::builder().build()?;
-            let cx = tokio_tls::TlsConnector::from(cx);
-            let stream = cx.connect(&uri.host(), stream).await?;
+            let mut config = ClientConfig::new();
+            config
+                .root_store
+                .add_server_trust_anchors(&webpki_roots::TLS_SERVER_ROOTS);
+            let connector = TlsConnector::from(Arc::new(config));
+            let dnsname = DNSNameRef::try_from_ascii_str(uri.host())?;
+            let stream = connector.connect(dnsname, stream).await?;
             Ok(MaybeHttpsStream::from(stream))
         } else {
             Ok(MaybeHttpsStream::from(stream))

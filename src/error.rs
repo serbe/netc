@@ -78,7 +78,13 @@ impl PartialEq for Error {
             (Error::InvalidStatusCode(code), Error::InvalidStatusCode(other_code)) => {
                 code == other_code
             }
-            // (Error::InvalidDNSNameError, Error::InvalidDNSNameError) => true,
+            (
+                Error::UnsupportedProxyScheme(scheme),
+                Error::UnsupportedProxyScheme(other_scheme),
+            ) => scheme == other_scheme,
+            (Error::InvalidDNSNameError(dns), Error::InvalidDNSNameError(other_dns)) => {
+                dns == other_dns
+            }
             _ => false,
         }
     }

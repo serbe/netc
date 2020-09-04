@@ -1,8 +1,9 @@
-use std::fmt;
-use std::io;
-use std::pin::Pin;
-use std::sync::Arc;
-use std::task::{Context, Poll};
+use std::{
+    fmt, io,
+    pin::Pin,
+    sync::Arc,
+    task::{Context, Poll},
+};
 
 use bytes::{Buf, BufMut, Bytes};
 use rsl::socks5;
@@ -99,7 +100,7 @@ impl From<TlsStream<TcpStream>> for MaybeHttpsStream {
 }
 
 impl AsyncRead for MaybeHttpsStream {
-    #[inline]
+    // #[inline]
     unsafe fn prepare_uninitialized_buffer(&self, buf: &mut [std::mem::MaybeUninit<u8>]) -> bool {
         match self {
             MaybeHttpsStream::Http(s) => s.prepare_uninitialized_buffer(buf),
@@ -107,7 +108,7 @@ impl AsyncRead for MaybeHttpsStream {
         }
     }
 
-    #[inline]
+    // #[inline]
     fn poll_read(
         self: Pin<&mut Self>,
         cx: &mut Context,
@@ -119,7 +120,7 @@ impl AsyncRead for MaybeHttpsStream {
         }
     }
 
-    #[inline]
+    // #[inline]
     fn poll_read_buf<B: BufMut>(
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -133,7 +134,7 @@ impl AsyncRead for MaybeHttpsStream {
 }
 
 impl AsyncWrite for MaybeHttpsStream {
-    #[inline]
+    // #[inline]
     fn poll_write(
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -145,7 +146,7 @@ impl AsyncWrite for MaybeHttpsStream {
         }
     }
 
-    #[inline]
+    // #[inline]
     fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), io::Error>> {
         match Pin::get_mut(self) {
             MaybeHttpsStream::Http(s) => Pin::new(s).poll_flush(cx),
@@ -153,7 +154,7 @@ impl AsyncWrite for MaybeHttpsStream {
         }
     }
 
-    #[inline]
+    // #[inline]
     fn poll_shutdown(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), io::Error>> {
         match Pin::get_mut(self) {
             MaybeHttpsStream::Http(s) => Pin::new(s).poll_shutdown(cx),
@@ -161,7 +162,7 @@ impl AsyncWrite for MaybeHttpsStream {
         }
     }
 
-    #[inline]
+    // #[inline]
     fn poll_write_buf<B: Buf>(
         self: Pin<&mut Self>,
         cx: &mut Context<'_>,
@@ -174,87 +175,80 @@ impl AsyncWrite for MaybeHttpsStream {
     }
 }
 
-// impl<T: AsyncRead + AsyncWrite + Connection + Unpin> Connection for MaybeHttpsStream<T> {
-//     fn connected(&self) -> Connected {
-//         match self {
-//             MaybeHttpsStream::Http(s) => s.connected(),
-//             MaybeHttpsStream::Https(s) => s.get_ref().connected(),
-//         }
-//     }
-// }
-
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use tokio::io::{AsyncReadExt, AsyncWriteExt};
-
-//     #[tokio::test]
-//     async fn http_stream() {
-//         let mut client = MaybeHttpsStream::new(&"http://api.ipify.org".parse::<Uri>().unwrap())
-//             .await
-//             .unwrap();
-//         client
-//             .send_msg(b"GET / HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
-//             .await
-//             .unwrap();
-//         let mut buf = Vec::new();
-//         client.read_to_end(&mut buf).await.unwrap();
-//         let body = String::from_utf8(buf).unwrap();
-//         assert!(&body.contains(crate::tests::IP.as_str()));
-//     }
-
-//     #[tokio::test]
-//     async fn https_stream() {
-//         let mut client = MaybeHttpsStream::new(&"https://api.ipify.org".parse::<Uri>().unwrap())
-//             .await
-//             .unwrap();
-//         client
-//             .write_all(b"GET / HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
-//             .await
-//             .unwrap();
-//         client.flush().await.unwrap();
-//         let mut buf = Vec::new();
-//         client.read_to_end(&mut buf).await.unwrap();
-//         let body = String::from_utf8(buf).unwrap();
-//         assert!(&body.contains(crate::tests::IP.as_str()));
-//     }
-
-#[tokio::test]
-async fn http_stream_http_proxy() {
+#[cfg(test)]
+mod tests {
+    use super::*;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
-    dotenv::dotenv().ok();
-    let http_proxy = match dotenv::var("HTTP_PROXY") {
-        Ok(it) => it,
-        _ => return,
-    };
-    let mut client = MaybeHttpsStream::new(&http_proxy.parse::<Uri>().unwrap())
-        .await
-        .unwrap();
-    client
-        .write_all(b"GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
-        .await
-        .unwrap();
-    client.flush().await.unwrap();
-    let mut buf = Vec::new();
-    client.read_to_end(&mut buf).await.unwrap();
-    let body = String::from_utf8(buf).unwrap();
-    assert!(&body.contains(crate::tests::IP.as_str()));
-}
+    #[tokio::test]
+    async fn http_stream() {
+        let mut client = MaybeHttpsStream::new(&"http://api.ipify.org".parse::<Uri>().unwrap())
+            .await
+            .unwrap();
+        client
+            .send_msg(b"GET / HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
+            .await
+            .unwrap();
+        let mut buf = Vec::new();
+        client.read_to_end(&mut buf).await.unwrap();
+        let body = String::from_utf8(buf).unwrap();
+        assert!(&body.contains(crate::tests::IP.as_str()));
+    }
 
-//     #[tokio::test]
-//     async fn http_stream_auth_http_proxy() {
-//         let mut client = MaybeHttpsStream::new(&"http://127.0.0.1:5656".parse::<Uri>().unwrap())
-//             .await
-//             .unwrap();
-//         client
-//             .write_all(b"GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\nProxy-Authorization: Basic dGVzdDp0c2V0\r\n\r\n")
-//             .await
-//             .unwrap();
-//         client.flush().await.unwrap();
-//         let mut buf = Vec::new();
-//         client.read_to_end(&mut buf).await.unwrap();
-//         let body = String::from_utf8(buf).unwrap();
-//         assert!(&body.contains(crate::tests::IP.as_str()));
-//     }
-// }
+    #[tokio::test]
+    async fn https_stream() {
+        let mut client = MaybeHttpsStream::new(&"https://api.ipify.org".parse::<Uri>().unwrap())
+            .await
+            .unwrap();
+        client
+            .write_all(b"GET / HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
+            .await
+            .unwrap();
+        client.flush().await.unwrap();
+        let mut buf = Vec::new();
+        client.read_to_end(&mut buf).await.unwrap();
+        let body = String::from_utf8(buf).unwrap();
+        assert!(&body.contains(crate::tests::IP.as_str()));
+    }
+
+    #[tokio::test]
+    async fn http_stream_http_proxy() {
+        dotenv::dotenv().ok();
+        let http_proxy = match dotenv::var("TEST_HTTP_PROXY") {
+            Ok(it) => it,
+            _ => return,
+        };
+        let mut client = MaybeHttpsStream::new(&http_proxy.parse::<Uri>().unwrap())
+            .await
+            .unwrap();
+        client
+            .write_all(b"GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
+            .await
+            .unwrap();
+        client.flush().await.unwrap();
+        let mut buf = Vec::new();
+        client.read_to_end(&mut buf).await.unwrap();
+        let body = String::from_utf8(buf).unwrap();
+        assert!(&body.contains(crate::tests::IP.as_str()));
+    }
+
+    #[tokio::test]
+    async fn http_stream_auth_http_proxy() {
+        dotenv::dotenv().ok();
+
+        let http_proxy = match dotenv::var("TEST_HTTP_AUTH_PROXY") {
+            Ok(it) => it,
+            _ => return,
+        };
+        let uri = http_proxy.parse::<Uri>().unwrap();
+        let mut client = MaybeHttpsStream::new(&uri).await.unwrap();
+        let auth = uri.base64_auth().unwrap();
+        let body = format!("GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\nProxy-Authorization: Basic {}\r\n\r\n", auth);
+        client.write_all(body.as_bytes()).await.unwrap();
+        client.flush().await.unwrap();
+        let mut buf = Vec::new();
+        client.read_to_end(&mut buf).await.unwrap();
+        let body = String::from_utf8(buf).unwrap();
+        assert!(&body.contains(crate::tests::IP.as_str()));
+    }
+}

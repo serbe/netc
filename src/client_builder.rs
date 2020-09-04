@@ -1,7 +1,6 @@
-use std::convert::TryInto;
+use std::{convert::TryInto, time::Duration};
 
 use bytes::Bytes;
-use std::time::Duration;
 use uri::Uri;
 
 use crate::client::Client;

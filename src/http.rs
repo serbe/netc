@@ -30,23 +30,4 @@ impl HttpStream {
         };
         Ok(HttpStream { stream })
     }
-
-    // pub async fn connect_proxy(uri: &Uri) -> Result<Self> {
-    //     let target = uri.socket_addr()?;
-    //     let stream = TcpStream::connect(target).await?;
-    //     let stream = MaybeHttpsStream::from(stream);
-    //     Ok(HttpStream { stream })
-    // }
-
-    // pub fn send_request(&mut self, req: &[u8]) -> Result<()> {
-    //     Stream::send_msg(&mut self.stream, req)
-    // }
-
-    // pub fn get_response(&mut self) -> Result<Response> {
-    //     Stream::read_head(&mut self.stream)
-    // }
-
-    // pub fn get_body(&mut self, content_len: usize) -> Result<Vec<u8>> {
-    //     Stream::get_body(&mut self.stream, content_len)
-    // }
 }

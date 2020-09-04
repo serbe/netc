@@ -1,6 +1,8 @@
-use std::collections::{hash_map, HashMap};
-use std::fmt::{Display, Formatter};
-use std::str::FromStr;
+use std::{
+    collections::{hash_map, HashMap},
+    fmt::{Display, Formatter},
+    str::FromStr,
+};
 
 use crate::error::{Error, Result};
 

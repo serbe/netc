@@ -48,6 +48,12 @@ impl Headers {
     }
 }
 
+impl Default for Headers {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl FromStr for Headers {
     type Err = Error;
 

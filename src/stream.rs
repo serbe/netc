@@ -16,7 +16,7 @@ use crate::response::Response;
 
 pub enum MaybeHttpsStream {
     Http(TcpStream),
-    Https(TlsStream<TcpStream>),
+    Https(Box<TlsStream<TcpStream>>),
 }
 
 impl MaybeHttpsStream {
@@ -94,7 +94,7 @@ impl From<TcpStream> for MaybeHttpsStream {
 
 impl From<TlsStream<TcpStream>> for MaybeHttpsStream {
     fn from(inner: TlsStream<TcpStream>) -> Self {
-        MaybeHttpsStream::Https(inner)
+        MaybeHttpsStream::Https(Box::new(inner))
     }
 }
 

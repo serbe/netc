@@ -118,9 +118,8 @@ impl ClientBuilder {
     where
         M: TryInto<Method>,
     {
-        match value.try_into() {
-            Ok(method) => self.method = method,
-            _ => (),
+        if let Ok(method) = value.try_into() {
+            self.method = method
         }
         self
     }
@@ -189,9 +188,8 @@ impl ClientBuilder {
     where
         V: TryInto<Version>,
     {
-        match value.try_into() {
-            Ok(version) => self.version = version,
-            _ => (),
+        if let Ok(version) = value.try_into() {
+            self.version = version
         }
         self
     }

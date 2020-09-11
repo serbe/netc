@@ -39,7 +39,7 @@ impl MaybeHttpsStream {
                 .root_store
                 .add_server_trust_anchors(&webpki_roots::TLS_SERVER_ROOTS);
             let connector = TlsConnector::from(Arc::new(config));
-            let dnsname = DNSNameRef::try_from_ascii_str(uri.host())?;
+            let dnsname = DNSNameRef::try_from_ascii_str(uri.host_str())?;
             let stream = connector.connect(dnsname, stream).await?;
             Ok(MaybeHttpsStream::from(stream))
         } else {

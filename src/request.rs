@@ -23,16 +23,16 @@ impl Request {
         let request_uri = match proxy {
             Some(proxy) => match proxy.scheme() {
                 "http" | "https" => uri.proxy_request_uri(),
-                _ => uri.request_uri().to_string(),
+                _ => uri.request_uri(),
             },
-            None => uri.request_uri().to_string(),
+            None => uri.request_uri(),
         };
         Request {
             method: Method::GET,
-            request_uri,
+            request_uri: request_uri.to_string(),
             version: Version::Http11,
             headers: Headers::default_http(&uri.host_header()),
-            host: uri.host_port(),
+            host: uri.host_port().map_or(String::new(), |hp| hp),
             body: None,
         }
     }

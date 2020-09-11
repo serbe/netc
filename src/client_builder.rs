@@ -147,7 +147,7 @@ impl ClientBuilder {
         self
     }
 
-    pub fn put<U>(mut self, value: U) -> ClientBuilder
+    pub fn options<U>(mut self, value: U) -> ClientBuilder
     where
         U: TryInto<Uri>,
     {
@@ -155,19 +155,7 @@ impl ClientBuilder {
             Ok(uri) => self.uri = Some(uri),
             _ => self.uri = None,
         }
-        self.method = Method::PUT;
-        self
-    }
-
-    pub fn patch<U>(mut self, value: U) -> ClientBuilder
-    where
-        U: TryInto<Uri>,
-    {
-        match value.try_into() {
-            Ok(uri) => self.uri = Some(uri),
-            _ => self.uri = None,
-        }
-        self.method = Method::PATCH;
+        self.method = Method::OPTIONS;
         self
     }
 

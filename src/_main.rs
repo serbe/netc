@@ -32,20 +32,20 @@ mod http;
 }
 
 async fn run() -> Result<()> {
-        let http_proxy = "http://test:tset1@127.0.0.1:5656";
+        // let http_proxy = "http://test:tset1@127.0.0.1:5656";
         // let socks_proxy = "socks5://test:tset1@127.0.0.1:5757";
         // let ip = ip();
 
   let client_builder = Client::builder()
-                .get("http://api.ipify.org")
+                .get("http://api.ipify.org");
                 // .proxy(socks_proxy);
-                .proxy(http_proxy);
+                // .proxy(http_proxy);
 
                 // .build()
                 // .await
                 // .unwrap();
           println!("{:?}", client_builder);
-          let mut client = client_builder.build().await.unwrap();
+          let mut client = client_builder.build().await?;
           println!("{:?}", client);
             let request = client.request();
             println!("{:?}", request);

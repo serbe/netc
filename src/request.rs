@@ -21,20 +21,34 @@ pub struct Request {
 impl Request {
     pub fn new(uri: &Uri, proxy: Option<&Uri>) -> Request {
         let request_uri = match proxy {
-            Some(proxy) => match proxy.scheme() {
-                "http" | "https" => uri.proxy_request_uri(),
-                _ => uri.request_uri(),
-            },
-            None => uri.request_uri(),
-        };
+            Some(_) => uri.absolute_uri(),
+            // Some(proxy) => match proxy.scheme() {
+            //     "http" | "https" => uri.proxy_request_uri(),
+            //     _ => uri.request_uri(),
+            // },
+            None => uri.abs_path(),
+        }
+        .to_string();
         Request {
             method: Method::GET,
             request_uri: request_uri.to_string(),
             version: Version::Http11,
             headers: Headers::default_http(&uri.host_header()),
-            host: uri.host_port().map_or(String::new(), |hp| hp),
+            host: uri
+                .host_port()
+                .map_or(String::new(), |host_port| host_port.to_string()),
             body: None,
         }
+    }
+
+    /// Request-Line   = Method SP Request-URI SP HTTP-Version CRLF
+    pub fn request_line(&self) -> String {
+        format!(
+            "{} {} {}\r\n",
+            self.method,
+            self.request_uri(),
+            self.version
+        )
     }
 
     pub fn user_agent(&self) -> Option<String> {

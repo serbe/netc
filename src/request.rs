@@ -31,7 +31,7 @@ impl Request {
         .to_string();
         Request {
             method: Method::GET,
-            request_uri: request_uri.to_string(),
+            request_uri,
             version: Version::Http11,
             headers: Headers::default_http(&uri.host_header()),
             host: uri

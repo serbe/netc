@@ -10,9 +10,9 @@ bytes = "0.6"
 rsl = { version = "0.4", git = "https://github.com/serbe/rsl" }
 thiserror = "1.0"
 tokio = { version = "0.3", features = ["net", "io-util"] }
-tokio-rustls = "0.20.0"
+tokio-rustls = "0.21"
 uri = { version = "0.3", git = "https://github.com/serbe/uri" }
-webpki-roots = "0.20"
+webpki-roots = "0.21"
 
 [dev-dependencies]
 dotenv = "0.15"

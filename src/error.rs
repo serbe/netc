@@ -40,7 +40,7 @@ pub enum Error {
     HeaderToBig,
     #[error("invalid status code {0}")]
     InvalidStatusCode(u16),
-    #[error("unsupported proxyscheme {0}")]
+    #[error("unsupported proxy scheme {0}")]
     UnsupportedProxyScheme(String),
     #[error("InvalidDNSNameError")]
     InvalidDNSNameError(#[from] tokio_rustls::webpki::InvalidDNSNameError),

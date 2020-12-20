@@ -117,7 +117,7 @@ mod tests {
         let method_trace = Method::TRACE;
         let method_trace_expect = "TRACE";
         let method_custom = Method::Custom("PATCH".to_string());
-        let method_custum_expect = "PATCH";
+        let method_custom_expect = "PATCH";
 
         assert_eq!(method_options_expect, method_options.as_str());
         assert_eq!(method_get_expect, method_get.as_str());
@@ -127,6 +127,6 @@ mod tests {
         assert_eq!(method_delete_expect, method_delete.as_str());
         assert_eq!(method_connect_expect, method_connect.as_str());
         assert_eq!(method_trace_expect, method_trace.as_str());
-        assert_eq!(method_custum_expect, method_custom.as_str());
+        assert_eq!(method_custom_expect, method_custom.as_str());
     }
 }

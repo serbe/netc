@@ -59,7 +59,7 @@ pub struct StatusCode(u16);
 
 impl StatusCode {
     pub fn from_u16(code: u16) -> Result<StatusCode> {
-        if code < 100 || code >= 600 {
+        if !(100..600).contains(&code) {
             return Err(Error::InvalidStatusCode(code));
         }
 

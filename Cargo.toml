@@ -11,10 +11,10 @@ rsl = {version = "0.4", git = "https://github.com/serbe/rsl"}
 thiserror = "1.0"
 tokio = {version = "1.3", features = ["net", "io-util"]}
 tokio-rustls = "0.22"
-uri = {version = "0.3", git = "https://github.com/serbe/uri"}
+uri = {version = "0.3.1", git = "https://github.com/serbe/uri"}
 webpki-roots = "0.21"
 
 [dev-dependencies]
 dotenv = "0.15"
 lazy_static = "1.4"
-tokio = {version = "1.1", features = ["full"]}
+tokio = {version = "1.3", features = ["full"]}

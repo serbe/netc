@@ -1,7 +1,7 @@
 use std::{convert::TryInto, time::Duration};
 
 use bytes::Bytes;
-use uri::Uri;
+use url::Url;
 
 use crate::client::Client;
 use crate::error::{Error, Result};
@@ -9,16 +9,17 @@ use crate::headers::Headers;
 use crate::method::Method;
 use crate::request::Request;
 use crate::stream::MaybeHttpsStream;
+use crate::utils::base64_auth;
 use crate::version::Version;
 
 #[derive(Debug, PartialEq)]
 pub struct ClientBuilder {
-    uri: Option<Uri>,
+    url: Option<Url>,
     headers: Headers,
     method: Method,
     version: Version,
     body: Option<Bytes>,
-    proxy: Option<Uri>,
+    proxy: Option<Url>,
     nodelay: bool,
     timeout: Option<Duration>,
     connect_timeout: Option<Duration>,
@@ -34,7 +35,7 @@ impl ClientBuilder {
     pub fn new() -> Self {
         let headers = Headers::new();
         ClientBuilder {
-            uri: None,
+            url: None,
             headers,
             method: Method::GET,
             version: Version::Http11,
@@ -47,46 +48,46 @@ impl ClientBuilder {
     }
 
     pub async fn build(self) -> Result<Client> {
-        let uri = self.uri.ok_or(Error::EmptyUri)?;
+        let url = self.url.ok_or(Error::EmptyUrl)?;
         let mut headers = self.headers;
         let stream = match &self.proxy {
             Some(proxy) => match proxy.scheme() {
-                "socks5" | "socks5h" => Ok(MaybeHttpsStream::socks(&proxy, &uri).await?),
+                "socks5" | "socks5h" => Ok(MaybeHttpsStream::socks(&proxy, &url).await?),
                 "http" | "https" => {
-                    if let Some(auth) = proxy.base64_auth() {
+                    if let Some(auth) = base64_auth(&proxy) {
                         headers.insert("Proxy-Authorization", format!("Basic {}", auth).as_str());
                     };
                     Ok(MaybeHttpsStream::new(&proxy).await?)
                 }
                 scheme => Err(Error::UnsupportedProxyScheme(scheme.to_owned())),
             },
-            None => Ok(MaybeHttpsStream::new(&uri).await?),
+            None => Ok(MaybeHttpsStream::new(&url).await?),
         }?;
-        let mut request = Request::new(&uri, self.proxy.as_ref());
+        let mut request = Request::new(&url, self.proxy.as_ref());
         request.method(self.method);
         request.headers(headers);
         request.version(self.version);
         request.opt_body(self.body);
-        Ok(Client::new(request, uri, self.proxy, stream, None))
+        Ok(Client::new(request, url, self.proxy, stream, None))
     }
 
-    pub fn uri<U>(mut self, value: U) -> ClientBuilder
+    pub fn url<U>(mut self, value: U) -> ClientBuilder
     where
-        U: TryInto<Uri>,
+        U: TryInto<Url>,
     {
         match value.try_into() {
-            Ok(uri) => self.uri = Some(uri),
-            _ => self.uri = None,
+            Ok(url) => self.url = Some(url),
+            _ => self.url = None,
         }
         self
     }
 
     pub fn proxy<P>(mut self, value: P) -> ClientBuilder
     where
-        P: TryInto<Uri>,
+        P: TryInto<Url>,
     {
         match value.try_into() {
-            Ok(uri) => self.proxy = Some(uri),
+            Ok(url) => self.proxy = Some(url),
             _ => self.proxy = None,
         }
         self
@@ -125,11 +126,11 @@ impl ClientBuilder {
 
     pub fn get<U>(mut self, value: U) -> ClientBuilder
     where
-        U: TryInto<Uri>,
+        U: TryInto<Url>,
     {
         match value.try_into() {
-            Ok(uri) => self.uri = Some(uri),
-            _ => self.uri = None,
+            Ok(url) => self.url = Some(url),
+            _ => self.url = None,
         }
         self.method = Method::GET;
         self
@@ -137,11 +138,11 @@ impl ClientBuilder {
 
     pub fn post<U>(mut self, value: U) -> ClientBuilder
     where
-        U: TryInto<Uri>,
+        U: TryInto<Url>,
     {
         match value.try_into() {
-            Ok(uri) => self.uri = Some(uri),
-            _ => self.uri = None,
+            Ok(url) => self.url = Some(url),
+            _ => self.url = None,
         }
         self.method = Method::POST;
         self
@@ -149,11 +150,11 @@ impl ClientBuilder {
 
     pub fn options<U>(mut self, value: U) -> ClientBuilder
     where
-        U: TryInto<Uri>,
+        U: TryInto<Url>,
     {
         match value.try_into() {
-            Ok(uri) => self.uri = Some(uri),
-            _ => self.uri = None,
+            Ok(url) => self.url = Some(url),
+            _ => self.url = None,
         }
         self.method = Method::OPTIONS;
         self
@@ -161,11 +162,11 @@ impl ClientBuilder {
 
     pub fn delete<U>(mut self, value: U) -> ClientBuilder
     where
-        U: TryInto<Uri>,
+        U: TryInto<Url>,
     {
         match value.try_into() {
-            Ok(uri) => self.uri = Some(uri),
-            _ => self.uri = None,
+            Ok(url) => self.url = Some(url),
+            _ => self.url = None,
         }
         self.method = Method::DELETE;
         self
@@ -227,10 +228,10 @@ impl ClientBuilder {
 
     pub fn referer<U>(self, value: U) -> ClientBuilder
     where
-        U: TryInto<Uri>,
+        U: TryInto<Url>,
     {
         match value.try_into() {
-            Ok(uri) => self.header("Referer", &uri),
+            Ok(url) => self.header("Referer", &url),
             _ => self,
         }
     }

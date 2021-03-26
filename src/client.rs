@@ -1,5 +1,5 @@
 use bytes::Bytes;
-use uri::Uri;
+use url::Url;
 
 use crate::client_builder::ClientBuilder;
 use crate::error::Result;
@@ -11,8 +11,8 @@ use crate::stream::MaybeHttpsStream;
 #[derive(Debug)]
 pub struct Client {
     request: Request,
-    uri: Uri,
-    proxy: Option<Uri>,
+    url: Url,
+    proxy: Option<Url>,
     stream: MaybeHttpsStream,
     response: Option<Response>,
 }
@@ -24,14 +24,14 @@ impl Client {
 
     pub fn new(
         request: Request,
-        uri: Uri,
-        proxy: Option<Uri>,
+        url: Url,
+        proxy: Option<Url>,
         stream: MaybeHttpsStream,
         response: Option<Response>,
     ) -> Client {
         Client {
             request,
-            uri,
+            url,
             proxy,
             stream,
             response,
@@ -57,8 +57,8 @@ impl Client {
         self.request.get_headers()
     }
 
-    pub fn uri(&self) -> Uri {
-        self.uri.clone()
+    pub fn url(&self) -> Url {
+        self.url.clone()
     }
 
     pub fn request(&self) -> Request {
@@ -101,12 +101,12 @@ mod tests {
         };
         let mut client = Client::builder()
             .get(SIMPLE_URL)
-            .proxy(&http_proxy)
+            .proxy(http_proxy.parse::<Url>().unwrap())
             .build()
             .await
             .unwrap();
         let request = client.request();
-        assert_eq!(&request.request_uri(), "http://api.ipify.org:80/");
+        assert_eq!(&request.request_uri(), "http://api.ipify.org/");
         let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
         let body = response.text().unwrap();
@@ -122,7 +122,7 @@ mod tests {
         };
         let mut client = Client::builder()
             .get(SIMPLE_URL)
-            .proxy(&http_auth_proxy)
+            .proxy(http_auth_proxy.parse::<Url>().unwrap())
             .build()
             .await
             .unwrap();
@@ -141,7 +141,7 @@ mod tests {
         };
         let mut client = Client::builder()
             .get(SIMPLE_URL)
-            .proxy(&http_auth_proxy)
+            .proxy(http_auth_proxy.parse::<Url>().unwrap())
             .build()
             .await
             .unwrap();
@@ -158,7 +158,7 @@ mod tests {
         };
         let mut client = Client::builder()
             .get(SIMPLE_URL)
-            .proxy(&socks5_proxy)
+            .proxy(socks5_proxy.parse::<Url>().unwrap())
             .build()
             .await
             .unwrap();
@@ -177,7 +177,7 @@ mod tests {
         };
         let mut client = Client::builder()
             .get(SIMPLE_URL)
-            .proxy(&socks5_auth_proxy)
+            .proxy(socks5_auth_proxy.parse::<Url>().unwrap())
             .build()
             .await
             .unwrap();
@@ -196,7 +196,7 @@ mod tests {
         };
         let client = Client::builder()
             .get(SIMPLE_URL)
-            .proxy(&socks5_auth_proxy)
+            .proxy(socks5_auth_proxy.parse::<Url>().unwrap())
             .build()
             .await;
         assert!(client.is_err());

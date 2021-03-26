@@ -10,7 +10,7 @@ use rsl::socks5;
 use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, ReadBuf};
 use tokio::net::TcpStream;
 use tokio_rustls::{client::TlsStream, rustls::ClientConfig, webpki::DNSNameRef, TlsConnector};
-use uri::Uri;
+use url::Url;
 
 use crate::error::Error;
 use crate::response::Response;
@@ -21,25 +21,26 @@ pub enum MaybeHttpsStream {
 }
 
 impl MaybeHttpsStream {
-    pub async fn new(uri: &Uri) -> Result<Self, Error> {
-        let addr = uri.socket_addr()?;
-        let stream = TcpStream::connect(addr).await?;
-        MaybeHttpsStream::maybe_ssl(uri, stream).await
+    pub async fn new(url: &Url) -> Result<Self, Error> {
+        let socket_address = url.socket_addrs(|| None)?;
+        let stream =
+            TcpStream::connect(socket_address.get(0).map_or(Err(Error::SocketAddr), Ok)?).await?;
+        MaybeHttpsStream::maybe_ssl(url, stream).await
     }
 
-    pub async fn socks(proxy: &Uri, target: &Uri) -> Result<Self, Error> {
-        let stream = socks5::connect(proxy.as_str(), target.as_str()).await?;
+    pub async fn socks(proxy: &Url, target: &Url) -> Result<Self, Error> {
+        let stream = socks5::connect_url(proxy, target).await?;
         MaybeHttpsStream::maybe_ssl(target, stream).await
     }
 
-    async fn maybe_ssl(uri: &Uri, stream: TcpStream) -> Result<Self, Error> {
-        if uri.is_ssl() {
+    async fn maybe_ssl(url: &Url, stream: TcpStream) -> Result<Self, Error> {
+        if url.scheme() == "https" {
             let mut config = ClientConfig::new();
             config
                 .root_store
                 .add_server_trust_anchors(&webpki_roots::TLS_SERVER_ROOTS);
             let connector = TlsConnector::from(Arc::new(config));
-            let dns_name = DNSNameRef::try_from_ascii_str(uri.host_str())?;
+            let dns_name = DNSNameRef::try_from_ascii_str(url.host_str().ok_or(Error::EmptyHost)?)?;
             let stream = connector.connect(dns_name, stream).await?;
             Ok(MaybeHttpsStream::from(stream))
         } else {
@@ -178,11 +179,12 @@ impl AsyncWrite for MaybeHttpsStream {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::utils::base64_auth;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
     #[tokio::test]
     async fn http_stream() {
-        let mut client = MaybeHttpsStream::new(&"http://api.ipify.org".parse::<Uri>().unwrap())
+        let mut client = MaybeHttpsStream::new(&"http://api.ipify.org".parse::<Url>().unwrap())
             .await
             .unwrap();
         client
@@ -197,7 +199,7 @@ mod tests {
 
     #[tokio::test]
     async fn https_stream() {
-        let mut client = MaybeHttpsStream::new(&"https://api.ipify.org".parse::<Uri>().unwrap())
+        let mut client = MaybeHttpsStream::new(&"https://api.ipify.org".parse::<Url>().unwrap())
             .await
             .unwrap();
         client
@@ -218,7 +220,7 @@ mod tests {
             Ok(it) => it,
             _ => return,
         };
-        let mut client = MaybeHttpsStream::new(&http_proxy.parse::<Uri>().unwrap())
+        let mut client = MaybeHttpsStream::new(&http_proxy.parse::<Url>().unwrap())
             .await
             .unwrap();
         client
@@ -240,9 +242,10 @@ mod tests {
             Ok(it) => it,
             _ => return,
         };
-        let uri = http_proxy.parse::<Uri>().unwrap();
-        let mut client = MaybeHttpsStream::new(&uri).await.unwrap();
-        let auth = uri.base64_auth().unwrap();
+        let url = http_proxy.parse::<Url>().unwrap();
+        let mut client = MaybeHttpsStream::new(&url).await.unwrap();
+        let auth = base64_auth(&url).unwrap();
+
         let body = format!("GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\nProxy-Authorization: Basic {}\r\n\r\n", auth);
         client.write_all(body.as_bytes()).await.unwrap();
         client.flush().await.unwrap();

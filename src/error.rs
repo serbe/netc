@@ -6,8 +6,10 @@ pub type Result<T> = result::Result<T, Error>;
 
 #[derive(Debug, ThisError)]
 pub enum Error {
-    #[error("empty Uri")]
-    EmptyUri,
+    #[error("empty url")]
+    EmptyUrl,
+    #[error("empty host")]
+    EmptyHost,
     #[error("wrong http")]
     WrongHttp,
     #[error("empty response")]
@@ -25,13 +27,11 @@ pub enum Error {
     #[error("bad headers")]
     HeadersErr,
     #[error("io error")]
-    IO(#[from] io::Error),
+    Io(#[from] io::Error),
     #[error("parse int")]
     ParseInt(#[from] num::ParseIntError),
     #[error("utf8")]
     FromUtf8(#[from] str::Utf8Error),
-    #[error("uri")]
-    UriError(#[from] uri::Error),
     #[error("Socks5")]
     Socks5(#[from] rsl::error::Error),
     #[error("header incomplete")]
@@ -43,13 +43,15 @@ pub enum Error {
     #[error("unsupported proxy scheme {0}")]
     UnsupportedProxyScheme(String),
     #[error("InvalidDNSNameError")]
-    InvalidDNSNameError(#[from] tokio_rustls::webpki::InvalidDNSNameError),
+    InvalidDnsNameError(#[from] tokio_rustls::webpki::InvalidDNSNameError),
+    #[error("No get socket address")]
+    SocketAddr,
 }
 
 impl PartialEq for Error {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Error::EmptyUri, Error::EmptyUri) => true,
+            (Error::EmptyUrl, Error::EmptyUrl) => true,
             (Error::WrongHttp, Error::WrongHttp) => true,
             (Error::EmptyResponse, Error::EmptyResponse) => true,
             (Error::ParseHeaders, Error::ParseHeaders) => true,
@@ -64,12 +66,10 @@ impl PartialEq for Error {
             }
             (Error::StatusErr, Error::StatusErr) => true,
             (Error::HeadersErr, Error::HeadersErr) => true,
-            (Error::IO(io), Error::IO(other_io)) => io.to_string() == other_io.to_string(),
+            (Error::Io(io), Error::Io(other_io)) => io.to_string() == other_io.to_string(),
             (Error::ParseInt(int), Error::ParseInt(other_int)) => int == other_int,
             (Error::FromUtf8(utf8), Error::FromUtf8(other_utf8)) => utf8 == other_utf8,
-            (Error::UriError(uri), Error::UriError(other_uri)) => {
-                uri.to_string() == other_uri.to_string()
-            }
+
             (Error::Socks5(socks), Error::Socks5(other_socks)) => {
                 socks.to_string() == other_socks.to_string()
             }
@@ -82,7 +82,7 @@ impl PartialEq for Error {
                 Error::UnsupportedProxyScheme(scheme),
                 Error::UnsupportedProxyScheme(other_scheme),
             ) => scheme == other_scheme,
-            (Error::InvalidDNSNameError(dns), Error::InvalidDNSNameError(other_dns)) => {
+            (Error::InvalidDnsNameError(dns), Error::InvalidDnsNameError(other_dns)) => {
                 dns == other_dns
             }
             _ => false,

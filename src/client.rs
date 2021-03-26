@@ -101,7 +101,7 @@ mod tests {
         };
         let mut client = Client::builder()
             .get(SIMPLE_URL)
-            .proxy(http_proxy.parse::<Url>().unwrap())
+            .proxy(http_proxy)
             .build()
             .await
             .unwrap();
@@ -122,7 +122,7 @@ mod tests {
         };
         let mut client = Client::builder()
             .get(SIMPLE_URL)
-            .proxy(http_auth_proxy.parse::<Url>().unwrap())
+            .proxy(http_auth_proxy)
             .build()
             .await
             .unwrap();
@@ -141,7 +141,7 @@ mod tests {
         };
         let mut client = Client::builder()
             .get(SIMPLE_URL)
-            .proxy(http_auth_proxy.parse::<Url>().unwrap())
+            .proxy(http_auth_proxy)
             .build()
             .await
             .unwrap();
@@ -158,7 +158,7 @@ mod tests {
         };
         let mut client = Client::builder()
             .get(SIMPLE_URL)
-            .proxy(socks5_proxy.parse::<Url>().unwrap())
+            .proxy(socks5_proxy)
             .build()
             .await
             .unwrap();
@@ -177,7 +177,7 @@ mod tests {
         };
         let mut client = Client::builder()
             .get(SIMPLE_URL)
-            .proxy(socks5_auth_proxy.parse::<Url>().unwrap())
+            .proxy(socks5_auth_proxy)
             .build()
             .await
             .unwrap();
@@ -196,7 +196,7 @@ mod tests {
         };
         let client = Client::builder()
             .get(SIMPLE_URL)
-            .proxy(socks5_auth_proxy.parse::<Url>().unwrap())
+            .proxy(socks5_auth_proxy)
             .build()
             .await;
         assert!(client.is_err());

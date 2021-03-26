@@ -9,7 +9,7 @@ use crate::headers::Headers;
 use crate::method::Method;
 use crate::request::Request;
 use crate::stream::MaybeHttpsStream;
-use crate::utils::base64_auth;
+use crate::utils::{base64_auth, IntoUrl};
 use crate::version::Version;
 
 #[derive(Debug, PartialEq)]
@@ -71,10 +71,7 @@ impl ClientBuilder {
         Ok(Client::new(request, url, self.proxy, stream, None))
     }
 
-    pub fn url<U>(mut self, value: U) -> ClientBuilder
-    where
-        U: TryInto<Url>,
-    {
+    pub fn url<T: IntoUrl>(mut self, value: T) -> ClientBuilder {
         match value.try_into() {
             Ok(url) => self.url = Some(url),
             _ => self.url = None,

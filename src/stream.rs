@@ -199,7 +199,7 @@ mod tests {
 
     #[tokio::test]
     async fn https_stream() {
-        let mut client = MaybeHttpsStream::new(&"https://api.ipify.org".parse::<Url>().unwrap())
+        let mut client = MaybeHttpsStream::new(&"https://api.ipify.org")
             .await
             .unwrap();
         client
@@ -220,9 +220,7 @@ mod tests {
             Ok(it) => it,
             _ => return,
         };
-        let mut client = MaybeHttpsStream::new(&http_proxy.parse::<Url>().unwrap())
-            .await
-            .unwrap();
+        let mut client = MaybeHttpsStream::new(&http_proxy).await.unwrap();
         client
             .write_all(b"GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
             .await
@@ -243,7 +241,7 @@ mod tests {
             _ => return,
         };
         let url = http_proxy.parse::<Url>().unwrap();
-        let mut client = MaybeHttpsStream::new(&url).await.unwrap();
+        let mut client = MaybeHttpsStream::new(&http_proxy).await.unwrap();
         let auth = base64_auth(&url).unwrap();
 
         let body = format!("GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\nProxy-Authorization: Basic {}\r\n\r\n", auth);

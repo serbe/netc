@@ -46,6 +46,8 @@ pub enum Error {
     InvalidDnsNameError(#[from] tokio_rustls::webpki::InvalidDNSNameError),
     #[error("No get socket address")]
     SocketAddr,
+    #[error("UrlParseError")]
+    UrlParseError(#[from] url::ParseError),
 }
 
 impl PartialEq for Error {
@@ -87,6 +89,7 @@ impl PartialEq for Error {
                 dns == other_dns
             }
             (Error::SocketAddr, Error::SocketAddr) => true,
+            (Error::UrlParseError(err), Error::UrlParseError(other_err)) => err == other_err,
             _ => false,
         }
     }

@@ -30,6 +30,7 @@ pub fn host_header(url: &Url) -> String {
 pub trait IntoUrl: IntoUrlSealed {}
 
 impl IntoUrl for Url {}
+impl IntoUrl for &Url {}
 impl IntoUrl for String {}
 impl<'a> IntoUrl for &'a str {}
 impl<'a> IntoUrl for &'a String {}
@@ -44,6 +45,20 @@ impl IntoUrlSealed for Url {
     fn into_url(self) -> Result<Url> {
         if self.has_host() {
             Ok(self)
+        } else {
+            Err(Error::EmptyHost)
+        }
+    }
+
+    fn as_str(&self) -> &str {
+        self.as_ref()
+    }
+}
+
+impl IntoUrlSealed for &Url {
+    fn into_url(self) -> Result<Url> {
+        if self.has_host() {
+            Ok(self.clone())
         } else {
             Err(Error::EmptyHost)
         }

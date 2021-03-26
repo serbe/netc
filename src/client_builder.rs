@@ -57,7 +57,7 @@ impl ClientBuilder {
                     if let Some(auth) = base64_auth(&proxy) {
                         headers.insert("Proxy-Authorization", format!("Basic {}", auth).as_str());
                     };
-                    Ok(MaybeHttpsStream::new(&proxy).await?)
+                    Ok(MaybeHttpsStream::new(proxy).await?)
                 }
                 scheme => Err(Error::UnsupportedProxyScheme(scheme.to_owned())),
             },
@@ -71,19 +71,16 @@ impl ClientBuilder {
         Ok(Client::new(request, url, self.proxy, stream, None))
     }
 
-    pub fn url<T: IntoUrl>(mut self, value: T) -> ClientBuilder {
-        match value.try_into() {
+    pub fn url<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
+        match value.into_url() {
             Ok(url) => self.url = Some(url),
             _ => self.url = None,
         }
         self
     }
 
-    pub fn proxy<P>(mut self, value: P) -> ClientBuilder
-    where
-        P: TryInto<Url>,
-    {
-        match value.try_into() {
+    pub fn proxy<P: IntoUrl>(mut self, value: P) -> ClientBuilder {
+        match value.into_url() {
             Ok(url) => self.proxy = Some(url),
             _ => self.proxy = None,
         }
@@ -121,11 +118,8 @@ impl ClientBuilder {
         self
     }
 
-    pub fn get<U>(mut self, value: U) -> ClientBuilder
-    where
-        U: TryInto<Url>,
-    {
-        match value.try_into() {
+    pub fn get<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
+        match value.into_url() {
             Ok(url) => self.url = Some(url),
             _ => self.url = None,
         }

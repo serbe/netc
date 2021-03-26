@@ -14,6 +14,7 @@ use url::Url;
 
 use crate::error::Error;
 use crate::response::Response;
+use crate::utils::IntoUrl;
 
 pub enum MaybeHttpsStream {
     Http(TcpStream),
@@ -21,11 +22,12 @@ pub enum MaybeHttpsStream {
 }
 
 impl MaybeHttpsStream {
-    pub async fn new(url: &Url) -> Result<Self, Error> {
+    pub async fn new<U: IntoUrl>(value: U) -> Result<Self, Error> {
+        let url = value.into_url()?;
         let socket_address = url.socket_addrs(|| None)?;
         let stream =
             TcpStream::connect(socket_address.get(0).map_or(Err(Error::SocketAddr), Ok)?).await?;
-        MaybeHttpsStream::maybe_ssl(url, stream).await
+        MaybeHttpsStream::maybe_ssl(&url, stream).await
     }
 
     pub async fn socks(proxy: &Url, target: &Url) -> Result<Self, Error> {
@@ -184,9 +186,7 @@ mod tests {
 
     #[tokio::test]
     async fn http_stream() {
-        let mut client = MaybeHttpsStream::new(&"http://api.ipify.org".parse::<Url>().unwrap())
-            .await
-            .unwrap();
+        let mut client = MaybeHttpsStream::new("http://api.ipify.org").await.unwrap();
         client
             .send_msg(b"GET / HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
             .await
@@ -199,7 +199,7 @@ mod tests {
 
     #[tokio::test]
     async fn https_stream() {
-        let mut client = MaybeHttpsStream::new(&"https://api.ipify.org")
+        let mut client = MaybeHttpsStream::new("https://api.ipify.org")
             .await
             .unwrap();
         client

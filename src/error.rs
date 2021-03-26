@@ -52,6 +52,7 @@ impl PartialEq for Error {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
             (Error::EmptyUrl, Error::EmptyUrl) => true,
+            (Error::EmptyHost, Error::EmptyHost) => true,
             (Error::WrongHttp, Error::WrongHttp) => true,
             (Error::EmptyResponse, Error::EmptyResponse) => true,
             (Error::ParseHeaders, Error::ParseHeaders) => true,
@@ -85,6 +86,7 @@ impl PartialEq for Error {
             (Error::InvalidDnsNameError(dns), Error::InvalidDnsNameError(other_dns)) => {
                 dns == other_dns
             }
+            (Error::SocketAddr, Error::SocketAddr) => true,
             _ => false,
         }
     }

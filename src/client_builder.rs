@@ -37,7 +37,7 @@ impl ClientBuilder {
         ClientBuilder {
             url: None,
             headers,
-            method: Method::GET,
+            method: Method::Get,
             version: Version::Http11,
             body: None,
             proxy: None,
@@ -123,7 +123,7 @@ impl ClientBuilder {
             Ok(url) => self.url = Some(url),
             _ => self.url = None,
         }
-        self.method = Method::GET;
+        self.method = Method::Get;
         self
     }
 
@@ -135,7 +135,7 @@ impl ClientBuilder {
             Ok(url) => self.url = Some(url),
             _ => self.url = None,
         }
-        self.method = Method::POST;
+        self.method = Method::Post;
         self
     }
 
@@ -147,7 +147,7 @@ impl ClientBuilder {
             Ok(url) => self.url = Some(url),
             _ => self.url = None,
         }
-        self.method = Method::OPTIONS;
+        self.method = Method::Options;
         self
     }
 
@@ -159,7 +159,7 @@ impl ClientBuilder {
             Ok(url) => self.url = Some(url),
             _ => self.url = None,
         }
-        self.method = Method::DELETE;
+        self.method = Method::Delete;
         self
     }
 

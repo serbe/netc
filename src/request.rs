@@ -26,7 +26,7 @@ impl Request {
             None => url.path().to_string(),
         };
         Request {
-            method: Method::GET,
+            method: Method::Get,
             request_uri,
             version: Version::Http11,
             headers: Headers::default_http(&host_header(&url)),

@@ -32,8 +32,8 @@ pub trait IntoUrl: IntoUrlSealed {}
 impl IntoUrl for Url {}
 impl IntoUrl for &Url {}
 impl IntoUrl for String {}
+impl IntoUrl for &String {}
 impl<'a> IntoUrl for &'a str {}
-impl<'a> IntoUrl for &'a String {}
 
 pub trait IntoUrlSealed {
     fn into_url(self) -> Result<Url>;
@@ -79,7 +79,7 @@ impl<'a> IntoUrlSealed for &'a str {
     }
 }
 
-impl<'a> IntoUrlSealed for &'a String {
+impl IntoUrlSealed for &String {
     fn into_url(self) -> Result<Url> {
         (&**self).into_url()
     }

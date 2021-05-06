@@ -13,6 +13,7 @@ mod request;
 mod response;
 mod status;
 mod stream;
+mod utils;
 mod version;
 
 fn ip() -> String {

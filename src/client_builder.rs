@@ -127,11 +127,8 @@ impl ClientBuilder {
         self
     }
 
-    pub fn post<U>(mut self, value: U) -> ClientBuilder
-    where
-        U: TryInto<Url>,
-    {
-        match value.try_into() {
+    pub fn post<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
+        match value.into_url() {
             Ok(url) => self.url = Some(url),
             _ => self.url = None,
         }
@@ -139,11 +136,8 @@ impl ClientBuilder {
         self
     }
 
-    pub fn options<U>(mut self, value: U) -> ClientBuilder
-    where
-        U: TryInto<Url>,
-    {
-        match value.try_into() {
+    pub fn options<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
+        match value.into_url() {
             Ok(url) => self.url = Some(url),
             _ => self.url = None,
         }
@@ -151,11 +145,8 @@ impl ClientBuilder {
         self
     }
 
-    pub fn delete<U>(mut self, value: U) -> ClientBuilder
-    where
-        U: TryInto<Url>,
-    {
-        match value.try_into() {
+    pub fn delete<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
+        match value.into_url() {
             Ok(url) => self.url = Some(url),
             _ => self.url = None,
         }

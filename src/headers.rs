@@ -23,10 +23,7 @@ impl Headers {
     }
 
     pub fn get<T: ToString + ?Sized>(&self, k: &T) -> Option<String> {
-        match self.0.get(&k.to_string().to_lowercase()) {
-            Some(value) => Some(value.to_string()),
-            None => None,
-        }
+        self.0.get(&k.to_string().to_lowercase()).map(|value| value.to_string())
     }
 
     pub fn insert<T: ToString + ?Sized, U: ToString + ?Sized>(

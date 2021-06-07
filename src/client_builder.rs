@@ -64,6 +64,11 @@ impl ClientBuilder {
             None => Ok(MaybeHttpsStream::new(&url).await?),
         }?;
         let mut request = Request::new(&url, self.proxy.as_ref());
+        if let Some(auth) = base64_auth(&url) {
+            if let "http" | "https" = url.scheme() {
+                headers.insert("Authorization", format!("Basic {}", auth).as_str());
+            }
+        }
         request.method(self.method);
         request.headers(headers);
         request.version(self.version);

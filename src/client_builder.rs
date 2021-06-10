@@ -9,7 +9,7 @@ use crate::headers::Headers;
 use crate::method::Method;
 use crate::request::Request;
 use crate::stream::MaybeHttpsStream;
-use crate::utils::{base64_auth, IntoUrl};
+use crate::utils::IntoUrl;
 use crate::version::Version;
 
 #[derive(Debug, PartialEq)]
@@ -49,13 +49,14 @@ impl ClientBuilder {
 
     pub async fn build(self) -> Result<Client> {
         let url = self.url.ok_or(Error::EmptyUrl)?;
-        let mut headers = self.headers;
+        let mut request = Request::new(&url, self.proxy.as_ref());
+        request.headers(self.headers);
         let stream = match &self.proxy {
             Some(proxy) => match proxy.scheme() {
                 "socks5" | "socks5h" => Ok(MaybeHttpsStream::socks(&proxy, &url).await?),
                 "http" | "https" => {
-                    if let Some(auth) = base64_auth(&proxy) {
-                        headers.insert("Proxy-Authorization", format!("Basic {}", auth).as_str());
+                    if let (username, Some(password)) = (proxy.username(), proxy.password()) {
+                        request.set_proxy_basic_auth(username, password);
                     };
                     Ok(MaybeHttpsStream::new(proxy).await?)
                 }
@@ -63,14 +64,12 @@ impl ClientBuilder {
             },
             None => Ok(MaybeHttpsStream::new(&url).await?),
         }?;
-        let mut request = Request::new(&url, self.proxy.as_ref());
-        if let Some(auth) = base64_auth(&url) {
+        if let (username, Some(password)) = (url.username(), url.password()) {
             if let "http" | "https" = url.scheme() {
-                headers.insert("Authorization", format!("Basic {}", auth).as_str());
+                request.set_basic_auth(username, password);
             }
         }
         request.method(self.method);
-        request.headers(headers);
         request.version(self.version);
         request.opt_body(self.body);
         Ok(Client::new(request, url, self.proxy, stream, None))

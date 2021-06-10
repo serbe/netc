@@ -122,6 +122,14 @@ impl Request {
         self
     }
 
+    pub fn set_proxy_basic_auth(&mut self, username: &str, password: &str) -> &mut Self {
+        self.header(
+            "Proxy-Authorization",
+            &format!("Basic {}", encode(&format!("{}:{}", username, password))),
+        );
+        self
+    }
+
     pub fn to_vec(&self) -> Vec<u8> {
         let request_line = format!(
             "{} {} {}{}",

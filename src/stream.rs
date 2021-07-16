@@ -53,6 +53,7 @@ impl MaybeHttpsStream {
     pub async fn get_body(&mut self, content_len: usize) -> Result<Bytes, Error> {
         let mut body = vec![0u8; content_len];
         self.read_exact(&mut body).await?;
+        dbg!(&body);
         Ok(body.into())
     }
 
@@ -66,6 +67,7 @@ impl MaybeHttpsStream {
         }
         let response = Response::from_header(&header)?;
         let content_len = response.content_len()?;
+        dbg!(content_len);
         let body = self.get_body(content_len).await?;
         Ok(Response {
             status: response.status,

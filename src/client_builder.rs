@@ -53,7 +53,7 @@ impl ClientBuilder {
         request.headers(self.headers);
         let stream = match &self.proxy {
             Some(proxy) => match proxy.scheme() {
-                "socks5" | "socks5h" => Ok(MaybeHttpsStream::socks(&proxy, &url).await?),
+                "socks5" | "socks5h" => Ok(MaybeHttpsStream::socks(proxy, &url).await?),
                 "http" | "https" => {
                     if let (username, Some(password)) = (proxy.username(), proxy.password()) {
                         request.set_proxy_basic_auth(username, password);

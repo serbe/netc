@@ -72,7 +72,7 @@ mod tests {
     use dotenv;
 
     const SIMPLE_URL: &'static str = "http://api.ipify.org";
-    const SECURE_URL: &'static str = "https://api.ipify.org";
+    const SECURE_URL: &'static str = "https://www.socks-proxy.net/";
 
     #[tokio::test]
     async fn client_http() {

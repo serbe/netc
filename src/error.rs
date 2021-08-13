@@ -48,6 +48,10 @@ pub enum Error {
     SocketAddr,
     #[error("UrlParseError")]
     UrlParseError(#[from] url::ParseError),
+    #[error("Empty version")]
+    EmptyVersion,
+    #[error("Empty status")]
+    EmptyStatus,
 }
 
 impl PartialEq for Error {
@@ -90,6 +94,8 @@ impl PartialEq for Error {
             }
             (Error::SocketAddr, Error::SocketAddr) => true,
             (Error::UrlParseError(err), Error::UrlParseError(other_err)) => err == other_err,
+            (Error::EmptyVersion, Error::EmptyVersion) => true,
+            (Error::EmptyStatus, Error::EmptyStatus) => true,
             _ => false,
         }
     }

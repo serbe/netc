@@ -29,7 +29,7 @@ impl Request {
             method: Method::Get,
             request_uri,
             version: Version::Http11,
-            headers: Headers::default_http(&host_header(&url)),
+            headers: Headers::default_http(&host_header(url)),
             host: host_port(url),
             body: None,
         }

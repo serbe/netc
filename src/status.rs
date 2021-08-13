@@ -1,10 +1,13 @@
-use std::{fmt, str::FromStr};
+use std::{convert::TryFrom, fmt, str::FromStr};
 
-use crate::error::{Error, Result};
+use crate::{
+    error::{Error, Result},
+    Version,
+};
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Status {
-    version: String,
+    version: Version,
     code: StatusCode,
     reason: String,
 }
@@ -14,8 +17,8 @@ impl Status {
         self.code
     }
 
-    pub fn version(&self) -> &str {
-        &self.version
+    pub fn version(&self) -> Version {
+        self.version
     }
 
     pub fn reason(&self) -> &str {
@@ -23,18 +26,20 @@ impl Status {
     }
 }
 
-impl<T, U, V> From<(T, U, V)> for Status
+impl<T, U, V> TryFrom<(T, U, V)> for Status
 where
-    T: ToString,
+    Version: TryFrom<T>,
     V: ToString,
     StatusCode: From<U>,
 {
-    fn from(status: (T, U, V)) -> Status {
-        Status {
-            version: status.0.to_string(),
+    type Error = Error;
+
+    fn try_from(status: (T, U, V)) -> Result<Status> {
+        Ok(Status {
+            version: Version::try_from(status.0).map_err(|_| Error::StatusErr)?,
             code: StatusCode::from(status.1),
             reason: status.2.to_string(),
-        }
+        })
     }
 }
 
@@ -44,13 +49,13 @@ impl FromStr for Status {
     fn from_str(status_line: &str) -> Result<Status> {
         let mut status_line = status_line.trim().splitn(3, ' ');
 
-        let version = status_line.next().ok_or(Error::StatusErr)?;
-        let code: StatusCode = status_line.next().ok_or(Error::StatusErr)?.parse()?;
+        let version: Version = status_line.next().ok_or(Error::EmptyVersion)?.parse()?;
+        let code: StatusCode = status_line.next().ok_or(Error::EmptyStatus)?.parse()?;
         let reason = status_line
             .next()
             .unwrap_or_else(|| code.reason().unwrap_or("Unknown"));
 
-        Ok(Status::from((version, u16::from(code), reason)))
+        Status::try_from((version, u16::from(code), reason))
     }
 }
 
@@ -95,6 +100,7 @@ impl StatusCode {
             100 => Some("Continue"),
             101 => Some("Switching Protocols"),
             102 => Some("Processing"),
+            103 => Some("Early Hints"),
             200 => Some("OK"),
             201 => Some("Created"),
             202 => Some("Accepted"),
@@ -111,6 +117,7 @@ impl StatusCode {
             303 => Some("See Other"),
             304 => Some("Not Modified"),
             305 => Some("Use Proxy"),
+            306 => Some("Switch Proxy"),
             307 => Some("Temporary Redirect"),
             308 => Some("Permanent Redirect"),
             400 => Some("Bad Request"),
@@ -136,6 +143,7 @@ impl StatusCode {
             422 => Some("Unprocessable Entity"),
             423 => Some("Locked"),
             424 => Some("Failed Dependency"),
+            425 => Some("Too Early"),
             426 => Some("Upgrade Required"),
             428 => Some("Precondition Required"),
             429 => Some("Too Many Requests"),
@@ -188,7 +196,7 @@ mod tests {
     use super::*;
 
     const STATUS_LINE: &str = "HTTP/1.1 200 OK";
-    const VERSION: &str = "HTTP/1.1";
+    const VERSION: Version = Version::Http11;
     const CODE: u16 = 200;
     const REASON: &str = "OK";
     const CODE_S: StatusCode = StatusCode(200);
@@ -297,7 +305,7 @@ mod tests {
 
     #[test]
     fn status_from() {
-        let status = Status::from((VERSION, CODE, REASON));
+        let status = Status::try_from((VERSION, CODE, REASON)).unwrap();
 
         assert_eq!(status.version(), VERSION);
         assert_eq!(status.status_code(), CODE_S);

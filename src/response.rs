@@ -5,6 +5,7 @@ use bytes::Bytes;
 use crate::error::{Error, Result};
 use crate::headers::Headers;
 use crate::status::{Status, StatusCode};
+use crate::Version;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Response {
@@ -17,7 +18,7 @@ impl Response {
     pub fn from_header(header: &[u8]) -> Result<Response> {
         let mut header = str::from_utf8(header)?.splitn(2, '\n');
 
-        let status = header.next().ok_or(Error::StatusErr)?.parse()?;
+        let status = header.next().ok_or(Error::EmptyStatus)?.parse()?;
         let headers = header.next().ok_or(Error::HeadersErr)?.parse()?;
         let body = Bytes::new();
 
@@ -48,12 +49,12 @@ impl Response {
         self.status.status_code()
     }
 
-    pub fn version(&self) -> &str {
-        &self.status.version()
+    pub fn version(&self) -> Version {
+        self.status.version()
     }
 
     pub fn reason(&self) -> &str {
-        &self.status.reason()
+        self.status.reason()
     }
 
     pub fn headers(&self) -> &Headers {
@@ -147,7 +148,7 @@ mod tests {
         let mut writer = Vec::new();
         let res = Response::try_from(RESPONSE, &mut writer).unwrap();
 
-        assert_eq!(res.version(), "HTTP/1.1");
+        assert_eq!(&res.version().to_string(), "HTTP/1.1");
     }
 
     #[test]

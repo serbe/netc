@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use crate::error::{Error, Result};
+use crate::Error;
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Headers(HashMap<String, String>);
@@ -23,7 +23,9 @@ impl Headers {
     }
 
     pub fn get<T: ToString + ?Sized>(&self, k: &T) -> Option<String> {
-        self.0.get(&k.to_string().to_lowercase()).map(|value| value.to_string())
+        self.0
+            .get(&k.to_string().to_lowercase())
+            .map(|value| value.to_string())
     }
 
     pub fn insert<T: ToString + ?Sized, U: ToString + ?Sized>(
@@ -56,7 +58,7 @@ impl Default for Headers {
 impl FromStr for Headers {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<Headers> {
+    fn from_str(s: &str) -> Result<Headers, Error> {
         let headers = s.trim();
 
         if headers.lines().all(|e| e.contains(':')) {

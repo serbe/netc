@@ -4,16 +4,15 @@ use tokio::net::TcpStream;
 use tokio_rustls::{rustls::ClientConfig, webpki::DNSNameRef, TlsConnector};
 use url::Url;
 
-use crate::error::{Error, Result};
-use crate::stream::MaybeHttpsStream;
+use crate::{Error, MaybeHttpsStream};
 
 #[derive(Debug)]
 pub struct HttpStream {
-    stream: MaybeHttpsStream,
+    pub(crate) stream: MaybeHttpsStream,
 }
 
 impl HttpStream {
-    pub async fn connect(url: &Url) -> Result<Self> {
+    pub async fn connect(url: &Url) -> Result<Self, Error> {
         let socket_address = url.socket_addrs(|| None)?;
         let target = socket_address.get(0).map_or(Err(Error::SocketAddr), Ok)?;
         let stream = TcpStream::connect(target).await?;

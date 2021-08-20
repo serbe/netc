@@ -13,7 +13,7 @@ pub mod version;
 
 pub use crate::client::Client;
 pub use crate::client_builder::ClientBuilder;
-pub use crate::error::{Error, Result};
+pub use crate::error::Error;
 pub use crate::headers::Headers;
 pub use crate::http::HttpStream;
 pub use crate::method::Method;

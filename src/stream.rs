@@ -12,9 +12,7 @@ use tokio::net::TcpStream;
 use tokio_rustls::{client::TlsStream, rustls::ClientConfig, webpki::DNSNameRef, TlsConnector};
 use url::Url;
 
-use crate::response::Response;
-use crate::utils::IntoUrl;
-use crate::{error::Error, Version};
+use crate::{utils::IntoUrl, Error, Response, Version};
 
 pub enum MaybeHttpsStream {
     Http(TcpStream),
@@ -71,7 +69,7 @@ impl MaybeHttpsStream {
                 return Err(Error::HeaderToBig);
             }
         }
-        let response = Response::from_header(&header)?;
+        let mut response = Response::from_header(&header)?;
         let content_len = response.content_len()?;
         dbg!(content_len);
         let body = match (content_len > 0, response.status.version()) {
@@ -79,11 +77,8 @@ impl MaybeHttpsStream {
             (false, Version::Http11) => self.get_chunked_body().await?,
             _ => Bytes::new(),
         };
-        Ok(Response {
-            status: response.status,
-            headers: response.headers,
-            body,
-        })
+        response.body = body;
+        Ok(response)
     }
 
     pub async fn send_msg(&mut self, msg: &[u8]) -> Result<(), Error> {

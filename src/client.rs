@@ -1,20 +1,15 @@
 use bytes::Bytes;
 use url::Url;
 
-use crate::client_builder::ClientBuilder;
-use crate::error::Result;
-use crate::headers::Headers;
-use crate::request::Request;
-use crate::response::Response;
-use crate::stream::MaybeHttpsStream;
+use crate::{ClientBuilder, Error, Headers, MaybeHttpsStream, Request, Response};
 
 #[derive(Debug)]
 pub struct Client {
-    request: Request,
-    url: Url,
-    proxy: Option<Url>,
-    stream: MaybeHttpsStream,
-    response: Option<Response>,
+    pub(crate) request: Request,
+    pub(crate) url: Url,
+    pub(crate) proxy: Option<Url>,
+    pub(crate) stream: MaybeHttpsStream,
+    pub(crate) response: Option<Response>,
 }
 
 impl Client {
@@ -38,9 +33,10 @@ impl Client {
         }
     }
 
-    pub async fn send(&mut self) -> Result<Response> {
+    pub async fn send(&mut self) -> Result<Response, Error> {
         self.stream.send_msg(&self.request.to_vec()).await?;
-        let response = self.stream.get_response().await?;
+        let mut response = self.stream.get_response().await?;
+        response.method = self.request.method.clone();
         self.response = Some(response.clone());
         Ok(response)
     }

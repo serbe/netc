@@ -1,6 +1,6 @@
 use std::{fmt, str::FromStr};
 
-use crate::error::{Error, Result};
+use crate::Error;
 
 #[derive(Clone, Debug, PartialEq)]
 pub enum Method {
@@ -40,7 +40,7 @@ impl Default for Method {
 impl FromStr for Method {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self> {
+    fn from_str(s: &str) -> Result<Self, Error> {
         match s.to_ascii_uppercase().as_str() {
             "OPTIONS" => Ok(Method::Options),
             "GET" => Ok(Method::Get),

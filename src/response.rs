@@ -2,20 +2,18 @@ use std::{io::Write, str};
 
 use bytes::Bytes;
 
-use crate::error::{Error, Result};
-use crate::headers::Headers;
-use crate::status::{Status, StatusCode};
-use crate::Version;
+use crate::{Error, Headers, Method, Status, StatusCode, Version};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Response {
     pub status: Status,
     pub headers: Headers,
+    pub method: Method,
     pub body: Bytes,
 }
 
 impl Response {
-    pub fn from_header(header: &[u8]) -> Result<Response> {
+    pub fn from_header(header: &[u8]) -> Result<Response, Error> {
         let mut header = str::from_utf8(header)?.splitn(2, '\n');
 
         let status = header.next().ok_or(Error::EmptyStatus)?.parse()?;
@@ -25,11 +23,12 @@ impl Response {
         Ok(Response {
             status,
             headers,
+            method: Method::Get,
             body,
         })
     }
 
-    pub fn try_from<T: Write>(res: &[u8], writer: &mut T) -> Result<Response> {
+    pub fn try_from<T: Write>(res: &[u8], writer: &mut T) -> Result<Response, Error> {
         if res.is_empty() {
             Err(Error::EmptyResponse)
         } else {
@@ -61,7 +60,11 @@ impl Response {
         &self.headers
     }
 
-    pub fn content_len(&self) -> Result<usize> {
+    pub fn header(&self, value: &str) -> Option<String> {
+        self.headers.get(value)
+    }
+
+    pub fn content_len(&self) -> Result<usize, Error> {
         match self.headers().get("Content-Length") {
             Some(p) => Ok(p.parse()?),
             None => Ok(0),
@@ -72,8 +75,49 @@ impl Response {
         self.body.clone()
     }
 
-    pub fn text(&self) -> Result<String> {
+    pub fn text(&self) -> Result<String, Error> {
         Ok(String::from_utf8_lossy(&self.body).to_string())
+    }
+
+    pub fn read_body(&self) {
+        let is_http10 = self.status.version() == Version::Http10;
+        let is_close = self
+            .header("connection")
+            .map(|c| c.eq_ignore_ascii_case("close"))
+            .unwrap_or(false);
+
+        let has_no_body = self.method == Method::Head || self.status_code().is_nobody();
+
+        let is_chunked = self
+            .header("transfer-encoding")
+            .map(|enc| !enc.is_empty()) // whatever it says, do chunked
+            .unwrap_or(false);
+
+        let _use_chunked = !is_http10 && !has_no_body && is_chunked;
+
+        let _limit_bytes = if is_http10 || is_close {
+            None
+        } else if has_no_body {
+            // head requests never have a body
+            Some(0)
+        } else {
+            self.content_len().ok()
+        };
+
+        // let stream = self.stream.expect("No reader in response?!");
+        // let unit = self.unit;
+        // let deadline = unit.as_ref().and_then(|u| u.deadline);
+        // let stream = DeadlineStream::new(stream, deadline);
+
+        // match (use_chunked, limit_bytes) {
+        //     (true, _) => {
+        //         Box::new(PoolReturnRead::new(unit, ChunkDecoder::new(stream))) as Box<dyn Read>
+        //     }
+        //     (false, Some(len)) => {
+        //         Box::new(PoolReturnRead::new(unit, LimitedRead::new(stream, len)))
+        //     }
+        //     (false, None) => Box::new(stream),
+        // }
     }
 }
 

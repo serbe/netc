@@ -1,6 +1,6 @@
 use std::{fmt, str::FromStr};
 
-use crate::error::{Error, Result};
+use crate::Error;
 
 #[derive(PartialEq, Copy, Clone)]
 pub enum Version {
@@ -32,7 +32,7 @@ impl Default for Version {
 impl FromStr for Version {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<Self> {
+    fn from_str(s: &str) -> Result<Self, Error> {
         match s.to_uppercase().as_str() {
             "HTTP/0.9" => Ok(Version::Http09),
             "HTTP/1.0" => Ok(Version::Http10),

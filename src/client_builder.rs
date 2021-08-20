@@ -3,26 +3,19 @@ use std::{convert::TryInto, time::Duration};
 use bytes::Bytes;
 use url::Url;
 
-use crate::client::Client;
-use crate::error::{Error, Result};
-use crate::headers::Headers;
-use crate::method::Method;
-use crate::request::Request;
-use crate::stream::MaybeHttpsStream;
-use crate::utils::IntoUrl;
-use crate::version::Version;
+use crate::{utils::IntoUrl, Client, Error, Headers, MaybeHttpsStream, Method, Request, Version};
 
 #[derive(Debug, PartialEq)]
 pub struct ClientBuilder {
-    url: Option<Url>,
-    headers: Headers,
-    method: Method,
-    version: Version,
-    body: Option<Bytes>,
-    proxy: Option<Url>,
-    nodelay: bool,
-    timeout: Option<Duration>,
-    connect_timeout: Option<Duration>,
+    pub(crate) url: Option<Url>,
+    pub(crate) headers: Headers,
+    pub(crate) method: Method,
+    pub(crate) version: Version,
+    pub(crate) body: Option<Bytes>,
+    pub(crate) proxy: Option<Url>,
+    pub(crate) nodelay: bool,
+    pub(crate) timeout: Option<Duration>,
+    pub(crate) connect_timeout: Option<Duration>,
 }
 
 impl Default for ClientBuilder {
@@ -47,7 +40,7 @@ impl ClientBuilder {
         }
     }
 
-    pub async fn build(self) -> Result<Client> {
+    pub async fn build(self) -> Result<Client, Error> {
         let url = self.url.ok_or(Error::EmptyUrl)?;
         let mut request = Request::new(&url, self.proxy.as_ref());
         request.headers(self.headers);

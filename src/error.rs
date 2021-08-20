@@ -1,8 +1,6 @@
-use std::{io, num, result, str};
+use std::{io, num, str};
 
 use thiserror::Error as ThisError;
-
-pub type Result<T> = result::Result<T, Error>;
 
 #[derive(Debug, ThisError)]
 pub enum Error {

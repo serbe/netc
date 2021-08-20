@@ -1,9 +1,6 @@
 use std::{convert::TryFrom, fmt, str::FromStr};
 
-use crate::{
-    error::{Error, Result},
-    Version,
-};
+use crate::{Error, Version};
 
 #[derive(PartialEq, Debug, Clone)]
 pub struct Status {
@@ -24,6 +21,10 @@ impl Status {
     pub fn reason(&self) -> &str {
         &self.reason
     }
+
+    pub fn as_u16(&self) -> u16 {
+        self.code.0
+    }
 }
 
 impl<T, U, V> TryFrom<(T, U, V)> for Status
@@ -34,7 +35,7 @@ where
 {
     type Error = Error;
 
-    fn try_from(status: (T, U, V)) -> Result<Status> {
+    fn try_from(status: (T, U, V)) -> Result<Status, Error> {
         Ok(Status {
             version: Version::try_from(status.0).map_err(|_| Error::StatusErr)?,
             code: StatusCode::from(status.1),
@@ -46,7 +47,7 @@ where
 impl FromStr for Status {
     type Err = Error;
 
-    fn from_str(status_line: &str) -> Result<Status> {
+    fn from_str(status_line: &str) -> Result<Status, Error> {
         let mut status_line = status_line.trim().splitn(3, ' ');
 
         let version: Version = status_line.next().ok_or(Error::EmptyVersion)?.parse()?;
@@ -63,7 +64,7 @@ impl FromStr for Status {
 pub struct StatusCode(u16);
 
 impl StatusCode {
-    pub fn from_u16(code: u16) -> Result<StatusCode> {
+    pub fn from_u16(code: u16) -> Result<StatusCode, Error> {
         if !(100..600).contains(&code) {
             return Err(Error::InvalidStatusCode(code));
         }
@@ -89,6 +90,10 @@ impl StatusCode {
 
     pub fn is_server_err(self) -> bool {
         self.0 >= 500 && self.0 < 600
+    }
+
+    pub fn is_nobody(self) -> bool {
+        self.is_info() || self.0 == 204 || self.0 == 304
     }
 
     pub fn is<F: FnOnce(u16) -> bool>(self, f: F) -> bool {
@@ -186,7 +191,7 @@ impl fmt::Display for StatusCode {
 impl FromStr for StatusCode {
     type Err = Error;
 
-    fn from_str(s: &str) -> Result<StatusCode> {
+    fn from_str(s: &str) -> Result<StatusCode, Error> {
         StatusCode::from_u16(s.parse()?)
     }
 }

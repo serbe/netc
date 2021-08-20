@@ -1,7 +1,7 @@
 use base64::encode;
 use url::Url;
 
-use crate::error::{Error, Result};
+use crate::Error;
 
 pub fn base64_auth(url: &Url) -> Option<String> {
     match (url.username(), url.password()) {
@@ -36,13 +36,13 @@ impl IntoUrl for &String {}
 impl<'a> IntoUrl for &'a str {}
 
 pub trait IntoUrlSealed {
-    fn into_url(self) -> Result<Url>;
+    fn into_url(self) -> Result<Url, Error>;
 
     fn as_str(&self) -> &str;
 }
 
 impl IntoUrlSealed for Url {
-    fn into_url(self) -> Result<Url> {
+    fn into_url(self) -> Result<Url, Error> {
         if self.has_host() {
             Ok(self)
         } else {
@@ -56,7 +56,7 @@ impl IntoUrlSealed for Url {
 }
 
 impl IntoUrlSealed for &Url {
-    fn into_url(self) -> Result<Url> {
+    fn into_url(self) -> Result<Url, Error> {
         if self.has_host() {
             Ok(self.clone())
         } else {
@@ -70,7 +70,7 @@ impl IntoUrlSealed for &Url {
 }
 
 impl<'a> IntoUrlSealed for &'a str {
-    fn into_url(self) -> Result<Url> {
+    fn into_url(self) -> Result<Url, Error> {
         Url::parse(self)?.into_url()
     }
 
@@ -80,7 +80,7 @@ impl<'a> IntoUrlSealed for &'a str {
 }
 
 impl IntoUrlSealed for &String {
-    fn into_url(self) -> Result<Url> {
+    fn into_url(self) -> Result<Url, Error> {
         (&**self).into_url()
     }
 
@@ -90,7 +90,7 @@ impl IntoUrlSealed for &String {
 }
 
 impl<'a> IntoUrlSealed for String {
-    fn into_url(self) -> Result<Url> {
+    fn into_url(self) -> Result<Url, Error> {
         (&*self).into_url()
     }
 

@@ -4,19 +4,19 @@ use base64::encode;
 use bytes::Bytes;
 use url::Url;
 
-use crate::headers::Headers;
-use crate::method::Method;
-use crate::utils::{host_header, host_port};
-use crate::version::Version;
+use crate::{
+    utils::{host_header, host_port},
+    Headers, Method, Version,
+};
 
 #[derive(Clone, Debug)]
 pub struct Request {
-    method: Method,
-    request_uri: String,
-    version: Version,
-    headers: Headers,
-    host: String,
-    body: Option<Bytes>,
+    pub(crate) method: Method,
+    pub(crate) request_uri: String,
+    pub(crate) version: Version,
+    pub(crate) headers: Headers,
+    pub(crate) host: String,
+    pub(crate) body: Option<Bytes>,
 }
 
 impl Request {

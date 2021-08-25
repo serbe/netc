@@ -2,12 +2,9 @@ use std::convert::TryInto;
 
 use base64::encode;
 use bytes::Bytes;
-use url::Url;
+use uri::Uri;
 
-use crate::{
-    utils::{host_header, host_port},
-    Headers, Method, Version,
-};
+use crate::{Headers, Method, Version};
 
 #[derive(Clone, Debug)]
 pub struct Request {
@@ -20,17 +17,17 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn new(url: &Url, proxy: Option<&Url>) -> Request {
+    pub fn new(uri: &Uri, proxy: Option<&Uri>) -> Request {
         let request_uri = match proxy {
-            Some(_) => url.to_string(),
-            None => url.path().to_string(),
+            Some(_) => uri.absolute_uri(),
+            None => uri.abs_path(),
         };
         Request {
             method: Method::Get,
-            request_uri,
+            request_uri: request_uri.to_string(),
             version: Version::Http11,
-            headers: Headers::default_http(&host_header(url)),
-            host: host_port(url),
+            headers: Headers::default_http(uri.host_header()),
+            host: uri.host_header().to_string(),
             body: None,
         }
     }
@@ -179,8 +176,8 @@ mod tests {
 
     #[test]
     fn new_request() {
-        let url = "https://api.ipify.org:1234/123/as".parse().unwrap();
-        let mut request = Request::new(&url, None);
+        let uri = "https://api.ipify.org:1234/123/as".parse().unwrap();
+        let mut request = Request::new(&uri, None);
         request.body(BODY);
         assert_eq!(CONTENT_LENGTH, request.content_length());
         assert_eq!(BODY, request.get_body().unwrap().to_owned());

@@ -1,11 +1,7 @@
-use std::{io, num, str};
-
-use thiserror::Error as ThisError;
-
-#[derive(Debug, ThisError)]
+#[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("empty url")]
-    EmptyUrl,
+    #[error("empty uri")]
+    EmptyUri,
     #[error("empty host")]
     EmptyHost,
     #[error("wrong http")]
@@ -25,11 +21,11 @@ pub enum Error {
     #[error("bad headers")]
     HeadersErr,
     #[error("io error")]
-    Io(#[from] io::Error),
+    Io(#[from] std::io::Error),
     #[error("parse int")]
-    ParseInt(#[from] num::ParseIntError),
+    ParseInt(#[from] std::num::ParseIntError),
     #[error("utf8")]
-    FromUtf8(#[from] str::Utf8Error),
+    FromUtf8(#[from] std::str::Utf8Error),
     #[error("Socks5")]
     Socks5(#[from] rsl::error::Error),
     #[error("header incomplete")]
@@ -44,8 +40,8 @@ pub enum Error {
     InvalidDnsNameError(#[from] tokio_rustls::webpki::InvalidDNSNameError),
     #[error("No get socket address")]
     SocketAddr,
-    #[error("UrlParseError")]
-    UrlParseError(#[from] url::ParseError),
+    #[error("UriParseError")]
+    UriError(#[from] uri::Error),
     #[error("Empty version")]
     EmptyVersion,
     #[error("Empty status")]
@@ -55,7 +51,7 @@ pub enum Error {
 impl PartialEq for Error {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Error::EmptyUrl, Error::EmptyUrl) => true,
+            (Error::EmptyUri, Error::EmptyUri) => true,
             (Error::EmptyHost, Error::EmptyHost) => true,
             (Error::WrongHttp, Error::WrongHttp) => true,
             (Error::EmptyResponse, Error::EmptyResponse) => true,
@@ -91,7 +87,7 @@ impl PartialEq for Error {
                 dns == other_dns
             }
             (Error::SocketAddr, Error::SocketAddr) => true,
-            (Error::UrlParseError(err), Error::UrlParseError(other_err)) => err == other_err,
+            (Error::UriError(err), Error::UriError(other_err)) => err == other_err,
             (Error::EmptyVersion, Error::EmptyVersion) => true,
             (Error::EmptyStatus, Error::EmptyStatus) => true,
             _ => false,

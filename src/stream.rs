@@ -7,12 +7,14 @@ use std::{
 
 use bytes::Bytes;
 use rsl::socks5;
-use tokio::io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, ReadBuf};
-use tokio::net::TcpStream;
+use tokio::{
+    io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, ReadBuf},
+    net::TcpStream,
+};
 use tokio_rustls::{client::TlsStream, rustls::ClientConfig, webpki::DNSNameRef, TlsConnector};
-use url::Url;
+use uri::{into_uri::IntoUri, Uri};
 
-use crate::{utils::IntoUrl, Error, Response, Version};
+use crate::{Error, Response, Version};
 
 pub enum MaybeHttpsStream {
     Http(TcpStream),
@@ -20,27 +22,26 @@ pub enum MaybeHttpsStream {
 }
 
 impl MaybeHttpsStream {
-    pub async fn new<U: IntoUrl>(value: U) -> Result<Self, Error> {
-        let url = value.into_url()?;
-        let socket_address = url.socket_addrs(|| None)?;
-        let stream =
-            TcpStream::connect(socket_address.get(0).map_or(Err(Error::SocketAddr), Ok)?).await?;
-        MaybeHttpsStream::maybe_ssl(&url, stream).await
+    pub async fn new<U: IntoUri>(value: U) -> Result<Self, Error> {
+        let uri = value.into_uri()?;
+        let socket_addr = uri.socket_addr()?;
+        let stream = TcpStream::connect(socket_addr).await?;
+        MaybeHttpsStream::maybe_ssl(&uri, stream).await
     }
 
-    pub async fn socks(proxy: &Url, target: &Url) -> Result<Self, Error> {
-        let stream = socks5::connect_url(proxy, target).await?;
+    pub async fn socks(proxy: &Uri, target: &Uri) -> Result<Self, Error> {
+        let stream = socks5::connect_uri(proxy, target).await?;
         MaybeHttpsStream::maybe_ssl(target, stream).await
     }
 
-    async fn maybe_ssl(url: &Url, stream: TcpStream) -> Result<Self, Error> {
-        if url.scheme() == "https" {
+    async fn maybe_ssl(uri: &Uri, stream: TcpStream) -> Result<Self, Error> {
+        if uri.scheme() == "https" {
             let mut config = ClientConfig::new();
             config
                 .root_store
                 .add_server_trust_anchors(&webpki_roots::TLS_SERVER_ROOTS);
             let connector = TlsConnector::from(Arc::new(config));
-            let dns_name = DNSNameRef::try_from_ascii_str(url.host_str().ok_or(Error::EmptyHost)?)?;
+            let dns_name = DNSNameRef::try_from_ascii_str(uri.host_str())?;
             let stream = connector.connect(dns_name, stream).await?;
             Ok(MaybeHttpsStream::from(stream))
         } else {
@@ -188,7 +189,6 @@ impl AsyncWrite for MaybeHttpsStream {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::utils::base64_auth;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
     #[tokio::test]
@@ -247,9 +247,9 @@ mod tests {
             Ok(it) => it,
             _ => return,
         };
-        let url = http_proxy.parse::<Url>().unwrap();
+        let uri = http_proxy.parse::<Uri>().unwrap();
         let mut client = MaybeHttpsStream::new(&http_proxy).await.unwrap();
-        let auth = base64_auth(&url).unwrap();
+        let auth = uri.base64_auth().unwrap();
 
         let body = format!("GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\nProxy-Authorization: Basic {}\r\n\r\n", auth);
         client.write_all(body.as_bytes()).await.unwrap();

@@ -1,18 +1,18 @@
 use std::{convert::TryInto, time::Duration};
 
 use bytes::Bytes;
-use url::Url;
+use uri::{IntoUri, Uri};
 
-use crate::{utils::IntoUrl, Client, Error, Headers, MaybeHttpsStream, Method, Request, Version};
+use crate::{Client, Error, Headers, MaybeHttpsStream, Method, Request, Version};
 
 #[derive(Debug, PartialEq)]
 pub struct ClientBuilder {
-    pub(crate) url: Option<Url>,
+    pub(crate) uri: Option<Uri>,
     pub(crate) headers: Headers,
     pub(crate) method: Method,
     pub(crate) version: Version,
     pub(crate) body: Option<Bytes>,
-    pub(crate) proxy: Option<Url>,
+    pub(crate) proxy: Option<Uri>,
     pub(crate) nodelay: bool,
     pub(crate) timeout: Option<Duration>,
     pub(crate) connect_timeout: Option<Duration>,
@@ -28,7 +28,7 @@ impl ClientBuilder {
     pub fn new() -> Self {
         let headers = Headers::new();
         ClientBuilder {
-            url: None,
+            uri: None,
             headers,
             method: Method::Get,
             version: Version::Http11,
@@ -41,44 +41,44 @@ impl ClientBuilder {
     }
 
     pub async fn build(self) -> Result<Client, Error> {
-        let url = self.url.ok_or(Error::EmptyUrl)?;
-        let mut request = Request::new(&url, self.proxy.as_ref());
+        let uri = self.uri.ok_or(Error::EmptyUri)?;
+        let mut request = Request::new(&uri, self.proxy.as_ref());
         request.headers(self.headers);
         let stream = match &self.proxy {
             Some(proxy) => match proxy.scheme() {
-                "socks5" | "socks5h" => Ok(MaybeHttpsStream::socks(proxy, &url).await?),
+                "socks5" | "socks5h" => Ok(MaybeHttpsStream::socks(proxy, &uri).await?),
                 "http" | "https" => {
-                    if let (username, Some(password)) = (proxy.username(), proxy.password()) {
+                    if let (Some(username), Some(password)) = (proxy.username(), proxy.password()) {
                         request.set_proxy_basic_auth(username, password);
                     };
                     Ok(MaybeHttpsStream::new(proxy).await?)
                 }
                 scheme => Err(Error::UnsupportedProxyScheme(scheme.to_owned())),
             },
-            None => Ok(MaybeHttpsStream::new(&url).await?),
+            None => Ok(MaybeHttpsStream::new(&uri).await?),
         }?;
-        if let (username, Some(password)) = (url.username(), url.password()) {
-            if let "http" | "https" = url.scheme() {
+        if let (Some(username), Some(password)) = (uri.username(), uri.password()) {
+            if let "http" | "https" = uri.scheme() {
                 request.set_basic_auth(username, password);
             }
         }
         request.method(self.method);
         request.version(self.version);
         request.opt_body(self.body);
-        Ok(Client::new(request, url, self.proxy, stream, None))
+        Ok(Client::new(request, uri, self.proxy, stream, None))
     }
 
-    pub fn url<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
-        match value.into_url() {
-            Ok(url) => self.url = Some(url),
-            _ => self.url = None,
+    pub fn uri<U: IntoUri>(mut self, value: U) -> ClientBuilder {
+        match value.into_uri() {
+            Ok(uri) => self.uri = Some(uri),
+            _ => self.uri = None,
         }
         self
     }
 
-    pub fn proxy<P: IntoUrl>(mut self, value: P) -> ClientBuilder {
-        match value.into_url() {
-            Ok(url) => self.proxy = Some(url),
+    pub fn proxy<P: IntoUri>(mut self, value: P) -> ClientBuilder {
+        match value.into_uri() {
+            Ok(uri) => self.proxy = Some(uri),
             _ => self.proxy = None,
         }
         self
@@ -115,37 +115,37 @@ impl ClientBuilder {
         self
     }
 
-    pub fn get<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
-        match value.into_url() {
-            Ok(url) => self.url = Some(url),
-            _ => self.url = None,
+    pub fn get<U: IntoUri>(mut self, value: U) -> ClientBuilder {
+        match value.into_uri() {
+            Ok(uri) => self.uri = Some(uri),
+            _ => self.uri = None,
         }
         self.method = Method::Get;
         self
     }
 
-    pub fn post<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
-        match value.into_url() {
-            Ok(url) => self.url = Some(url),
-            _ => self.url = None,
+    pub fn post<U: IntoUri>(mut self, value: U) -> ClientBuilder {
+        match value.into_uri() {
+            Ok(uri) => self.uri = Some(uri),
+            _ => self.uri = None,
         }
         self.method = Method::Post;
         self
     }
 
-    pub fn options<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
-        match value.into_url() {
-            Ok(url) => self.url = Some(url),
-            _ => self.url = None,
+    pub fn options<U: IntoUri>(mut self, value: U) -> ClientBuilder {
+        match value.into_uri() {
+            Ok(uri) => self.uri = Some(uri),
+            _ => self.uri = None,
         }
         self.method = Method::Options;
         self
     }
 
-    pub fn delete<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
-        match value.into_url() {
-            Ok(url) => self.url = Some(url),
-            _ => self.url = None,
+    pub fn delete<U: IntoUri>(mut self, value: U) -> ClientBuilder {
+        match value.into_uri() {
+            Ok(uri) => self.uri = Some(uri),
+            _ => self.uri = None,
         }
         self.method = Method::Delete;
         self
@@ -207,10 +207,10 @@ impl ClientBuilder {
 
     pub fn referer<U>(self, value: U) -> ClientBuilder
     where
-        U: TryInto<Url>,
+        U: TryInto<Uri>,
     {
         match value.try_into() {
-            Ok(url) => self.header("Referer", &url),
+            Ok(uri) => self.header("Referer", &uri),
             _ => self,
         }
     }

@@ -2,16 +2,16 @@
 authors = ["Valeriy Kostikov <mkoctuk@gmail.com>"]
 edition = "2018"
 name = "netc"
-version = "0.6.7"
+version = "0.7.0"
 
 [dependencies]
 base64 = "0.13"
 bytes = "1.0"
-rsl = {version = "0.5", git = "https://github.com/serbe/rsl"}
+rsl = {version = "0.6", git = "https://github.com/serbe/rsl"}
 thiserror = "1.0"
 tokio = {version = "1", features = ["net", "io-util"]}
 tokio-rustls = "0.22"
-url = "2.2"
+uri = {version = "0.4", git = "https://github.com/serbe/uri"}
 webpki-roots = "0.21"
 
 [dev-dependencies]

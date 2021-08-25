@@ -1,13 +1,13 @@
 use bytes::Bytes;
-use url::Url;
+use uri::Uri;
 
 use crate::{ClientBuilder, Error, Headers, MaybeHttpsStream, Request, Response};
 
 #[derive(Debug)]
 pub struct Client {
     pub(crate) request: Request,
-    pub(crate) url: Url,
-    pub(crate) proxy: Option<Url>,
+    pub(crate) uri: Uri,
+    pub(crate) proxy: Option<Uri>,
     pub(crate) stream: MaybeHttpsStream,
     pub(crate) response: Option<Response>,
 }
@@ -19,14 +19,14 @@ impl Client {
 
     pub fn new(
         request: Request,
-        url: Url,
-        proxy: Option<Url>,
+        uri: Uri,
+        proxy: Option<Uri>,
         stream: MaybeHttpsStream,
         response: Option<Response>,
     ) -> Client {
         Client {
             request,
-            url,
+            uri,
             proxy,
             stream,
             response,
@@ -53,8 +53,8 @@ impl Client {
         self.request.get_headers()
     }
 
-    pub fn url(&self) -> Url {
-        self.url.clone()
+    pub fn uri(&self) -> Uri {
+        self.uri.clone()
     }
 
     pub fn request(&self) -> Request {

@@ -1,100 +1,75 @@
-use base64::encode;
-use url::Url;
+// use uri::Uri;
 
-use crate::Error;
+// use crate::Error;
 
-pub fn base64_auth(url: &Url) -> Option<String> {
-    match (url.username(), url.password()) {
-        (user, Some(pass)) => Some(encode(&format!("{}:{}", user, pass))),
-        _ => None,
-    }
-}
+// pub trait IntoUri: IntoUriSealed {}
 
-pub fn host_port(url: &Url) -> String {
-    match (url.host_str(), url.port_or_known_default()) {
-        (Some(host), Some(port)) => format!("{}:{}", host, port),
-        (Some(host), None) => host.to_string(),
-        _ => String::new(),
-    }
-}
+// impl IntoUri for Uri {}
+// impl IntoUri for &Uri {}
+// impl IntoUri for String {}
+// impl IntoUri for &String {}
+// impl<'a> IntoUri for &'a str {}
 
-pub fn host_header(url: &Url) -> String {
-    match (url.host_str(), url.port()) {
-        (Some(host), Some(port)) if Some(port) == url.port_or_known_default() => host.to_string(),
-        (Some(host), Some(port)) => format!("{}, {}", host, port),
-        (Some(host), None) => host.to_string(),
-        _ => String::new(),
-    }
-}
+// pub trait IntoUriSealed {
+//     fn into_uri(self) -> Result<Uri, Error>;
 
-pub trait IntoUrl: IntoUrlSealed {}
+//     fn as_str(&self) -> &str;
+// }
 
-impl IntoUrl for Url {}
-impl IntoUrl for &Url {}
-impl IntoUrl for String {}
-impl IntoUrl for &String {}
-impl<'a> IntoUrl for &'a str {}
+// impl IntoUriSealed for Uri {
+//     fn into_uri(self) -> Result<Uri, Error> {
+//         if self.has_host() {
+//             Ok(self)
+//         } else {
+//             Err(Error::EmptyHost)
+//         }
+//     }
 
-pub trait IntoUrlSealed {
-    fn into_url(self) -> Result<Url, Error>;
+//     fn as_str(&self) -> &str {
+//         self.as_ref()
+//     }
+// }
 
-    fn as_str(&self) -> &str;
-}
+// impl IntoUriSealed for &Uri {
+//     fn into_uri(self) -> Result<Uri, Error> {
+//         if self.has_host() {
+//             Ok(self.clone())
+//         } else {
+//             Err(Error::EmptyHost)
+//         }
+//     }
 
-impl IntoUrlSealed for Url {
-    fn into_url(self) -> Result<Url, Error> {
-        if self.has_host() {
-            Ok(self)
-        } else {
-            Err(Error::EmptyHost)
-        }
-    }
+//     fn as_str(&self) -> &str {
+//         self.as_ref()
+//     }
+// }
 
-    fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+// impl<'a> IntoUriSealed for &'a str {
+//     fn into_uri(self) -> Result<Uri, Error> {
+//         Uri::parse(self)?.into_uri()
+//     }
 
-impl IntoUrlSealed for &Url {
-    fn into_url(self) -> Result<Url, Error> {
-        if self.has_host() {
-            Ok(self.clone())
-        } else {
-            Err(Error::EmptyHost)
-        }
-    }
+//     fn as_str(&self) -> &str {
+//         self
+//     }
+// }
 
-    fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+// impl IntoUriSealed for &String {
+//     fn into_uri(self) -> Result<Uri, Error> {
+//         (&**self).into_uri()
+//     }
 
-impl<'a> IntoUrlSealed for &'a str {
-    fn into_url(self) -> Result<Url, Error> {
-        Url::parse(self)?.into_url()
-    }
+//     fn as_str(&self) -> &str {
+//         self.as_ref()
+//     }
+// }
 
-    fn as_str(&self) -> &str {
-        self
-    }
-}
+// impl<'a> IntoUriSealed for String {
+//     fn into_uri(self) -> Result<Uri, Error> {
+//         (&*self).into_uri()
+//     }
 
-impl IntoUrlSealed for &String {
-    fn into_url(self) -> Result<Url, Error> {
-        (&**self).into_url()
-    }
-
-    fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
-
-impl<'a> IntoUrlSealed for String {
-    fn into_url(self) -> Result<Url, Error> {
-        (&*self).into_url()
-    }
-
-    fn as_str(&self) -> &str {
-        self.as_ref()
-    }
-}
+//     fn as_str(&self) -> &str {
+//         self.as_ref()
+//     }
+// }

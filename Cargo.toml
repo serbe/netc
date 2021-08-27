@@ -2,7 +2,7 @@
 authors = ["Valeriy Kostikov <mkoctuk@gmail.com>"]
 edition = "2018"
 name = "netc"
-version = "0.7.0"
+version = "0.7.1"
 
 [dependencies]
 base64 = "0.13"

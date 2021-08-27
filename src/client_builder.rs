@@ -3,7 +3,7 @@ use std::{convert::TryInto, time::Duration};
 use bytes::Bytes;
 use uri::{IntoUri, Uri};
 
-use crate::{Client, Error, Headers, MaybeHttpsStream, Method, Request, Version};
+use crate::{Client, Error, Headers, HttpStream, Method, Request, Version};
 
 #[derive(Debug, PartialEq)]
 pub struct ClientBuilder {
@@ -46,16 +46,16 @@ impl ClientBuilder {
         request.headers(self.headers);
         let stream = match &self.proxy {
             Some(proxy) => match proxy.scheme() {
-                "socks5" | "socks5h" => Ok(MaybeHttpsStream::socks(proxy, &uri).await?),
+                "socks5" | "socks5h" => Ok(HttpStream::socks(proxy, &uri).await?),
                 "http" | "https" => {
                     if let (Some(username), Some(password)) = (proxy.username(), proxy.password()) {
                         request.set_proxy_basic_auth(username, password);
                     };
-                    Ok(MaybeHttpsStream::new(proxy).await?)
+                    Ok(HttpStream::new(proxy).await?)
                 }
                 scheme => Err(Error::UnsupportedProxyScheme(scheme.to_owned())),
             },
-            None => Ok(MaybeHttpsStream::new(&uri).await?),
+            None => Ok(HttpStream::new(&uri).await?),
         }?;
         if let (Some(username), Some(password)) = (uri.username(), uri.password()) {
             if let "http" | "https" = uri.scheme() {

@@ -20,11 +20,11 @@ impl Request {
     pub fn new(uri: &Uri, proxy: Option<&Uri>) -> Request {
         let request_uri = match proxy {
             Some(_) => uri.absolute_uri(),
-            None => uri.abs_path(),
+            None => uri.abs_path().to_string(),
         };
         Request {
             method: Method::Get,
-            request_uri: request_uri.to_string(),
+            request_uri,
             version: Version::Http11,
             headers: Headers::default_http(uri.host_header()),
             host: uri.host_header().to_string(),

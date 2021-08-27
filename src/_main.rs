@@ -8,14 +8,13 @@ pub use crate::method::Method;
 pub use crate::request::Request;
 pub use crate::response::Response;
 pub use crate::status::{Status, StatusCode};
-pub use crate::stream::MaybeHttpsStream;
+pub use crate::stream::HttpStream;
 pub use crate::version::Version;
 
 mod client;
 mod client_builder;
 mod error;
 mod headers;
-mod http;
 mod method;
 mod request;
 mod response;
@@ -45,7 +44,7 @@ async fn run() -> Result<(), Error> {
     // const SECURE_URL: &'static str = "https://www.socks-proxy.net/";
     // let ip = ip();
 
-    let client_builder = Client::builder().get("https://www.socks-proxy.net");
+    let client_builder = Client::builder().get("http://klava.org/");
     // .proxy(socks_proxy);
     // .proxy(http_proxy);
 
@@ -76,9 +75,9 @@ pub(crate) fn my_ip() -> String {
     use std::io::{Read, Write};
     use std::net::TcpStream;
 
-    let mut stream = TcpStream::connect("api.ipify.org:80").unwrap();
+    let mut stream = TcpStream::connect("udds.ru:443").unwrap();
     stream
-        .write_all(b"GET / HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
+        .write_all(b"GET / HTTP/1.1\r\nHost: udds.ru\r\n\r\n")
         .unwrap();
     stream.flush().unwrap();
     let mut buf = Vec::new();

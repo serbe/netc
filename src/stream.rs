@@ -1,5 +1,6 @@
 use std::{
     fmt, io,
+    io::Write,
     pin::Pin,
     sync::Arc,
     task::{Context, Poll},
@@ -16,22 +17,27 @@ use uri::{into_uri::IntoUri, Uri};
 
 use crate::{Error, Response, Version};
 
-pub enum MaybeHttpsStream {
+const CHUNK_MAX_SIZE: usize = 0x4000; // Maximum size of a TLS fragment
+const CHUNK_HEADER_MAX_SIZE: usize = 6; // four hex digits plus "\r\n"
+const CHUNK_FOOTER_SIZE: usize = 2; // "\r\n"
+const CHUNK_MAX_PAYLOAD_SIZE: usize = CHUNK_MAX_SIZE - CHUNK_HEADER_MAX_SIZE - CHUNK_FOOTER_SIZE;
+
+pub enum HttpStream {
     Http(TcpStream),
     Https(Box<TlsStream<TcpStream>>),
 }
 
-impl MaybeHttpsStream {
+impl HttpStream {
     pub async fn new<U: IntoUri>(value: U) -> Result<Self, Error> {
         let uri = value.into_uri()?;
         let socket_addr = uri.socket_addr()?;
         let stream = TcpStream::connect(socket_addr).await?;
-        MaybeHttpsStream::maybe_ssl(&uri, stream).await
+        HttpStream::maybe_ssl(&uri, stream).await
     }
 
     pub async fn socks(proxy: &Uri, target: &Uri) -> Result<Self, Error> {
         let stream = socks5::connect_uri(proxy, target).await?;
-        MaybeHttpsStream::maybe_ssl(target, stream).await
+        HttpStream::maybe_ssl(target, stream).await
     }
 
     async fn maybe_ssl(uri: &Uri, stream: TcpStream) -> Result<Self, Error> {
@@ -43,9 +49,9 @@ impl MaybeHttpsStream {
             let connector = TlsConnector::from(Arc::new(config));
             let dns_name = DNSNameRef::try_from_ascii_str(uri.host_str())?;
             let stream = connector.connect(dns_name, stream).await?;
-            Ok(MaybeHttpsStream::from(stream))
+            Ok(HttpStream::from(stream))
         } else {
-            Ok(MaybeHttpsStream::from(stream))
+            Ok(HttpStream::from(stream))
         }
     }
 
@@ -57,9 +63,36 @@ impl MaybeHttpsStream {
 
     pub async fn get_chunked_body(&mut self) -> Result<Bytes, Error> {
         let mut body = Vec::new();
-        self.read_exact(&mut body).await?;
-        dbg!(&body);
-        Ok(body.into())
+        let mut chunk = Vec::with_capacity(CHUNK_MAX_SIZE);
+
+        // self.read_to_end(&mut body).await?;
+        // dbg!("get_chunked_body", String::from_utf8_lossy(&body));
+
+        loop {
+            chunk.resize(CHUNK_HEADER_MAX_SIZE, 0);
+            let payload_size = self
+                .take(CHUNK_MAX_PAYLOAD_SIZE as u64)
+                .read_to_end(&mut chunk)
+                .await?;
+
+            // Then write the header
+            let header_str = format!("{:x}\r\n", payload_size);
+            let header = header_str.as_bytes();
+            assert!(header.len() <= CHUNK_HEADER_MAX_SIZE);
+            let start_index = CHUNK_HEADER_MAX_SIZE - header.len();
+            (&mut chunk[start_index..]).write_all(&header).unwrap();
+
+            // And add the footer
+            chunk.extend_from_slice(b"\r\n");
+
+            // Finally Write the chunk
+            std::io::Write::write_all(&mut body, &chunk[start_index..]).unwrap();
+
+            // On EOF, we wrote a 0 sized chunk. This is what the chunked encoding protocol requires.
+            if payload_size == 0 {
+                return Ok(body.into());
+            }
+        }
     }
 
     pub async fn get_response(&mut self) -> Result<Response, Error> {
@@ -89,33 +122,33 @@ impl MaybeHttpsStream {
     }
 }
 
-impl fmt::Debug for MaybeHttpsStream {
+impl fmt::Debug for HttpStream {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
-            MaybeHttpsStream::Http(s) => f.debug_tuple("Http").field(s).finish(),
-            MaybeHttpsStream::Https(s) => f.debug_tuple("Https").field(s).finish(),
+            HttpStream::Http(s) => f.debug_tuple("Http").field(s).finish(),
+            HttpStream::Https(s) => f.debug_tuple("Https").field(s).finish(),
         }
     }
 }
 
-impl From<TcpStream> for MaybeHttpsStream {
+impl From<TcpStream> for HttpStream {
     fn from(inner: TcpStream) -> Self {
-        MaybeHttpsStream::Http(inner)
+        HttpStream::Http(inner)
     }
 }
 
-impl From<TlsStream<TcpStream>> for MaybeHttpsStream {
+impl From<TlsStream<TcpStream>> for HttpStream {
     fn from(inner: TlsStream<TcpStream>) -> Self {
-        MaybeHttpsStream::Https(Box::new(inner))
+        HttpStream::Https(Box::new(inner))
     }
 }
 
-impl AsyncRead for MaybeHttpsStream {
+impl AsyncRead for HttpStream {
     // // #[inline]
     // unsafe fn prepare_uninitialized_buffer(&self, buf: &mut [std::mem::MaybeUninit<u8>]) -> bool {
     //     match self {
-    //         MaybeHttpsStream::Http(s) => s.prepare_uninitialized_buffer(buf),
-    //         MaybeHttpsStream::Https(s) => s.prepare_uninitialized_buffer(buf),
+    //         HttpStream::Http(s) => s.prepare_uninitialized_buffer(buf),
+    //         HttpStream::Https(s) => s.prepare_uninitialized_buffer(buf),
     //     }
     // }
 
@@ -126,8 +159,8 @@ impl AsyncRead for MaybeHttpsStream {
         buf: &mut ReadBuf,
     ) -> Poll<Result<(), io::Error>> {
         match Pin::get_mut(self) {
-            MaybeHttpsStream::Http(s) => Pin::new(s).poll_read(cx, buf),
-            MaybeHttpsStream::Https(s) => Pin::new(s).poll_read(cx, buf),
+            HttpStream::Http(s) => Pin::new(s).poll_read(cx, buf),
+            HttpStream::Https(s) => Pin::new(s).poll_read(cx, buf),
         }
     }
 
@@ -138,13 +171,13 @@ impl AsyncRead for MaybeHttpsStream {
     //     buf: &mut B,
     // ) -> Poll<Result<usize, io::Error>> {
     //     match Pin::get_mut(self) {
-    //         MaybeHttpsStream::Http(s) => Pin::new(s).poll_read_buf(cx, buf),
-    //         MaybeHttpsStream::Https(s) => Pin::new(s).poll_read_buf(cx, buf),
+    //         HttpStream::Http(s) => Pin::new(s).poll_read_buf(cx, buf),
+    //         HttpStream::Https(s) => Pin::new(s).poll_read_buf(cx, buf),
     //     }
     // }
 }
 
-impl AsyncWrite for MaybeHttpsStream {
+impl AsyncWrite for HttpStream {
     // #[inline]
     fn poll_write(
         self: Pin<&mut Self>,
@@ -152,24 +185,24 @@ impl AsyncWrite for MaybeHttpsStream {
         buf: &[u8],
     ) -> Poll<Result<usize, io::Error>> {
         match Pin::get_mut(self) {
-            MaybeHttpsStream::Http(s) => Pin::new(s).poll_write(cx, buf),
-            MaybeHttpsStream::Https(s) => Pin::new(s).poll_write(cx, buf),
+            HttpStream::Http(s) => Pin::new(s).poll_write(cx, buf),
+            HttpStream::Https(s) => Pin::new(s).poll_write(cx, buf),
         }
     }
 
     // #[inline]
     fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), io::Error>> {
         match Pin::get_mut(self) {
-            MaybeHttpsStream::Http(s) => Pin::new(s).poll_flush(cx),
-            MaybeHttpsStream::Https(s) => Pin::new(s).poll_flush(cx),
+            HttpStream::Http(s) => Pin::new(s).poll_flush(cx),
+            HttpStream::Https(s) => Pin::new(s).poll_flush(cx),
         }
     }
 
     // #[inline]
     fn poll_shutdown(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Result<(), io::Error>> {
         match Pin::get_mut(self) {
-            MaybeHttpsStream::Http(s) => Pin::new(s).poll_shutdown(cx),
-            MaybeHttpsStream::Https(s) => Pin::new(s).poll_shutdown(cx),
+            HttpStream::Http(s) => Pin::new(s).poll_shutdown(cx),
+            HttpStream::Https(s) => Pin::new(s).poll_shutdown(cx),
         }
     }
 
@@ -180,8 +213,8 @@ impl AsyncWrite for MaybeHttpsStream {
     //     buf: &mut B,
     // ) -> Poll<Result<usize, io::Error>> {
     //     match Pin::get_mut(self) {
-    //         MaybeHttpsStream::Http(s) => Pin::new(s).poll_write_buf(cx, buf),
-    //         MaybeHttpsStream::Https(s) => Pin::new(s).poll_write_buf(cx, buf),
+    //         HttpStream::Http(s) => Pin::new(s).poll_write_buf(cx, buf),
+    //         HttpStream::Https(s) => Pin::new(s).poll_write_buf(cx, buf),
     //     }
     // }
 }
@@ -193,7 +226,7 @@ mod tests {
 
     #[tokio::test]
     async fn http_stream() {
-        let mut client = MaybeHttpsStream::new("http://api.ipify.org").await.unwrap();
+        let mut client = HttpStream::new("http://api.ipify.org").await.unwrap();
         client
             .send_msg(b"GET / HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
             .await
@@ -206,9 +239,7 @@ mod tests {
 
     #[tokio::test]
     async fn https_stream() {
-        let mut client = MaybeHttpsStream::new("https://api.ipify.org")
-            .await
-            .unwrap();
+        let mut client = HttpStream::new("https://api.ipify.org").await.unwrap();
         client
             .write_all(b"GET / HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
             .await
@@ -227,7 +258,7 @@ mod tests {
             Ok(it) => it,
             _ => return,
         };
-        let mut client = MaybeHttpsStream::new(&http_proxy).await.unwrap();
+        let mut client = HttpStream::new(&http_proxy).await.unwrap();
         client
             .write_all(b"GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
             .await
@@ -248,7 +279,7 @@ mod tests {
             _ => return,
         };
         let uri = http_proxy.parse::<Uri>().unwrap();
-        let mut client = MaybeHttpsStream::new(&http_proxy).await.unwrap();
+        let mut client = HttpStream::new(&http_proxy).await.unwrap();
         let auth = uri.base64_auth().unwrap();
 
         let body = format!("GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\nProxy-Authorization: Basic {}\r\n\r\n", auth);

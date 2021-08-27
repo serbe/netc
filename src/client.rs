@@ -1,14 +1,14 @@
 use bytes::Bytes;
 use uri::Uri;
 
-use crate::{ClientBuilder, Error, Headers, MaybeHttpsStream, Request, Response};
+use crate::{ClientBuilder, Error, Headers, HttpStream, Request, Response};
 
 #[derive(Debug)]
 pub struct Client {
     pub(crate) request: Request,
     pub(crate) uri: Uri,
     pub(crate) proxy: Option<Uri>,
-    pub(crate) stream: MaybeHttpsStream,
+    pub(crate) stream: HttpStream,
     pub(crate) response: Option<Response>,
 }
 
@@ -21,7 +21,7 @@ impl Client {
         request: Request,
         uri: Uri,
         proxy: Option<Uri>,
-        stream: MaybeHttpsStream,
+        stream: HttpStream,
         response: Option<Response>,
     ) -> Client {
         Client {

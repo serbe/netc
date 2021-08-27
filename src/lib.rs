@@ -2,7 +2,6 @@ pub mod client;
 pub mod client_builder;
 pub mod error;
 pub mod headers;
-pub mod http;
 pub mod method;
 pub mod request;
 pub mod response;
@@ -14,12 +13,11 @@ pub use crate::client::Client;
 pub use crate::client_builder::ClientBuilder;
 pub use crate::error::Error;
 pub use crate::headers::Headers;
-pub use crate::http::HttpStream;
 pub use crate::method::Method;
 pub use crate::request::Request;
 pub use crate::response::Response;
 pub use crate::status::{Status, StatusCode};
-pub use crate::stream::MaybeHttpsStream;
+pub use crate::stream::HttpStream;
 pub use crate::version::Version;
 
 #[cfg(test)]

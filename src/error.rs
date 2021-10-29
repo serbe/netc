@@ -36,8 +36,8 @@ pub enum Error {
     InvalidStatusCode(u16),
     #[error("unsupported proxy scheme {0}")]
     UnsupportedProxyScheme(String),
-    #[error("InvalidDNSNameError")]
-    InvalidDnsNameError(#[from] tokio_rustls::webpki::InvalidDNSNameError),
+    #[error("InvalidDNSNameError {0}")]
+    InvalidDnsNameError(String),
     #[error("No get socket address")]
     SocketAddr,
     #[error("UriParseError")]

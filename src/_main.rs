@@ -42,9 +42,10 @@ async fn run() -> Result<(), Error> {
     // let http_proxy = "http://test:tset1@127.0.0.1:5656";
     // let socks_proxy = "socks5://test:tset1@127.0.0.1:5757";
     // const SECURE_URL: &'static str = "https://www.socks-proxy.net/";
+    const KLAVA_URL: &str = "http://klava.org/";
     // let ip = ip();
 
-    let client_builder = Client::builder().get("http://klava.org/");
+    let client_builder = Client::builder().get(KLAVA_URL);
     // .proxy(socks_proxy);
     // .proxy(http_proxy);
 
@@ -57,9 +58,9 @@ async fn run() -> Result<(), Error> {
     let request = client.request();
     println!("{:?}", request);
     let response = client.send().await.unwrap();
-    println!("{:?}", response);
-    // let body = response.text().unwrap();
-    // println!("{:?}", body);
+    // println!("{:?}", response);
+    let body = response.text().unwrap();
+    println!("{:?}", body);
 
     Ok(())
 }

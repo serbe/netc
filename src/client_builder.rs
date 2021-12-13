@@ -42,7 +42,8 @@ impl ClientBuilder {
 
     pub async fn build(self) -> Result<Client, Error> {
         let uri = self.uri.ok_or(Error::EmptyUri)?;
-        let mut request = Request::new(&uri, self.proxy.as_ref());
+        let mut request = Request::new(&uri);
+        request.proxy(self.proxy.as_ref());
         request.headers(self.headers);
         let stream = match &self.proxy {
             Some(proxy) => match proxy.scheme() {

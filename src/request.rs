@@ -8,27 +8,23 @@ use crate::{Headers, Method, Version};
 
 #[derive(Clone, Debug)]
 pub struct Request {
+    pub(crate) uri: Uri,
     pub(crate) method: Method,
-    pub(crate) request_uri: String,
     pub(crate) version: Version,
     pub(crate) headers: Headers,
-    pub(crate) host: String,
     pub(crate) body: Option<Bytes>,
+    pub(crate) proxy: Option<Uri>,
 }
 
 impl Request {
-    pub fn new(uri: &Uri, proxy: Option<&Uri>) -> Request {
-        let request_uri = match proxy {
-            Some(_) => uri.absolute_uri(),
-            None => uri.abs_path().to_string(),
-        };
+    pub fn new(uri: &Uri) -> Request {
         Request {
+            uri: uri.clone(),
             method: Method::Get,
-            request_uri,
             version: Version::Http11,
             headers: Headers::default_http(uri.host_header()),
-            host: uri.host_header().to_string(),
             body: None,
+            proxy: None,
         }
     }
 
@@ -128,18 +124,15 @@ impl Request {
     }
 
     pub fn to_vec(&self) -> Vec<u8> {
-        let request_line = format!(
-            "{} {} {}{}",
-            self.method, self.request_uri, self.version, "\r\n"
-        );
-
         let headers: String = self
             .headers
             .iter()
             .map(|(k, v)| format!("{}: {}{}", k, v, "\r\n"))
             .collect();
 
-        let mut request_msg = (request_line + &headers + "\r\n").as_bytes().to_vec();
+        let mut request_msg = (self.request_line() + &headers + "\r\n")
+            .as_bytes()
+            .to_vec();
 
         if let Some(b) = &self.body {
             request_msg.extend(b);
@@ -162,8 +155,12 @@ impl Request {
         self.headers.clone()
     }
 
+    pub fn proxy(&mut self, proxy: Option<&Uri>) {
+        self.proxy = proxy.cloned()
+    }
+
     pub fn request_uri(&self) -> String {
-        self.request_uri.clone()
+        self.uri.request_uri(self.proxy.is_some())
     }
 }
 
@@ -177,10 +174,10 @@ mod tests {
     #[test]
     fn new_request() {
         let uri = "https://api.ipify.org:1234/123/as".parse().unwrap();
-        let mut request = Request::new(&uri, None);
+        let mut request = Request::new(&uri);
         request.body(BODY);
         assert_eq!(CONTENT_LENGTH, request.content_length());
         assert_eq!(BODY, request.get_body().unwrap().to_owned());
-        assert_eq!("/123/as", &request.request_uri);
+        assert_eq!("/123/as", &request.request_uri());
     }
 }

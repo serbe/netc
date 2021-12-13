@@ -57,8 +57,7 @@ impl FromStr for Method {
 
 impl fmt::Display for Method {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let method = self.as_str();
-        write!(f, "{}", method)
+        write!(f, "{}", self.as_str())
     }
 }
 

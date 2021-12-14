@@ -2,9 +2,9 @@ use std::convert::TryInto;
 
 use base64::encode;
 use bytes::Bytes;
-use uri::Uri;
+use uri::{IntoUri, Uri};
 
-use crate::{Headers, Method, Version, Error};
+use crate::{Error, Headers, Method, Version};
 
 #[derive(Clone, Debug)]
 pub struct Request {
@@ -77,10 +77,7 @@ impl Request {
         self
     }
 
-    pub fn body<B>(&mut self, value: B) -> &mut Self
-    where
-        B: TryInto<Bytes>,
-    {
+    pub fn body<B: TryInto<Bytes>>(&mut self, value: B) -> &mut Self {
         match value.try_into() {
             Ok(body) => {
                 let content_len = body.len();
@@ -94,10 +91,7 @@ impl Request {
         }
     }
 
-    pub fn opt_body<B>(&mut self, value: Option<B>) -> &mut Self
-    where
-        B: TryInto<Bytes>,
-    {
+    pub fn opt_body<B: TryInto<Bytes>>(&mut self, value: Option<B>) -> &mut Self {
         match value {
             Some(body) => self.body(body),
             None => {
@@ -164,20 +158,13 @@ impl Request {
     }
 }
 
-// pub fn get<U>(uri: U) -> Result<Request, Error> 
-// where
-//         U: TryInto<Uri>,
-// {
-//     match uri.try_into() {
-//         Ok(uri) => Ok(Request::new(Method::Get, &uri)),
-//         Err(err) => Err(IntoUri(err.to_string()))
-//     }
-    
-// }
+pub fn get<U: IntoUri>(uri: U) -> Result<Request, Error> {
+    Ok(Request::new(Method::Get, &uri.into_uri()?))
+}
 
-// pub fn post(uri: U) -> Result<Request, Error> {
-//     Ok(Request::new(Method::Post, &uri.parse()?))
-// }
+pub fn post<U: IntoUri>(uri: U) -> Result<Request, Error> {
+    Ok(Request::new(Method::Post, &uri.into_uri()?))
+}
 
 #[cfg(test)]
 mod tests {

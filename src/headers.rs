@@ -50,7 +50,11 @@ impl Headers {
 
     pub fn get_array<T: ToString + ?Sized>(&self, key: &T) -> Vec<String> {
         self.get(key).map_or_else(Vec::new, |value| {
-            value.split(',').map(|value| value.trim().to_string()).filter(|value| !value.is_empty()).collect()
+            value
+                .split(',')
+                .map(|value| value.trim().to_string())
+                .filter(|value| !value.is_empty())
+                .collect()
         })
     }
 }
@@ -224,8 +228,18 @@ mod tests {
         headers.insert("Accept-Encoding", "compress, gzip");
         headers.insert("Accept-Language", "da, en-gb;q=0.8, en;q=0.7");
 
-        assert_eq!(headers.get_array("accept-encoding"), vec!["compress".to_string(), "gzip".to_string()]);
-        assert_eq!(headers.get_array("accept-language"), vec!["da".to_string(), "en-gb;q=0.8".to_string(), "en;q=0.7".to_string()]);
+        assert_eq!(
+            headers.get_array("accept-encoding"),
+            vec!["compress".to_string(), "gzip".to_string()]
+        );
+        assert_eq!(
+            headers.get_array("accept-language"),
+            vec![
+                "da".to_string(),
+                "en-gb;q=0.8".to_string(),
+                "en;q=0.7".to_string()
+            ]
+        );
     }
 
     #[test]

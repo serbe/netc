@@ -15,13 +15,11 @@ pub mod version;
 pub use crate::error::Error;
 pub use crate::headers::Headers;
 pub use crate::method::Method;
-pub use crate::request::{Request, get, post};
+pub use crate::request::{get, post, Request};
 pub use crate::response::Response;
 pub use crate::status::{Status, StatusCode};
 pub use crate::stream::HttpStream;
 pub use crate::version::Version;
-
-
 
 #[cfg(test)]
 pub(crate) fn my_ip() -> String {

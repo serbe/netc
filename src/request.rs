@@ -4,7 +4,7 @@ use base64::encode;
 use bytes::Bytes;
 use uri::Uri;
 
-use crate::{Headers, Method, Version};
+use crate::{Headers, Method, Version, Error};
 
 #[derive(Clone, Debug)]
 pub struct Request {
@@ -17,10 +17,10 @@ pub struct Request {
 }
 
 impl Request {
-    pub fn new(uri: &Uri) -> Request {
+    pub fn new(method: Method, uri: &Uri) -> Request {
         Request {
             uri: uri.clone(),
-            method: Method::Get,
+            method,
             version: Version::Http11,
             headers: Headers::default_http(uri.host_header()),
             body: None,
@@ -164,6 +164,21 @@ impl Request {
     }
 }
 
+// pub fn get<U>(uri: U) -> Result<Request, Error> 
+// where
+//         U: TryInto<Uri>,
+// {
+//     match uri.try_into() {
+//         Ok(uri) => Ok(Request::new(Method::Get, &uri)),
+//         Err(err) => Err(IntoUri(err.to_string()))
+//     }
+    
+// }
+
+// pub fn post(uri: U) -> Result<Request, Error> {
+//     Ok(Request::new(Method::Post, &uri.parse()?))
+// }
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -173,8 +188,8 @@ mod tests {
 
     #[test]
     fn new_request() {
-        let uri = "https://api.ipify.org:1234/123/as".parse().unwrap();
-        let mut request = Request::new(&uri);
+        let uri = "https://api.ipify.org:1234/123/as";
+        let mut request = get(uri).unwrap();
         request.body(BODY);
         assert_eq!(CONTENT_LENGTH, request.content_length());
         assert_eq!(BODY, request.get_body().unwrap().to_owned());

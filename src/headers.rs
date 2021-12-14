@@ -18,34 +18,40 @@ impl Headers {
         Headers(HashMap::with_capacity(capacity))
     }
 
+    pub fn default_http(host: &str) -> Headers {
+        let mut headers = Headers::with_capacity(2);
+        headers.insert("Host", host);
+        headers.insert("Connection", "Close");
+        headers
+    }
+
     pub fn iter(&self) -> hash_map::Iter<String, String> {
         self.0.iter()
     }
 
-    pub fn get<T: ToString + ?Sized>(&self, k: &T) -> Option<String> {
+    pub fn get<T: ToString + ?Sized>(&self, key: &T) -> Option<String> {
         self.0
-            .get(&k.to_string().to_lowercase())
+            .get(&key.to_string().to_lowercase())
             .map(|value| value.to_string())
     }
 
     pub fn insert<T: ToString + ?Sized, U: ToString + ?Sized>(
         &mut self,
         key: &T,
-        val: &U,
+        value: &U,
     ) -> Option<String> {
         self.0
-            .insert(key.to_string().to_lowercase(), val.to_string())
+            .insert(key.to_string().to_lowercase(), value.to_string())
     }
 
     pub fn remove<T: ToString + ?Sized>(&mut self, key: &T) -> Option<String> {
         self.0.remove(&key.to_string().to_lowercase())
     }
 
-    pub fn default_http(host: &str) -> Headers {
-        let mut headers = Headers::with_capacity(2);
-        headers.insert("Host", host);
-        headers.insert("Connection", "Close");
-        headers
+    pub fn get_array<T: ToString + ?Sized>(&self, key: &T) -> Vec<String> {
+        self.get(key).map_or_else(Vec::new, |value| {
+            value.split(',').map(|value| value.trim().to_string()).filter(|value| !value.is_empty()).collect()
+        })
     }
 }
 
@@ -210,5 +216,25 @@ mod tests {
         headers_expect.insert("content-length".to_string(), "100".to_string());
 
         assert_eq!(HashMap::from(headers), headers_expect);
+    }
+
+    #[test]
+    fn headers_get_array() {
+        let mut headers = Headers::with_capacity(2);
+        headers.insert("Accept-Encoding", "compress, gzip");
+        headers.insert("Accept-Language", "da, en-gb;q=0.8, en;q=0.7");
+
+        assert_eq!(headers.get_array("accept-encoding"), vec!["compress".to_string(), "gzip".to_string()]);
+        assert_eq!(headers.get_array("accept-language"), vec!["da".to_string(), "en-gb;q=0.8".to_string(), "en;q=0.7".to_string()]);
+    }
+
+    #[test]
+    fn headers_array_length() {
+        let mut headers = Headers::with_capacity(2);
+        headers.insert("Key1", "da, en-gb;q=0.8, en;q=0.7");
+        headers.insert("Key2", "da, en-gb;q=0.8, , en;q=0.7");
+
+        assert_eq!(headers.get_array("key1").len(), 3);
+        assert_eq!(headers.get_array("key2").len(), 3);
     }
 }

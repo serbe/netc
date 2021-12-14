@@ -46,6 +46,8 @@ pub enum Error {
     EmptyVersion,
     #[error("Empty status")]
     EmptyStatus,
+    #[error("Into uri {0}")]
+    UntoUri(String),
 }
 
 impl PartialEq for Error {
@@ -90,6 +92,7 @@ impl PartialEq for Error {
             (Error::UriError(err), Error::UriError(other_err)) => err == other_err,
             (Error::EmptyVersion, Error::EmptyVersion) => true,
             (Error::EmptyStatus, Error::EmptyStatus) => true,
+            (Error::UntoUri(err), Error::UntoUri(other_err)) => err == other_err,
             _ => false,
         }
     }

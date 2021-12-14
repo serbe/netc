@@ -7,7 +7,6 @@ use crate::{ClientBuilder, Error, Headers, HttpStream, Request, Response};
 pub struct Client {
     pub(crate) request: Request,
     pub(crate) uri: Uri,
-    pub(crate) proxy: Option<Uri>,
     pub(crate) stream: HttpStream,
     pub(crate) response: Option<Response>,
 }
@@ -20,14 +19,12 @@ impl Client {
     pub fn new(
         request: Request,
         uri: Uri,
-        proxy: Option<Uri>,
         stream: HttpStream,
         response: Option<Response>,
     ) -> Client {
         Client {
             request,
             uri,
-            proxy,
             stream,
             response,
         }
@@ -68,7 +65,7 @@ mod tests {
     use dotenv;
 
     const SIMPLE_URL: &'static str = "http://api.ipify.org";
-    const SECURE_URL: &'static str = "https://www.socks-proxy.net";
+    const SECURE_URL: &'static str = "https://api.ipify.org";
 
     #[tokio::test]
     async fn client_http() {

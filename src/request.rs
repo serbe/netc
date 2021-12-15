@@ -1,5 +1,3 @@
-use std::convert::TryInto;
-
 use base64::encode;
 use bytes::Bytes;
 use uri::{IntoUri, Uri};
@@ -62,7 +60,7 @@ impl Request {
         self
     }
 
-    pub fn header_remove<T: ToString + ?Sized>(&mut self, key: &T) -> &mut Self {
+    pub fn remove_header<T: ToString + ?Sized>(&mut self, key: &T) -> &mut Self {
         self.headers.remove(key);
         self
     }
@@ -77,26 +75,19 @@ impl Request {
         self
     }
 
-    pub fn body<B: TryInto<Bytes>>(&mut self, value: B) -> &mut Self {
-        match value.try_into() {
-            Ok(body) => {
+    pub fn body<B: Into<Bytes>>(&mut self, value: B) -> &mut Self {
+        let body = value.into();
                 let content_len = body.len();
                 self.body = Some(body);
                 self.header("Content-Length", &content_len)
-            }
-            _ => {
-                self.body = None;
-                self.header_remove("Content-Length")
-            }
-        }
     }
 
-    pub fn opt_body<B: TryInto<Bytes>>(&mut self, value: Option<B>) -> &mut Self {
+    pub fn opt_body<B: Into<Bytes>>(&mut self, value: Option<B>) -> &mut Self {
         match value {
             Some(body) => self.body(body),
             None => {
                 self.body = None;
-                self.header_remove("Content-Length")
+                self.remove_header("Content-Length")
             }
         }
     }

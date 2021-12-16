@@ -1,4 +1,4 @@
-// pub mod chunk;
+pub mod chunk;
 // pub mod client;
 // pub mod client_builder;
 pub mod error;

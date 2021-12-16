@@ -78,6 +78,24 @@ impl HttpStream {
         Ok(body.into())
     }
 
+    pub async fn read_chunk_size(&mut self) -> Result<usize, Error> {
+        let mut size_line = Vec::new();
+        let mut ext = false;  
+        loop {
+            match self.read_u8().await? {
+                value if value == b';' => {ext = true},
+                value if value == b'\r' => break,
+                value if !ext => size_line.push(value),
+                _ => (),
+            }
+        }
+        let size = match self.read_u8().await? {
+            value if value != b'\n' => return Err(Error::InvalidChunkSize),
+            _ =>  usize::from_str_radix(String::from_utf8(size_line)?.trim(), 16)?,
+        };
+        Ok(size)
+    }
+
     pub async fn get_chunked_body(&mut self) -> Result<Bytes, Error> {
         let mut body = Vec::new();
         let mut chunk = Vec::with_capacity(CHUNK_MAX_SIZE);

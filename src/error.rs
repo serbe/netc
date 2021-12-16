@@ -24,6 +24,8 @@ pub enum Error {
     Io(#[from] std::io::Error),
     #[error("parse int")]
     ParseInt(#[from] std::num::ParseIntError),
+    #[error("parse utf8")]
+    ParseUtf8(#[from] std::string::FromUtf8Error),
     #[error("utf8")]
     FromUtf8(#[from] std::str::Utf8Error),
     #[error("Socks5")]
@@ -48,6 +50,8 @@ pub enum Error {
     EmptyStatus,
     #[error("Into uri {0}")]
     UntoUri(String),
+    #[error("Invalid chunk size format")]
+    InvalidChunkSize,
 }
 
 impl PartialEq for Error {
@@ -71,6 +75,7 @@ impl PartialEq for Error {
             (Error::HeadersErr, Error::HeadersErr) => true,
             (Error::Io(io), Error::Io(other_io)) => io.to_string() == other_io.to_string(),
             (Error::ParseInt(int), Error::ParseInt(other_int)) => int == other_int,
+            (Error::ParseUtf8(utf8), Error::ParseUtf8(other_utf8)) => utf8 == other_utf8,
             (Error::FromUtf8(utf8), Error::FromUtf8(other_utf8)) => utf8 == other_utf8,
 
             (Error::Socks5(socks), Error::Socks5(other_socks)) => {
@@ -93,6 +98,7 @@ impl PartialEq for Error {
             (Error::EmptyVersion, Error::EmptyVersion) => true,
             (Error::EmptyStatus, Error::EmptyStatus) => true,
             (Error::UntoUri(err), Error::UntoUri(other_err)) => err == other_err,
+            (Error::InvalidChunkSize, Error::InvalidChunkSize) => true,
             _ => false,
         }
     }

@@ -52,6 +52,8 @@ pub enum Error {
     UntoUri(String),
     #[error("Invalid chunk size format")]
     InvalidChunkSize,
+    #[error("Invalid chunk end of line")]
+    InvalidChunkEOL,
 }
 
 impl PartialEq for Error {
@@ -99,6 +101,7 @@ impl PartialEq for Error {
             (Error::EmptyStatus, Error::EmptyStatus) => true,
             (Error::UntoUri(err), Error::UntoUri(other_err)) => err == other_err,
             (Error::InvalidChunkSize, Error::InvalidChunkSize) => true,
+            (Error::InvalidChunkEOL, Error::InvalidChunkEOL) => true,
             _ => false,
         }
     }

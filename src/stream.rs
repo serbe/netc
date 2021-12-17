@@ -1,6 +1,6 @@
 use std::{
     fmt, io,
-    io::Write,
+    // io::Write,
     pin::Pin,
     sync::Arc,
     task::{Context, Poll},
@@ -21,10 +21,10 @@ use uri::{into_uri::IntoUri, Uri};
 
 use crate::{Error, Response, Version};
 
-const CHUNK_MAX_SIZE: usize = 0x4000; // Maximum size of a TLS fragment
-const CHUNK_HEADER_MAX_SIZE: usize = 6; // four hex digits plus "\r\n"
-const CHUNK_FOOTER_SIZE: usize = 2; // "\r\n"
-const CHUNK_MAX_PAYLOAD_SIZE: usize = CHUNK_MAX_SIZE - CHUNK_HEADER_MAX_SIZE - CHUNK_FOOTER_SIZE;
+// const CHUNK_MAX_SIZE: usize = 0x4000; // Maximum size of a TLS fragment
+// const CHUNK_HEADER_MAX_SIZE: usize = 6; // four hex digits plus "\r\n"
+// const CHUNK_FOOTER_SIZE: usize = 2; // "\r\n"
+// const CHUNK_MAX_PAYLOAD_SIZE: usize = CHUNK_MAX_SIZE - CHUNK_HEADER_MAX_SIZE - CHUNK_FOOTER_SIZE;
 
 pub enum HttpStream {
     Http(TcpStream),
@@ -83,12 +83,13 @@ impl HttpStream {
         let mut ext = false;  
         loop {
             match self.read_u8().await? {
-                value if value == b';' => {ext = true},
                 value if value == b'\r' => break,
+                value if value == b';' => ext = true,
                 value if !ext => size_line.push(value),
                 _ => (),
             }
         }
+        dbg!(&size_line, ext);
         let size = match self.read_u8().await? {
             value if value != b'\n' => return Err(Error::InvalidChunkSize),
             _ =>  usize::from_str_radix(String::from_utf8(size_line)?.trim(), 16)?,
@@ -98,36 +99,25 @@ impl HttpStream {
 
     pub async fn get_chunked_body(&mut self) -> Result<Bytes, Error> {
         let mut body = Vec::new();
-        let mut chunk = Vec::with_capacity(CHUNK_MAX_SIZE);
-
-        // self.read_to_end(&mut body).await?;
-        // dbg!("get_chunked_body", String::from_utf8_lossy(&body));
-
         loop {
-            chunk.resize(CHUNK_HEADER_MAX_SIZE, 0);
-            let payload_size = self
-                .take(CHUNK_MAX_PAYLOAD_SIZE as u64)
-                .read_to_end(&mut chunk)
-                .await?;
-
-            // Then write the header
-            let header_str = format!("{:x}\r\n", payload_size);
-            let header = header_str.as_bytes();
-            assert!(header.len() <= CHUNK_HEADER_MAX_SIZE);
-            let start_index = CHUNK_HEADER_MAX_SIZE - header.len();
-            (&mut chunk[start_index..]).write_all(header).unwrap();
-
-            // And add the footer
-            chunk.extend_from_slice(b"\r\n");
-
-            // Finally Write the chunk
-            std::io::Write::write_all(&mut body, &chunk[start_index..]).unwrap();
-
-            // On EOF, we wrote a 0 sized chunk. This is what the chunked encoding protocol requires.
-            if payload_size == 0 {
-                return Ok(body.into());
+            match self.read_chunk_size().await? {
+                size if size == 0 => break,
+                size => {
+                    let mut buf = Vec::with_capacity(size);
+                    self.read(&mut buf).await?;
+                    dbg!(&buf.capacity(), &buf);
+                    body.append(&mut buf);
+                }
             }
         }
+        let mut buf = [0u8; 2];
+        self.read(&mut buf).await?;
+        if buf != [b'\r', b'\n'] {
+            dbg!(buf);
+            return Err(Error::InvalidChunkEOL)
+        }
+
+        Ok(body.into())
     }
 
     pub async fn get_response(&mut self) -> Result<Response, Error> {
@@ -140,6 +130,7 @@ impl HttpStream {
         }
         let mut response = Response::from_header(&header)?;
         let content_len = response.content_len()?;
+        dbg!(response.headers());
         dbg!(content_len);
         let body = match (content_len > 0, response.status.version()) {
             (true, _) => self.get_body(content_len).await?,
@@ -324,5 +315,16 @@ mod tests {
         client.read_to_end(&mut buf).await.unwrap();
         let body = String::from_utf8(buf).unwrap();
         assert!(&body.contains(crate::tests::IP.as_str()));
+    }
+
+    #[tokio::test]
+    async fn chunked_body() {
+        let mut client = HttpStream::new("https://www.socks-proxy.net/").await.unwrap();
+        client
+            .send_msg(b"GET / HTTP/1.1\r\nHost: www.socks-proxy.net\r\n\r\n")
+            .await
+            .unwrap();
+        let response = client.get_response().await.unwrap();
+        assert!(!response.body().is_empty());
     }
 }

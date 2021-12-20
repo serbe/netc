@@ -27,6 +27,7 @@ use crate::{Error, Response};
 // const CHUNK_FOOTER_SIZE: usize = 2; // "\r\n"
 // const CHUNK_MAX_PAYLOAD_SIZE: usize = CHUNK_MAX_SIZE - CHUNK_HEADER_MAX_SIZE - CHUNK_FOOTER_SIZE;
 const CHUNK_MAX_LINE_LENGTH: usize = 4096;
+const HEADERS_MAX_LENGTH: usize = 4096;
 
 pub enum HttpStream {
     Http(TcpStream),
@@ -84,7 +85,7 @@ impl HttpStream {
         let mut header = Vec::with_capacity(512);
         while !(header.len() > 4 && header[header.len() - 4..] == b"\r\n\r\n"[..]) {
             header.push(self.read_u8().await.or(Err(Error::HeaderIncomplete))?);
-            if header.len() > 1024 {
+            if header.len() > HEADERS_MAX_LENGTH {
                 return Err(Error::HeaderToBig);
             }
         }

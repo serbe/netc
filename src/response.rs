@@ -79,45 +79,18 @@ impl Response {
         Ok(String::from_utf8_lossy(&self.body).to_string())
     }
 
-    pub fn read_body(&self) {
-        let is_http10 = self.status.version() == Version::Http10;
-        let is_close = self
-            .header("connection")
-            .map(|c| c.eq_ignore_ascii_case("close"))
-            .unwrap_or(false);
-
+    pub fn has_body(&self) -> bool {
         let has_no_body = self.method == Method::Head || self.status_code().is_nobody();
+        !has_no_body
+    }
 
+    pub fn has_chuncked_body(&self) -> bool {
+        let is_http10 = self.status.version() == Version::Http10;
         let is_chunked = self
-            .header("transfer-encoding")
-            .map(|enc| !enc.is_empty()) // whatever it says, do chunked
-            .unwrap_or(false);
-
-        let _use_chunked = !is_http10 && !has_no_body && is_chunked;
-
-        let _limit_bytes = if is_http10 || is_close {
-            None
-        } else if has_no_body {
-            // head requests never have a body
-            Some(0)
-        } else {
-            self.content_len().ok()
-        };
-
-        // let stream = self.stream.expect("No reader in response?!");
-        // let unit = self.unit;
-        // let deadline = unit.as_ref().and_then(|u| u.deadline);
-        // let stream = DeadlineStream::new(stream, deadline);
-
-        // match (use_chunked, limit_bytes) {
-        //     (true, _) => {
-        //         Box::new(PoolReturnRead::new(unit, ChunkDecoder::new(stream))) as Box<dyn Read>
-        //     }
-        //     (false, Some(len)) => {
-        //         Box::new(PoolReturnRead::new(unit, LimitedRead::new(stream, len)))
-        //     }
-        //     (false, None) => Box::new(stream),
-        // }
+            .headers
+            .get_array("transfer-encoding")
+            .contains(&"chunked".to_string());
+        !is_http10 && self.has_body() && is_chunked
     }
 }
 

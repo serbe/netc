@@ -54,6 +54,8 @@ pub enum Error {
     InvalidChunkSize,
     #[error("Invalid chunk end of line")]
     InvalidChunkEOL,
+    #[error("Chunk line length {0} > 4096")]
+    ChunkLineTooLong(usize),
 }
 
 impl PartialEq for Error {
@@ -102,6 +104,9 @@ impl PartialEq for Error {
             (Error::UntoUri(err), Error::UntoUri(other_err)) => err == other_err,
             (Error::InvalidChunkSize, Error::InvalidChunkSize) => true,
             (Error::InvalidChunkEOL, Error::InvalidChunkEOL) => true,
+            (Error::ChunkLineTooLong(length), Error::ChunkLineTooLong(other_length)) => {
+                length == other_length
+            }
             _ => false,
         }
     }

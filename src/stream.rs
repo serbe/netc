@@ -1,12 +1,13 @@
 use std::{
-    fmt, io,
+    fmt,
+    io,
     // io::Write,
     pin::Pin,
     sync::Arc,
     task::{Context, Poll},
 };
 
-use bytes::Bytes;
+use bytes::{BufMut, Bytes};
 use rsl::socks5;
 use tokio::{
     io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, ReadBuf},
@@ -19,12 +20,13 @@ use tokio_rustls::{
 };
 use uri::{into_uri::IntoUri, Uri};
 
-use crate::{Error, Response, Version};
+use crate::{Error, Response};
 
 // const CHUNK_MAX_SIZE: usize = 0x4000; // Maximum size of a TLS fragment
 // const CHUNK_HEADER_MAX_SIZE: usize = 6; // four hex digits plus "\r\n"
 // const CHUNK_FOOTER_SIZE: usize = 2; // "\r\n"
 // const CHUNK_MAX_PAYLOAD_SIZE: usize = CHUNK_MAX_SIZE - CHUNK_HEADER_MAX_SIZE - CHUNK_FOOTER_SIZE;
+const CHUNK_MAX_LINE_LENGTH: usize = 4096;
 
 pub enum HttpStream {
     Http(TcpStream),
@@ -78,48 +80,6 @@ impl HttpStream {
         Ok(body.into())
     }
 
-    pub async fn read_chunk_size(&mut self) -> Result<usize, Error> {
-        let mut size_line = Vec::new();
-        let mut ext = false;  
-        loop {
-            match self.read_u8().await? {
-                value if value == b'\r' => break,
-                value if value == b';' => ext = true,
-                value if !ext => size_line.push(value),
-                _ => (),
-            }
-        }
-        dbg!(&size_line, ext);
-        let size = match self.read_u8().await? {
-            value if value != b'\n' => return Err(Error::InvalidChunkSize),
-            _ =>  usize::from_str_radix(String::from_utf8(size_line)?.trim(), 16)?,
-        };
-        Ok(size)
-    }
-
-    pub async fn get_chunked_body(&mut self) -> Result<Bytes, Error> {
-        let mut body = Vec::new();
-        loop {
-            match self.read_chunk_size().await? {
-                size if size == 0 => break,
-                size => {
-                    let mut buf = Vec::with_capacity(size);
-                    self.read(&mut buf).await?;
-                    dbg!(&buf.capacity(), &buf);
-                    body.append(&mut buf);
-                }
-            }
-        }
-        let mut buf = [0u8; 2];
-        self.read(&mut buf).await?;
-        if buf != [b'\r', b'\n'] {
-            dbg!(buf);
-            return Err(Error::InvalidChunkEOL)
-        }
-
-        Ok(body.into())
-    }
-
     pub async fn get_response(&mut self) -> Result<Response, Error> {
         let mut header = Vec::with_capacity(512);
         while !(header.len() > 4 && header[header.len() - 4..] == b"\r\n\r\n"[..]) {
@@ -130,11 +90,9 @@ impl HttpStream {
         }
         let mut response = Response::from_header(&header)?;
         let content_len = response.content_len()?;
-        dbg!(response.headers());
-        dbg!(content_len);
-        let body = match (content_len > 0, response.status.version()) {
-            (true, _) => self.get_body(content_len).await?,
-            (false, Version::Http11) => self.get_chunked_body().await?,
+        let body = match (response.has_body(), response.has_chuncked_body()) {
+            (true, false) => self.get_body(content_len).await?,
+            (true, true) => self.get_chunked_body().await?,
             _ => Bytes::new(),
         };
         response.body = body;
@@ -145,6 +103,45 @@ impl HttpStream {
         self.write_all(msg).await?;
         self.flush().await?;
         Ok(())
+    }
+
+    pub async fn read_chunk_line(&mut self) -> Result<usize, Error> {
+        let mut buf = vec![];
+        while !(buf.len() > 1 && buf[buf.len() - 2..] == b"\r\n"[..]) {
+            buf.put_u8(self.read_u8().await?);
+            if buf.len() >= CHUNK_MAX_LINE_LENGTH {
+                return Err(Error::ChunkLineTooLong(buf.len()));
+            }
+        }
+        let without_ext = buf
+            .split(|b| *b == b';')
+            .next()
+            .ok_or(Error::InvalidChunkSize)?;
+        let str_line = String::from_utf8(without_ext.to_vec())?;
+        let size = usize::from_str_radix(str_line.trim(), 16)?;
+        Ok(size)
+    }
+
+    pub async fn get_chunked_body(&mut self) -> Result<Bytes, Error> {
+        let mut body = Vec::new();
+        loop {
+            match self.read_chunk_line().await? {
+                size if size == 0 => break,
+                size => {
+                    let mut buf = vec![0u8; size];
+                    self.read_exact(&mut buf).await?;
+                    body.append(&mut buf);
+                }
+            }
+            let mut buf = [0u8; 2];
+            self.read(&mut buf).await?;
+        }
+        let mut buf = [0u8; 2];
+        self.read(&mut buf).await?;
+        if buf != [b'\r', b'\n'] {
+            return Err(Error::InvalidChunkEOL);
+        }
+        Ok(body.into())
     }
 }
 
@@ -319,7 +316,9 @@ mod tests {
 
     #[tokio::test]
     async fn chunked_body() {
-        let mut client = HttpStream::new("https://www.socks-proxy.net/").await.unwrap();
+        let mut client = HttpStream::new("https://www.socks-proxy.net/")
+            .await
+            .unwrap();
         client
             .send_msg(b"GET / HTTP/1.1\r\nHost: www.socks-proxy.net\r\n\r\n")
             .await

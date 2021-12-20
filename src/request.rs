@@ -77,9 +77,9 @@ impl Request {
 
     pub fn body<B: Into<Bytes>>(&mut self, value: B) -> &mut Self {
         let body = value.into();
-                let content_len = body.len();
-                self.body = Some(body);
-                self.header("Content-Length", &content_len)
+        let content_len = body.len();
+        self.body = Some(body);
+        self.header("Content-Length", &content_len)
     }
 
     pub fn opt_body<B: Into<Bytes>>(&mut self, value: Option<B>) -> &mut Self {

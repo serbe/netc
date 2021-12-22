@@ -1,8 +1,8 @@
 use base64::encode;
 use bytes::Bytes;
-use uri::{IntoUri, Uri};
+use uri::Uri;
 
-use crate::{Error, Headers, Method, Version};
+use crate::{Headers, Method, Version};
 
 #[derive(Clone, Debug)]
 pub struct Request {
@@ -20,7 +20,7 @@ impl Request {
             uri: uri.clone(),
             method,
             version: Version::Http11,
-            headers: Headers::default_http(uri.host_header()),
+            headers: Headers::default_http(&uri),
             body: None,
             proxy: None,
         }
@@ -141,20 +141,25 @@ impl Request {
     }
 
     pub fn proxy(&mut self, proxy: Option<&Uri>) {
-        self.proxy = proxy.cloned()
+        match proxy {
+            Some(proxy) => match (proxy.scheme(), proxy.username(), proxy.password()) {
+                ("http" | "https", Some(username), Some(password)) => {
+                    self.set_proxy_basic_auth(username, password)
+                }
+                _ => self.remove_header("Proxy-Authorization"),
+            },
+            None => self.remove_header("Proxy-Authorization"),
+        };
+        self.proxy = proxy.cloned();
     }
 
     pub fn request_uri(&self) -> String {
         self.uri.request_uri(self.proxy.is_some())
     }
-}
 
-pub fn get<U: IntoUri>(uri: U) -> Result<Request, Error> {
-    Ok(Request::new(Method::Get, &uri.into_uri()?))
-}
-
-pub fn post<U: IntoUri>(uri: U) -> Result<Request, Error> {
-    Ok(Request::new(Method::Post, &uri.into_uri()?))
+    pub fn uri(&self) -> Uri {
+        self.uri.clone()
+    }
 }
 
 #[cfg(test)]
@@ -166,11 +171,22 @@ mod tests {
 
     #[test]
     fn new_request() {
-        let uri = "https://api.ipify.org:1234/123/as";
-        let mut request = get(uri).unwrap();
+        let uri = "https://api.ipify.org:1234/123/as".parse().unwrap();
+        let mut request = Request::new(Method::Get, &uri);
         request.body(BODY);
         assert_eq!(CONTENT_LENGTH, request.content_length());
         assert_eq!(BODY, request.get_body().unwrap().to_owned());
         assert_eq!("/123/as", &request.request_uri());
     }
+
+    // #[test]
+    // fn delete_request() {
+    //     let uri = format!("{}{}", HTTPBIN, Method::Delete);
+    //     let mut request = delete(uri).unwrap();
+    //     request.header(ACCEPT, ACCEPT_JSON);
+    //     let body = request.get_body()
+    //     assert_eq!(CONTENT_LENGTH, request.content_length());
+    //     assert_eq!(BODY, request.get_body().unwrap().to_owned());
+    //     assert_eq!("/123/as", &request.request_uri());
+    // }
 }

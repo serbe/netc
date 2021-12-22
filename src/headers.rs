@@ -4,6 +4,9 @@ use std::{
     str::FromStr,
 };
 
+use base64::encode;
+use uri::Uri;
+
 use crate::Error;
 
 #[derive(Debug, PartialEq, Clone)]
@@ -18,10 +21,18 @@ impl Headers {
         Headers(HashMap::with_capacity(capacity))
     }
 
-    pub fn default_http(host: &str) -> Headers {
+    pub fn default_http(uri: &Uri) -> Headers {
         let mut headers = Headers::with_capacity(2);
-        headers.insert("Host", host);
+        headers.insert("Host", uri.host_header());
         headers.insert("Connection", "Close");
+        if let ("http" | "https", Some(username), Some(password)) =
+            (uri.scheme(), uri.username(), uri.password())
+        {
+            headers.insert(
+                "Authorization",
+                &format!("Basic {}", encode(&format!("{}:{}", username, password))),
+            );
+        }
         headers
     }
 
@@ -120,6 +131,8 @@ impl Display for Headers {
 
 #[cfg(test)]
 mod tests {
+    use uri::IntoUri;
+
     use super::*;
 
     const HEADERS: &str = "Date: Sat, 11 Jan 2003 02:44:04 GMT\r\n\
@@ -155,12 +168,12 @@ mod tests {
 
     #[test]
     fn headers_default_http() {
-        let host = "doc.rust-lang.org";
+        let uri = "http://doc.rust-lang.org";
         let mut headers = Headers::with_capacity(2);
         headers.insert("Host", "doc.rust-lang.org");
         headers.insert("Connection", "Close");
 
-        assert_eq!(Headers::default_http(&host), headers);
+        assert_eq!(Headers::default_http(&uri.into_uri().unwrap()), headers);
     }
 
     #[test]

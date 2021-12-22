@@ -20,12 +20,8 @@ use tokio_rustls::{
 };
 use uri::{into_uri::IntoUri, Uri};
 
-use crate::{Error, Response};
+use crate::{Error, Request, Response};
 
-// const CHUNK_MAX_SIZE: usize = 0x4000; // Maximum size of a TLS fragment
-// const CHUNK_HEADER_MAX_SIZE: usize = 6; // four hex digits plus "\r\n"
-// const CHUNK_FOOTER_SIZE: usize = 2; // "\r\n"
-// const CHUNK_MAX_PAYLOAD_SIZE: usize = CHUNK_MAX_SIZE - CHUNK_HEADER_MAX_SIZE - CHUNK_FOOTER_SIZE;
 const CHUNK_MAX_LINE_LENGTH: usize = 4096;
 const HEADERS_MAX_LENGTH: usize = 4096;
 
@@ -40,6 +36,17 @@ impl HttpStream {
         let socket_addr = uri.socket_addr()?;
         let stream = TcpStream::connect(socket_addr).await?;
         HttpStream::maybe_ssl(&uri, stream).await
+    }
+
+    pub async fn from_request(request: &Request) -> Result<Self, Error> {
+        match &request.proxy {
+            Some(proxy) => match proxy.scheme() {
+                "socks5" | "socks5h" => Ok(HttpStream::socks(proxy, &request.uri).await?),
+                "http" | "https" => Ok(HttpStream::new(proxy).await?),
+                scheme => Err(Error::UnsupportedProxyScheme(scheme.to_owned())),
+            },
+            None => Ok(HttpStream::new(&request.uri).await?),
+        }
     }
 
     pub async fn socks(proxy: &Uri, target: &Uri) -> Result<Self, Error> {

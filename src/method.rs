@@ -7,6 +7,7 @@ pub enum Method {
     Options,
     Get,
     Head,
+    Patch,
     Post,
     Put,
     Delete,
@@ -21,6 +22,7 @@ impl Method {
             Method::Options => "OPTIONS",
             Method::Get => "GET",
             Method::Head => "HEAD",
+            Method::Patch => "Patch",
             Method::Post => "POST",
             Method::Put => "PUT",
             Method::Delete => "DELETE",
@@ -45,6 +47,7 @@ impl FromStr for Method {
             "OPTIONS" => Ok(Method::Options),
             "GET" => Ok(Method::Get),
             "HEAD" => Ok(Method::Head),
+            "PATCH" => Ok(Method::Patch),
             "POST" => Ok(Method::Post),
             "PUT" => Ok(Method::Put),
             "DELETE" => Ok(Method::Delete),
@@ -73,6 +76,8 @@ mod tests {
         let method_get_expect: Method = "GET".parse().unwrap();
         let method_head = Method::Head;
         let method_head_expect: Method = "HEAD".parse().unwrap();
+        let method_patch = Method::Patch;
+        let method_patch_expect: Method = "PATCH".parse().unwrap();
         let method_post = Method::Post;
         let method_post_expect: Method = "POST".parse().unwrap();
         let method_put = Method::Put;
@@ -83,12 +88,13 @@ mod tests {
         let method_connect_expect: Method = "CONNECT".parse().unwrap();
         let method_trace = Method::Trace;
         let method_trace_expect: Method = "TRACE".parse().unwrap();
-        let method_custom = Method::Custom("PATCH".to_string());
-        let method_custom_expect: Method = "PATCH".parse().unwrap();
+        let method_custom = Method::Custom("MODIFY".to_string());
+        let method_custom_expect: Method = "MODIFY".parse().unwrap();
 
         assert_eq!(method_options_expect, method_options);
         assert_eq!(method_get_expect, method_get);
         assert_eq!(method_head_expect, method_head);
+        assert_eq!(method_patch_expect, method_patch);
         assert_eq!(method_post_expect, method_post);
         assert_eq!(method_put_expect, method_put);
         assert_eq!(method_delete_expect, method_delete);
@@ -105,6 +111,8 @@ mod tests {
         let method_get_expect = "GET";
         let method_head = Method::Head;
         let method_head_expect = "HEAD";
+        let method_patch = Method::Patch;
+        let method_patch_expect = "PATCH";
         let method_post = Method::Post;
         let method_post_expect = "POST";
         let method_put = Method::Put;
@@ -115,12 +123,13 @@ mod tests {
         let method_connect_expect = "CONNECT";
         let method_trace = Method::Trace;
         let method_trace_expect = "TRACE";
-        let method_custom = Method::Custom("PATCH".to_string());
-        let method_custom_expect = "PATCH";
+        let method_custom = Method::Custom("MODIFY".to_string());
+        let method_custom_expect = "MODIFY";
 
         assert_eq!(method_options_expect, method_options.as_str());
         assert_eq!(method_get_expect, method_get.as_str());
         assert_eq!(method_head_expect, method_head.as_str());
+        assert_eq!(method_patch_expect, method_patch.as_str());
         assert_eq!(method_post_expect, method_post.as_str());
         assert_eq!(method_put_expect, method_put.as_str());
         assert_eq!(method_delete_expect, method_delete.as_str());

@@ -42,31 +42,14 @@ impl ClientBuilder {
 
     pub async fn build(self) -> Result<Client, Error> {
         let uri = self.uri.ok_or(Error::EmptyUri)?;
-        let mut request = Request::new(&uri);
+        let mut request = Request::new(Method::Get, &uri);
         request.proxy(self.proxy.as_ref());
         request.headers(self.headers);
-        let stream = match &self.proxy {
-            Some(proxy) => match proxy.scheme() {
-                "socks5" | "socks5h" => Ok(HttpStream::socks(proxy, &uri).await?),
-                "http" | "https" => {
-                    if let (Some(username), Some(password)) = (proxy.username(), proxy.password()) {
-                        request.set_proxy_basic_auth(username, password);
-                    };
-                    Ok(HttpStream::new(proxy).await?)
-                }
-                scheme => Err(Error::UnsupportedProxyScheme(scheme.to_owned())),
-            },
-            None => Ok(HttpStream::new(&uri).await?),
-        }?;
-        if let (Some(username), Some(password)) = (uri.username(), uri.password()) {
-            if let "http" | "https" = uri.scheme() {
-                request.set_basic_auth(username, password);
-            }
-        }
         request.method(self.method);
         request.version(self.version);
         request.opt_body(self.body);
-        Ok(Client::new(request, uri, self.proxy, stream, None))
+        let stream = HttpStream::from_request(&request).await?;
+        Ok(Client::new(request, stream, None))
     }
 
     pub fn uri<U: IntoUri>(mut self, value: U) -> ClientBuilder {
@@ -214,5 +197,60 @@ impl ClientBuilder {
             Ok(uri) => self.header("Referer", &uri),
             _ => self,
         }
+    }
+}
+
+pub fn delete<U: IntoUri>(uri: U) -> Result<ClientBuilder, Error> {
+    Ok(ClientBuilder::new().delete(uri.into_uri()?))
+}
+
+pub fn get<U: IntoUri>(uri: U) -> Result<ClientBuilder, Error> {
+    Ok(ClientBuilder::new().get(uri.into_uri()?))
+}
+
+pub fn post<U: IntoUri>(uri: U) -> Result<ClientBuilder, Error> {
+    Ok(ClientBuilder::new().post(uri.into_uri()?))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const HTTPBIN: &str = "https://httpbin.org/";
+    const ACCEPT: &str = "accept";
+    const ACCEPT_JSON: &str = "application/json";
+
+    #[tokio::test]
+    async fn delete_client() {
+        let uri = format!("{}{}", HTTPBIN, "delete");
+        dbg!(&uri);
+        let mut client = delete(uri)
+            .unwrap()
+            .header(ACCEPT, ACCEPT_JSON)
+            .build()
+            .await
+            .unwrap();
+        let response = client.send().await.unwrap();
+        let body = response.body();
+        assert!(!body.is_empty());
+        assert_eq!(
+            Some("application/json".to_string()),
+            response.header("content-type")
+        );
+    }
+
+    #[tokio::test]
+    async fn get_client() {
+        let uri = format!("{}{}", HTTPBIN, "get");
+        dbg!(&uri);
+        let client_builder = get(uri).unwrap().header(ACCEPT, ACCEPT_JSON);
+        let mut client = client_builder.build().await.unwrap();
+        let response = client.send().await.unwrap();
+        let body = response.body();
+        assert!(!body.is_empty());
+        assert_eq!(
+            Some("application/json".to_string()),
+            response.header("content-type")
+        );
     }
 }

@@ -1,6 +1,5 @@
-// pub mod chunk;
-// pub mod client;
-// pub mod client_builder;
+pub mod client;
+pub mod client_builder;
 pub mod error;
 pub mod headers;
 pub mod method;
@@ -10,12 +9,12 @@ pub mod status;
 pub mod stream;
 pub mod version;
 
-// pub use crate::client::Client;
-// pub use crate::client_builder::ClientBuilder;
+pub use crate::client::Client;
+pub use crate::client_builder::{get, post, ClientBuilder};
 pub use crate::error::Error;
 pub use crate::headers::Headers;
 pub use crate::method::Method;
-pub use crate::request::{get, post, Request};
+pub use crate::request::Request;
 pub use crate::response::Response;
 pub use crate::status::{Status, StatusCode};
 pub use crate::stream::HttpStream;

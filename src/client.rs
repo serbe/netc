@@ -6,7 +6,6 @@ use crate::{ClientBuilder, Error, Headers, HttpStream, Request, Response};
 #[derive(Debug)]
 pub struct Client {
     pub(crate) request: Request,
-    pub(crate) uri: Uri,
     pub(crate) stream: HttpStream,
     pub(crate) response: Option<Response>,
 }
@@ -16,15 +15,9 @@ impl Client {
         ClientBuilder::default()
     }
 
-    pub fn new(
-        request: Request,
-        uri: Uri,
-        stream: HttpStream,
-        response: Option<Response>,
-    ) -> Client {
+    pub fn new(request: Request, stream: HttpStream, response: Option<Response>) -> Client {
         Client {
             request,
-            uri,
             stream,
             response,
         }
@@ -51,7 +44,7 @@ impl Client {
     }
 
     pub fn uri(&self) -> Uri {
-        self.uri.clone()
+        self.request.uri()
     }
 
     pub fn request(&self) -> Request {

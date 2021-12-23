@@ -22,7 +22,7 @@ impl Method {
             Method::Options => "OPTIONS",
             Method::Get => "GET",
             Method::Head => "HEAD",
-            Method::Patch => "Patch",
+            Method::Patch => "PATCH",
             Method::Post => "POST",
             Method::Put => "PUT",
             Method::Delete => "DELETE",

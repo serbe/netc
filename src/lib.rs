@@ -39,9 +39,8 @@ pub(crate) fn my_ip() -> String {
 
 #[cfg(test)]
 mod tests {
-    use lazy_static::lazy_static;
+    use once_cell::sync::Lazy;
 
-    lazy_static! {
-        pub static ref IP: String = crate::my_ip();
-    }
+    pub static IP: Lazy<String> = Lazy::new(|| crate::my_ip());
+    
 }

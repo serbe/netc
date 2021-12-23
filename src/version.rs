@@ -17,8 +17,8 @@ impl Version {
             Version::Http09 => "HTTP/0.9",
             Version::Http10 => "HTTP/1.0",
             Version::Http11 => "HTTP/1.1",
-            Version::H2 => "HTTP/2.0",
-            Version::H3 => "HTTP/3.0",
+            Version::H2 => "HTTP/2",
+            Version::H3 => "HTTP/3",
         }
     }
 }
@@ -37,8 +37,8 @@ impl FromStr for Version {
             "HTTP/0.9" => Ok(Version::Http09),
             "HTTP/1.0" => Ok(Version::Http10),
             "HTTP/1.1" => Ok(Version::Http11),
-            "HTTP/2.0" => Ok(Version::H2),
-            "HTTP/3.0" => Ok(Version::H3),
+            "HTTP/2" => Ok(Version::H2),
+            "HTTP/3" => Ok(Version::H3),
             _ => Err(Error::UnsupportedVersion(s.to_owned())),
         }
     }
@@ -71,9 +71,9 @@ mod tests {
         let version11 = Version::Http11;
         let version11_expect: Version = "HTTP/1.1".parse().unwrap();
         let version2 = Version::H2;
-        let version2_expect: Version = "HTTP/2.0".parse().unwrap();
+        let version2_expect: Version = "HTTP/2".parse().unwrap();
         let version3 = Version::H3;
-        let version3_expect: Version = "HTTP/3.0".parse().unwrap();
+        let version3_expect: Version = "HTTP/3".parse().unwrap();
 
         assert_eq!(version09_expect, version09);
         assert_eq!(version10_expect, version10);
@@ -91,9 +91,9 @@ mod tests {
         let version11 = Version::Http11;
         let version11_str = "HTTP/1.1";
         let version2 = Version::H2;
-        let version2_str = "HTTP/2.0";
+        let version2_str = "HTTP/2";
         let version3 = Version::H3;
-        let version3_str = "HTTP/3.0";
+        let version3_str = "HTTP/3";
 
         assert_eq!(version09.as_str(), version09_str);
         assert_eq!(version10.as_str(), version10_str);

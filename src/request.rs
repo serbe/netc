@@ -127,9 +127,7 @@ impl Request {
     }
 
     pub fn content_length(&self) -> usize {
-        self.headers
-            .get("Content-Length")
-            .map_or(0, |v| v.parse().map_or(0, |v| v))
+        self.headers.content_length()
     }
 
     pub fn get_body(&self) -> Option<Bytes> {

@@ -11,6 +11,7 @@ pub enum Version {
     H3,
 }
 
+// HTTP-Version   = "HTTP" "/" 1*DIGIT "." 1*DIGIT
 impl Version {
     fn as_str(&self) -> &str {
         match self {

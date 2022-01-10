@@ -68,6 +68,11 @@ impl Headers {
                 .collect()
         })
     }
+
+    pub fn content_length(&self) -> usize {
+        self.get("Content-Length")
+            .map_or(0, |v| v.parse().map_or(0, |v| v))
+    }
 }
 
 impl Default for Headers {

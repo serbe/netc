@@ -12,7 +12,7 @@ pub enum Method {
     Connect,
     Options,
     Trace,
-    Custom(String),
+    Patch,
 }
 
 impl Method {
@@ -26,7 +26,7 @@ impl Method {
             Method::Connect => "CONNECT",
             Method::Options => "OPTIONS",
             Method::Trace => "TRACE",
-            Method::Custom(s) => s.as_str(),
+            Method::Patch => "PATCH",
         }
     }
 }
@@ -50,7 +50,8 @@ impl FromStr for Method {
             "CONNECT" => Ok(Method::Connect),
             "OPTIONS" => Ok(Method::Options),
             "TRACE" => Ok(Method::Trace),
-            s => Ok(Method::Custom(s.to_string())),
+            "PATCH" => Ok(Method::Patch),
+            method => Err(Error::UnknownMethod(method.to_string())),
         }
     }
 }
@@ -83,8 +84,8 @@ mod tests {
         let method_options_expect: Method = "OPTIONS".parse().unwrap();
         let method_trace = Method::Trace;
         let method_trace_expect: Method = "TRACE".parse().unwrap();
-        let method_custom = Method::Custom("MODIFY".to_string());
-        let method_custom_expect: Method = "MODIFY".parse().unwrap();
+        let method_patch = Method::Patch;
+        let method_patch_expect: Method = "PATCH".parse().unwrap();
 
         assert_eq!(method_get_expect, method_get);
         assert_eq!(method_head_expect, method_head);
@@ -94,7 +95,7 @@ mod tests {
         assert_eq!(method_connect_expect, method_connect);
         assert_eq!(method_options_expect, method_options);
         assert_eq!(method_trace_expect, method_trace);
-        assert_eq!(method_custom_expect, method_custom);
+        assert_eq!(method_patch_expect, method_patch);
     }
 
     #[test]
@@ -115,8 +116,8 @@ mod tests {
         let method_options_expect = "OPTIONS";
         let method_trace = Method::Trace;
         let method_trace_expect = "TRACE";
-        let method_custom = Method::Custom("MODIFY".to_string());
-        let method_custom_expect = "MODIFY";
+        let method_patch = Method::Patch;
+        let method_patch_expect = "PATCH";
 
         assert_eq!(method_get_expect, method_get.as_str());
         assert_eq!(method_head_expect, method_head.as_str());
@@ -126,6 +127,6 @@ mod tests {
         assert_eq!(method_connect_expect, method_connect.as_str());
         assert_eq!(method_options_expect, method_options.as_str());
         assert_eq!(method_trace_expect, method_trace.as_str());
-        assert_eq!(method_custom_expect, method_custom.as_str());
+        assert_eq!(method_patch_expect, method_patch.as_str());
     }
 }

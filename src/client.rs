@@ -1,5 +1,4 @@
 use bytes::Bytes;
-use uri::Uri;
 
 use crate::{ClientBuilder, Error, Headers, HttpStream, Request, Response};
 
@@ -31,20 +30,12 @@ impl Client {
         Ok(response)
     }
 
-    pub fn content_length(&self) -> usize {
-        self.request.content_length()
-    }
-
     pub fn body(&self) -> Option<Bytes> {
         self.request.get_body()
     }
 
-    pub fn headers(&self) -> Headers {
+    pub fn headers(&self) -> &Headers {
         self.request.get_headers()
-    }
-
-    pub fn uri(&self) -> Uri {
-        self.request.uri()
     }
 
     pub fn request(&self) -> Request {

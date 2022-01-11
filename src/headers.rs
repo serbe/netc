@@ -7,7 +7,10 @@ use std::{
 use base64::encode;
 use uri::Uri;
 
-use crate::Error;
+use crate::{
+    utils::{array_from_string, relative_quality_factor},
+    Error,
+};
 
 #[derive(Debug, PartialEq, Clone)]
 pub struct Headers(HashMap<String, String>);
@@ -41,9 +44,7 @@ impl Headers {
     }
 
     pub fn get<T: ToString + ?Sized>(&self, key: &T) -> Option<String> {
-        self.0
-            .get(&key.to_string().to_lowercase())
-            .map(|value| value.to_string())
+        self.0.get(&key.to_string().to_lowercase()).cloned()
     }
 
     pub fn insert<T: ToString + ?Sized, U: ToString + ?Sized>(
@@ -59,19 +60,18 @@ impl Headers {
         self.0.remove(&key.to_string().to_lowercase())
     }
 
-    pub fn get_array<T: ToString + ?Sized>(&self, key: &T) -> Vec<String> {
-        self.get(key).map_or_else(Vec::new, |value| {
-            value
-                .split(',')
-                .map(|value| value.trim().to_string())
-                .filter(|value| !value.is_empty())
-                .collect()
-        })
+    pub fn get_q<T: ToString + ?Sized>(&self, key: &T) -> Option<f32> {
+        self.0
+            .get(&key.to_string().to_lowercase())
+            .and_then(relative_quality_factor)
     }
 
-    pub fn content_length(&self) -> usize {
-        self.get("Content-Length")
-            .map_or(0, |v| v.parse().map_or(0, |v| v))
+    pub fn get_array<T: ToString + ?Sized>(&self, key: &T) -> Vec<String> {
+        self.get(key).map_or_else(Vec::new, array_from_string)
+    }
+
+    pub fn content_length(&self) -> Option<usize> {
+        self.get("Content-Length").and_then(|v| v.parse().ok())
     }
 }
 

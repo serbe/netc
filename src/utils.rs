@@ -1,75 +1,74 @@
-// use uri::Uri;
+pub(crate) fn relative_quality_factor<T: ToString + ?Sized>(value: &T) -> Option<f32> {
+    let value = value.to_string();
+    if value.is_empty() {
+        return None;
+    };
+    value
+        .split(';')
+        .nth(1)
+        .and_then(|v| v.split("q=").nth(1))
+        .and_then(|v| v.parse().ok())
+        .or(Some(1.0f32))
+}
 
-// use crate::Error;
+pub(crate) fn array_from_string<T: ToString>(value: T) -> Vec<String> {
+    value
+        .to_string()
+        .split(',')
+        .map(|value| value.trim().to_string())
+        .filter(|value| !value.is_empty())
+        .collect()
+}
 
-// pub trait IntoUri: IntoUriSealed {}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-// impl IntoUri for Uri {}
-// impl IntoUri for &Uri {}
-// impl IntoUri for String {}
-// impl IntoUri for &String {}
-// impl<'a> IntoUri for &'a str {}
+    #[test]
+    fn quality_10_1() {
+        assert_eq!(relative_quality_factor("text/html"), Some(1.0f32));
+    }
 
-// pub trait IntoUriSealed {
-//     fn into_uri(self) -> Result<Uri, Error>;
+    #[test]
+    fn quality_10_2() {
+        assert_eq!(relative_quality_factor("text/html; q=1"), Some(1.0f32));
+    }
 
-//     fn as_str(&self) -> &str;
-// }
+    #[test]
+    fn quality_10_3() {
+        assert_eq!(relative_quality_factor("text/html; q=asd"), Some(1.0f32));
+    }
 
-// impl IntoUriSealed for Uri {
-//     fn into_uri(self) -> Result<Uri, Error> {
-//         if self.has_host() {
-//             Ok(self)
-//         } else {
-//             Err(Error::EmptyHost)
-//         }
-//     }
+    #[test]
+    fn quality_07_1() {
+        assert_eq!(relative_quality_factor("text/html; q=0.7"), Some(0.7f32));
+    }
 
-//     fn as_str(&self) -> &str {
-//         self.as_ref()
-//     }
-// }
+    #[test]
+    fn quality_07_2() {
+        assert_eq!(relative_quality_factor("text/html;q=0.7"), Some(0.7f32));
+    }
 
-// impl IntoUriSealed for &Uri {
-//     fn into_uri(self) -> Result<Uri, Error> {
-//         if self.has_host() {
-//             Ok(self.clone())
-//         } else {
-//             Err(Error::EmptyHost)
-//         }
-//     }
+    #[test]
+    fn string2array_1() {
+        assert!(array_from_string("").is_empty());
+    }
 
-//     fn as_str(&self) -> &str {
-//         self.as_ref()
-//     }
-// }
+    #[test]
+    fn string2array_2() {
+        assert_eq!(array_from_string("text/html;q=0.7").len(), 1);
+    }
 
-// impl<'a> IntoUriSealed for &'a str {
-//     fn into_uri(self) -> Result<Uri, Error> {
-//         Uri::parse(self)?.into_uri()
-//     }
+    #[test]
+    fn string2array_3() {
+        assert_eq!(array_from_string("text/html;q=0.7,,text/x-dvi").len(), 2);
+    }
 
-//     fn as_str(&self) -> &str {
-//         self
-//     }
-// }
-
-// impl IntoUriSealed for &String {
-//     fn into_uri(self) -> Result<Uri, Error> {
-//         (&**self).into_uri()
-//     }
-
-//     fn as_str(&self) -> &str {
-//         self.as_ref()
-//     }
-// }
-
-// impl<'a> IntoUriSealed for String {
-//     fn into_uri(self) -> Result<Uri, Error> {
-//         (&*self).into_uri()
-//     }
-
-//     fn as_str(&self) -> &str {
-//         self.as_ref()
-//     }
-// }
+    #[test]
+    fn string2array_4() {
+        assert_eq!(
+            array_from_string("text/html;q=0.7,,text/x-dvi"),
+            vec!["text/html;q=0.7".to_string(), "text/x-dvi".to_string()]
+        );
+    }
+}

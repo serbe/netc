@@ -97,10 +97,13 @@ impl HttpStream {
             }
         }
         let mut response = Response::from_header(&header)?;
-        let content_len = response.content_len()?;
-        let body = match (response.has_body(), response.has_chuncked_body()) {
-            (true, false) => self.get_body(content_len).await?,
-            (true, true) => self.get_chunked_body().await?,
+        let body = match (
+            response.has_body(),
+            response.has_chuncked_body(),
+            response.content_len(),
+        ) {
+            (true, false, Some(size)) => self.get_body(size).await?,
+            (true, true, _) => self.get_chunked_body().await?,
             _ => Bytes::new(),
         };
         response.body = body;

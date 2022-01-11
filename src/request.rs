@@ -20,7 +20,7 @@ impl Request {
             uri: uri.clone(),
             method,
             version: Version::Http11,
-            headers: Headers::default_http(&uri),
+            headers: Headers::default_http(uri),
             body: None,
             proxy: None,
         }
@@ -126,7 +126,7 @@ impl Request {
         request_msg
     }
 
-    pub fn content_length(&self) -> usize {
+    pub fn content_length(&self) -> Option<usize> {
         self.headers.content_length()
     }
 
@@ -134,8 +134,8 @@ impl Request {
         self.body.clone()
     }
 
-    pub fn get_headers(&self) -> Headers {
-        self.headers.clone()
+    pub fn get_headers(&self) -> &Headers {
+        &self.headers
     }
 
     pub fn proxy(&mut self, proxy: Option<&Uri>) {
@@ -172,7 +172,7 @@ mod tests {
         let uri = "https://api.ipify.org:1234/123/as".parse().unwrap();
         let mut request = Request::new(Method::Get, &uri);
         request.body(BODY);
-        assert_eq!(CONTENT_LENGTH, request.content_length());
+        assert_eq!(CONTENT_LENGTH, request.content_length().unwrap());
         assert_eq!(BODY, request.get_body().unwrap().to_owned());
         assert_eq!("/123/as", &request.request_uri());
     }

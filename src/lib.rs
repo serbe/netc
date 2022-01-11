@@ -7,6 +7,7 @@ pub mod request;
 pub mod response;
 pub mod status;
 pub mod stream;
+mod utils;
 pub mod version;
 
 pub use crate::client::Client;

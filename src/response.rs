@@ -64,11 +64,8 @@ impl Response {
         self.headers.get(value)
     }
 
-    pub fn content_len(&self) -> Result<usize, Error> {
-        match self.headers().get("Content-Length") {
-            Some(p) => Ok(p.parse()?),
-            None => Ok(0),
-        }
+    pub fn content_len(&self) -> Option<usize> {
+        self.headers().content_length()
     }
 
     pub fn body(&self) -> Bytes {
@@ -110,7 +107,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::status::StatusCode;
+    use crate::{status::StatusCode, Client};
 
     const RESPONSE: &[u8; 129] = b"HTTP/1.1 200 OK\r\n\
                                          Date: Sat, 11 Jan 2003 02:44:04 GMT\r\n\
@@ -194,7 +191,7 @@ mod tests {
         let mut writer = Vec::with_capacity(101);
         let res = Response::try_from(RESPONSE, &mut writer).unwrap();
 
-        assert_eq!(res.content_len(), Ok(100));
+        assert_eq!(res.content_len(), Some(100));
     }
 
     #[test]
@@ -203,5 +200,29 @@ mod tests {
         Response::try_from(RESPONSE, &mut writer).unwrap();
 
         assert_eq!(writer, BODY);
+    }
+
+    #[tokio::test]
+    async fn res_status_code_200() {
+        let mut client = Client::builder()
+            .get("https://httpbin.org/status/200")
+            .build()
+            .await
+            .unwrap();
+        let code = StatusCode::from_u16(200).unwrap();
+        let response = client.send().await.unwrap();
+        assert_eq!(response.status_code(), code);
+    }
+
+    #[tokio::test]
+    async fn res_status_code_302() {
+        let mut client = Client::builder()
+            .get("https://httpbin.org/status/302")
+            .build()
+            .await
+            .unwrap();
+        let code = StatusCode::from_u16(302).unwrap();
+        let response = client.send().await.unwrap();
+        assert_eq!(response.status_code(), code);
     }
 }

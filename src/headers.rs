@@ -5,10 +5,10 @@ use std::{
 };
 
 use base64::encode;
-use uri::Uri;
+use url::Url;
 
 use crate::{
-    utils::{array_from_string, relative_quality_factor},
+    utils::{array_from_string, host_header, relative_quality_factor},
     Error,
 };
 
@@ -24,16 +24,17 @@ impl Headers {
         Headers(HashMap::with_capacity(capacity))
     }
 
-    pub fn default_http(uri: &Uri) -> Headers {
+    pub fn default_http(url: &Url) -> Headers {
         let mut headers = Headers::with_capacity(2);
-        headers.insert("Host", uri.host_header());
+        headers.insert("Host", &host_header(url));
         headers.insert("Connection", "Close");
-        if let ("http" | "https", Some(username), Some(password)) =
-            (uri.scheme(), uri.username(), uri.password())
-        {
+        if let ("http" | "https", Some(password)) = (url.scheme(), url.password()) {
             headers.insert(
                 "Authorization",
-                &format!("Basic {}", encode(&format!("{}:{}", username, password))),
+                &format!(
+                    "Basic {}",
+                    encode(&format!("{}:{}", url.username(), password))
+                ),
             );
         }
         headers
@@ -136,7 +137,7 @@ impl Display for Headers {
 
 #[cfg(test)]
 mod tests {
-    use uri::IntoUri;
+    use crate::utils::IntoUrl;
 
     use super::*;
 
@@ -173,12 +174,12 @@ mod tests {
 
     #[test]
     fn headers_default_http() {
-        let uri = "http://doc.rust-lang.org";
+        let url = "http://doc.rust-lang.org";
         let mut headers = Headers::with_capacity(2);
         headers.insert("Host", "doc.rust-lang.org");
         headers.insert("Connection", "Close");
 
-        assert_eq!(Headers::default_http(&uri.into_uri().unwrap()), headers);
+        assert_eq!(Headers::default_http(&url.into_url().unwrap()), headers);
     }
 
     #[test]

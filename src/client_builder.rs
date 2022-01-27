@@ -1,18 +1,18 @@
 use std::{convert::TryInto, time::Duration};
 
 use bytes::Bytes;
-use uri::{IntoUri, Uri};
+use url::Url;
 
-use crate::{Client, Error, Headers, HttpStream, Method, Request, Version};
+use crate::{utils::IntoUrl, Client, Error, Headers, HttpStream, Method, Request, Version};
 
 #[derive(Debug, PartialEq)]
 pub struct ClientBuilder {
-    pub(crate) uri: Option<Uri>,
+    pub(crate) url: Option<Url>,
     pub(crate) headers: Headers,
     pub(crate) method: Method,
     pub(crate) version: Version,
     pub(crate) body: Option<Bytes>,
-    pub(crate) proxy: Option<Uri>,
+    pub(crate) proxy: Option<Url>,
     pub(crate) nodelay: bool,
     pub(crate) timeout: Option<Duration>,
     pub(crate) connect_timeout: Option<Duration>,
@@ -28,7 +28,7 @@ impl ClientBuilder {
     pub fn new() -> Self {
         let headers = Headers::new();
         ClientBuilder {
-            uri: None,
+            url: None,
             headers,
             method: Method::Get,
             version: Version::Http11,
@@ -41,8 +41,8 @@ impl ClientBuilder {
     }
 
     pub async fn build(self) -> Result<Client, Error> {
-        let uri = self.uri.ok_or(Error::EmptyUri)?;
-        let mut request = Request::new(Method::Get, &uri);
+        let url = self.url.ok_or(Error::EmptyUrl)?;
+        let mut request = Request::new(Method::Get, &url);
         request.proxy(self.proxy.as_ref());
         request.headers(self.headers);
         request.method(self.method);
@@ -52,17 +52,17 @@ impl ClientBuilder {
         Ok(Client::new(request, stream, None))
     }
 
-    pub fn uri<U: IntoUri>(mut self, value: U) -> ClientBuilder {
-        match value.into_uri() {
-            Ok(uri) => self.uri = Some(uri),
-            _ => self.uri = None,
+    pub fn url<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
+        match value.into_url() {
+            Ok(url) => self.url = Some(url),
+            _ => self.url = None,
         }
         self
     }
 
-    pub fn proxy<P: IntoUri>(mut self, value: P) -> ClientBuilder {
-        match value.into_uri() {
-            Ok(uri) => self.proxy = Some(uri),
+    pub fn proxy<P: IntoUrl>(mut self, value: P) -> ClientBuilder {
+        match value.into_url() {
+            Ok(url) => self.proxy = Some(url),
             _ => self.proxy = None,
         }
         self
@@ -99,37 +99,37 @@ impl ClientBuilder {
         self
     }
 
-    pub fn get<U: IntoUri>(mut self, value: U) -> ClientBuilder {
-        match value.into_uri() {
-            Ok(uri) => self.uri = Some(uri),
-            _ => self.uri = None,
+    pub fn get<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
+        match value.into_url() {
+            Ok(url) => self.url = Some(url),
+            _ => self.url = None,
         }
         self.method = Method::Get;
         self
     }
 
-    pub fn post<U: IntoUri>(mut self, value: U) -> ClientBuilder {
-        match value.into_uri() {
-            Ok(uri) => self.uri = Some(uri),
-            _ => self.uri = None,
+    pub fn post<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
+        match value.into_url() {
+            Ok(url) => self.url = Some(url),
+            _ => self.url = None,
         }
         self.method = Method::Post;
         self
     }
 
-    pub fn options<U: IntoUri>(mut self, value: U) -> ClientBuilder {
-        match value.into_uri() {
-            Ok(uri) => self.uri = Some(uri),
-            _ => self.uri = None,
+    pub fn options<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
+        match value.into_url() {
+            Ok(url) => self.url = Some(url),
+            _ => self.url = None,
         }
         self.method = Method::Options;
         self
     }
 
-    pub fn delete<U: IntoUri>(mut self, value: U) -> ClientBuilder {
-        match value.into_uri() {
-            Ok(uri) => self.uri = Some(uri),
-            _ => self.uri = None,
+    pub fn delete<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
+        match value.into_url() {
+            Ok(url) => self.url = Some(url),
+            _ => self.url = None,
         }
         self.method = Method::Delete;
         self
@@ -191,25 +191,25 @@ impl ClientBuilder {
 
     pub fn referer<U>(self, value: U) -> ClientBuilder
     where
-        U: TryInto<Uri>,
+        U: IntoUrl,
     {
-        match value.try_into() {
-            Ok(uri) => self.header("Referer", &uri),
+        match value.into_url() {
+            Ok(url) => self.header("Referer", &url),
             _ => self,
         }
     }
 }
 
-pub fn delete<U: IntoUri>(uri: U) -> Result<ClientBuilder, Error> {
-    Ok(ClientBuilder::new().delete(uri.into_uri()?))
+pub fn delete<U: IntoUrl>(url: U) -> Result<ClientBuilder, Error> {
+    Ok(ClientBuilder::new().delete(&url.into_url()?))
 }
 
-pub fn get<U: IntoUri>(uri: U) -> Result<ClientBuilder, Error> {
-    Ok(ClientBuilder::new().get(uri.into_uri()?))
+pub fn get<U: IntoUrl>(url: U) -> Result<ClientBuilder, Error> {
+    Ok(ClientBuilder::new().get(&url.into_url()?))
 }
 
-pub fn post<U: IntoUri>(uri: U) -> Result<ClientBuilder, Error> {
-    Ok(ClientBuilder::new().post(uri.into_uri()?))
+pub fn post<U: IntoUrl>(url: U) -> Result<ClientBuilder, Error> {
+    Ok(ClientBuilder::new().post(&url.into_url()?))
 }
 
 #[cfg(test)]
@@ -222,9 +222,9 @@ mod tests {
 
     #[tokio::test]
     async fn delete_client() {
-        let uri = format!("{}{}", HTTPBIN, "delete");
-        dbg!(&uri);
-        let mut client = delete(uri)
+        let url = format!("{}{}", HTTPBIN, "delete");
+        dbg!(&url);
+        let mut client = delete(&url)
             .unwrap()
             .header(ACCEPT, ACCEPT_JSON)
             .build()
@@ -241,9 +241,9 @@ mod tests {
 
     #[tokio::test]
     async fn get_client() {
-        let uri = format!("{}{}", HTTPBIN, "get");
-        dbg!(&uri);
-        let client_builder = get(uri).unwrap().header(ACCEPT, ACCEPT_JSON);
+        let url = format!("{}{}", HTTPBIN, "get");
+        dbg!(&url);
+        let client_builder = get(&url).unwrap().header(ACCEPT, ACCEPT_JSON);
         let mut client = client_builder.build().await.unwrap();
         let response = client.send().await.unwrap();
         let body = response.body();

@@ -1,7 +1,7 @@
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
-    #[error("empty uri")]
-    EmptyUri,
+    #[error("empty url")]
+    EmptyUrl,
     #[error("empty host")]
     EmptyHost,
     #[error("wrong http")]
@@ -42,13 +42,13 @@ pub enum Error {
     InvalidDnsNameError(String),
     #[error("No get socket address")]
     SocketAddr,
-    #[error("UriParseError")]
-    UriError(#[from] uri::Error),
+    #[error("UrlParseError")]
+    UrlError(#[from] url::ParseError),
     #[error("Empty version")]
     EmptyVersion,
     #[error("Empty status")]
     EmptyStatus,
-    #[error("Into uri {0}")]
+    #[error("Into url {0}")]
     UntoUri(String),
     #[error("Invalid chunk size format")]
     InvalidChunkSize,
@@ -61,7 +61,7 @@ pub enum Error {
 impl PartialEq for Error {
     fn eq(&self, other: &Self) -> bool {
         match (self, other) {
-            (Error::EmptyUri, Error::EmptyUri) => true,
+            (Error::EmptyUrl, Error::EmptyUrl) => true,
             (Error::EmptyHost, Error::EmptyHost) => true,
             (Error::WrongHttp, Error::WrongHttp) => true,
             (Error::EmptyResponse, Error::EmptyResponse) => true,
@@ -98,7 +98,7 @@ impl PartialEq for Error {
                 dns == other_dns
             }
             (Error::SocketAddr, Error::SocketAddr) => true,
-            (Error::UriError(err), Error::UriError(other_err)) => err == other_err,
+            (Error::UrlError(err), Error::UrlError(other_err)) => err == other_err,
             (Error::EmptyVersion, Error::EmptyVersion) => true,
             (Error::EmptyStatus, Error::EmptyStatus) => true,
             (Error::UntoUri(err), Error::UntoUri(other_err)) => err == other_err,

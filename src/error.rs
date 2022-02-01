@@ -29,7 +29,7 @@ pub enum Error {
     #[error("utf8")]
     FromUtf8(#[from] std::str::Utf8Error),
     #[error("Socks5")]
-    Socks5(#[from] rsl::error::Error),
+    Socks5(#[from] rscl::error::Error),
     #[error("header incomplete")]
     HeaderIncomplete,
     #[error("header more when 1024")]

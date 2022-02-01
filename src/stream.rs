@@ -8,7 +8,7 @@ use std::{
 };
 
 use bytes::{BufMut, Bytes};
-use rsl::socks5;
+use rscl::socks5;
 use tokio::{
     io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, ReadBuf},
     net::TcpStream,

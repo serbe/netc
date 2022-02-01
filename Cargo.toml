@@ -1,8 +1,12 @@
 [package]
 authors = ["Valeriy Kostikov <mkoctuk@gmail.com>"]
+description = "Rust http client library"
 edition = "2021"
 name = "netc"
 version = "0.1.0"
+readme = "README.md"
+repository = "https://github.com/serbe/netc/"
+license = "MIT OR Apache-2.0"
 
 [dependencies]
 base64 = "0.13"

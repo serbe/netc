@@ -1,5 +1,5 @@
 [package]
-authors = ["Valeriy Kostikov <mkoctuk@gmail.com>"]
+authors = ["serbe <serbenv@gmail.com>"]
 description = "Rust http client library"
 edition = "2021"
 name = "netc"

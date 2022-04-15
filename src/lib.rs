@@ -1,3 +1,9 @@
+/*!
+
+The `netc` crate is HTTP client for the [Rust](http://rust-lang.org/) programming language.
+ 
+*/
+
 pub mod client;
 pub mod client_builder;
 pub mod error;

@@ -74,7 +74,7 @@ impl<'a> IntoUrl for &'a String {
 pub(crate) fn host_header(url: &Url) -> String {
     match (url.host_str(), url.port()) {
         (Some(host), Some(port)) => format!("{}:{}", host, port),
-        (Some(host), None) => format!("{}", host),
+        (Some(host), None) => host.to_string(),
         _ => String::new(),
     }
 }

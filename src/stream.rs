@@ -146,10 +146,10 @@ impl HttpStream {
                 }
             }
             let mut buf = [0u8; 2];
-            self.read(&mut buf).await?;
+            self.read_exact(&mut buf).await?;
         }
         let mut buf = [0u8; 2];
-        self.read(&mut buf).await?;
+        self.read_exact(&mut buf).await?;
         if buf != [b'\r', b'\n'] {
             return Err(Error::InvalidChunkEOL);
         }

@@ -54,7 +54,7 @@ impl<'a> IntoUrl for &'a str {
 
 impl<'a> IntoUrl for &'a String {
     fn into_url(self) -> Result<Url, Error> {
-        Ok(Url::parse(&**self)?)
+        Ok(Url::parse(self)?)
     }
 }
 

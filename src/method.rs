@@ -2,7 +2,7 @@ use std::{fmt, str::FromStr};
 
 use crate::Error;
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub enum Method {
     Get,
     Head,

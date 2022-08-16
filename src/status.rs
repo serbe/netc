@@ -2,7 +2,7 @@ use std::{convert::TryFrom, fmt, str::FromStr};
 
 use crate::{Error, Version};
 
-#[derive(PartialEq, Debug, Clone)]
+#[derive(PartialEq, Eq, Debug, Clone)]
 pub struct Status {
     version: Version,
     code: StatusCode,
@@ -60,7 +60,7 @@ impl FromStr for Status {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct StatusCode(u16);
 
 impl StatusCode {

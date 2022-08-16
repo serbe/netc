@@ -4,7 +4,7 @@ use bytes::Bytes;
 
 use crate::{Error, Headers, Method, Status, StatusCode, Version};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Response {
     pub status: Status,
     pub headers: Headers,

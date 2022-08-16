@@ -2,7 +2,7 @@ use std::{fmt, str::FromStr};
 
 use crate::Error;
 
-#[derive(PartialEq, Copy, Clone)]
+#[derive(PartialEq, Eq, Copy, Clone)]
 pub enum Version {
     Http09,
     Http10,

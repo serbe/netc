@@ -5,7 +5,7 @@ use url::Url;
 
 use crate::{utils::IntoUrl, Client, Error, Headers, HttpStream, Method, Request, Version};
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct ClientBuilder {
     pub(crate) url: Option<Url>,
     pub(crate) headers: Headers,

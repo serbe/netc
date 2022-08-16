@@ -12,7 +12,7 @@ use crate::{
     Error,
 };
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Headers(HashMap<String, String>);
 
 impl Headers {

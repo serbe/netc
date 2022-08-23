@@ -166,7 +166,7 @@ impl ClientBuilder {
         B: TryInto<Bytes>,
     {
         match value.try_into() {
-            Ok(body) => self.body(body).header("Content-Type", "application/json"),
+            Ok(body) => self.body(body).content_type("application/json"),
             Err(_) => {
                 self.body = None;
                 self.header_remove("Content-Type")

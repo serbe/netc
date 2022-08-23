@@ -198,6 +198,16 @@ impl ClientBuilder {
             _ => self,
         }
     }
+
+    pub fn origin<U>(self, value: U) -> ClientBuilder
+    where
+        U: IntoUrl,
+    {
+        match value.into_url() {
+            Ok(url) => self.header("Origin", &url),
+            _ => self,
+        }
+    }
 }
 
 pub fn delete<U: IntoUrl>(url: U) -> Result<ClientBuilder, Error> {

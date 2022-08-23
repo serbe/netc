@@ -208,6 +208,13 @@ impl ClientBuilder {
             _ => self,
         }
     }
+
+    pub fn content_type<S>(self, value: &S) -> ClientBuilder
+    where
+        S: ToString + ?Sized,
+    {
+        self.header("Content-Type", &value.to_string())
+    }
 }
 
 pub fn delete<U: IntoUrl>(url: U) -> Result<ClientBuilder, Error> {

@@ -168,6 +168,10 @@ impl StatusCode {
             _ => None,
         }
     }
+
+    pub fn as_u16(self) -> u16 {
+        self.0
+    }
 }
 
 impl From<StatusCode> for u16 {

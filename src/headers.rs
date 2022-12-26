@@ -33,7 +33,7 @@ impl Headers {
                 "Authorization",
                 &format!(
                     "Basic {}",
-                    encode(&format!("{}:{}", url.username(), password))
+                    encode(format!("{}:{}", url.username(), password))
                 ),
             );
         }

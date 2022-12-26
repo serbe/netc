@@ -95,7 +95,7 @@ impl Request {
     pub fn set_basic_auth(&mut self, username: &str, password: &str) -> &mut Self {
         self.header(
             "Authorization",
-            &format!("Basic {}", encode(&format!("{}:{}", username, password))),
+            &format!("Basic {}", encode(format!("{}:{}", username, password))),
         );
         self
     }
@@ -103,7 +103,7 @@ impl Request {
     pub fn set_proxy_basic_auth(&mut self, username: &str, password: &str) -> &mut Self {
         self.header(
             "Proxy-Authorization",
-            &format!("Basic {}", encode(&format!("{}:{}", username, password))),
+            &format!("Basic {}", encode(format!("{}:{}", username, password))),
         );
         self
     }

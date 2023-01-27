@@ -4,7 +4,7 @@ use std::{
     str::FromStr,
 };
 
-use base64::encode;
+use base64::{engine::general_purpose::STANDARD, Engine};
 use url::Url;
 
 use crate::{
@@ -33,7 +33,7 @@ impl Headers {
                 "Authorization",
                 &format!(
                     "Basic {}",
-                    encode(format!("{}:{}", url.username(), password))
+                    STANDARD.encode(format!("{}:{}", url.username(), password))
                 ),
             );
         }
@@ -128,10 +128,10 @@ impl Display for Headers {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         let headers: String = self
             .iter()
-            .map(|(key, val)| format!("  {}: {}\r\n", key, val))
+            .map(|(key, val)| format!("  {key}: {val}\r\n"))
             .collect();
 
-        write!(f, "{{\r\n{}}}", headers)
+        write!(f, "{{\r\n{headers}}}")
     }
 }
 

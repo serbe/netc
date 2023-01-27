@@ -1,4 +1,4 @@
-use base64::encode;
+use base64::{engine::general_purpose::STANDARD, Engine};
 use bytes::Bytes;
 use url::Url;
 
@@ -95,7 +95,10 @@ impl Request {
     pub fn set_basic_auth(&mut self, username: &str, password: &str) -> &mut Self {
         self.header(
             "Authorization",
-            &format!("Basic {}", encode(format!("{}:{}", username, password))),
+            &format!(
+                "Basic {}",
+                STANDARD.encode(format!("{username}:{password}"))
+            ),
         );
         self
     }
@@ -103,7 +106,10 @@ impl Request {
     pub fn set_proxy_basic_auth(&mut self, username: &str, password: &str) -> &mut Self {
         self.header(
             "Proxy-Authorization",
-            &format!("Basic {}", encode(format!("{}:{}", username, password))),
+            &format!(
+                "Basic {}",
+                STANDARD.encode(format!("{username}:{password}"))
+            ),
         );
         self
     }
@@ -112,7 +118,7 @@ impl Request {
         let headers: String = self
             .headers
             .iter()
-            .map(|(k, v)| format!("{}: {}{}", k, v, "\r\n"))
+            .map(|(k, v)| format!("{k}: {v}\r\n"))
             .collect();
 
         let mut request_msg = (self.request_line() + &headers + "\r\n")

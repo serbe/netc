@@ -118,7 +118,7 @@ impl Request {
         let headers: String = self
             .headers
             .iter()
-            .map(|(k, v)| format!("{k}: {v}\r\n"))
+            .map(|(k, v)| format!("{}: {}{}", k, v, "\r\n"))
             .collect();
 
         let mut request_msg = (self.request_line() + &headers + "\r\n")

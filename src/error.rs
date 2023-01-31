@@ -10,8 +10,6 @@ pub enum Error {
     EmptyResponse,
     #[error("parse headers")]
     ParseHeaders,
-    #[error("unknown method {0}")]
-    UnknownMethod(String),
     #[error("unsupported scheme {0}")]
     UnsupportedScheme(String),
     #[error("unsupported version {0}")]
@@ -56,6 +54,10 @@ pub enum Error {
     InvalidChunkEOL,
     #[error("Chunk line length {0} > 4096")]
     ChunkLineTooLong(usize),
+    #[error("Header name must start with uppercase char or *")]
+    HeaderWrongNameStart,
+    #[error("Header name must contain ascii alphanumeric or -")]
+    HeaderWrongName,
 }
 
 impl PartialEq for Error {
@@ -66,9 +68,6 @@ impl PartialEq for Error {
             (Error::WrongHttp, Error::WrongHttp) => true,
             (Error::EmptyResponse, Error::EmptyResponse) => true,
             (Error::ParseHeaders, Error::ParseHeaders) => true,
-            (Error::UnknownMethod(method), Error::UnknownMethod(other_method)) => {
-                method == other_method
-            }
             (Error::UnsupportedScheme(scheme), Error::UnsupportedScheme(other_scheme)) => {
                 scheme == other_scheme
             }
@@ -107,6 +106,8 @@ impl PartialEq for Error {
             (Error::ChunkLineTooLong(length), Error::ChunkLineTooLong(other_length)) => {
                 length == other_length
             }
+            (Error::HeaderWrongNameStart, Error::HeaderWrongNameStart) => true,
+            (Error::HeaderWrongName, Error::HeaderWrongName) => true,
             _ => false,
         }
     }

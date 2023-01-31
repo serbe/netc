@@ -1,3 +1,4 @@
+use bytes::Bytes;
 // use base64::encode;
 use url::Url;
 // use percent_encoding::percent_decode_str;
@@ -24,6 +25,26 @@ pub(crate) fn array_from_string<T: ToString>(value: T) -> Vec<String> {
         .map(|value| value.trim().to_string())
         .filter(|value| !value.is_empty())
         .collect()
+}
+
+pub(crate) fn trim(word: &Bytes) -> Bytes {
+    let mut start = 0;
+    let mut end = 0;
+    for i in 0..word.len() {
+        if word[i].is_ascii_whitespace() {
+            continue;
+        }
+        start = i;
+        break;
+    }
+    for i in (start..word.len()).rev() {
+        if word[i].is_ascii_whitespace() {
+            continue;
+        }
+        end = i;
+        break;
+    }
+    word.slice(start..=end)
 }
 
 pub trait IntoUrl {
@@ -122,6 +143,12 @@ pub(crate) fn absolute_uri(url: &Url) -> &str {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn trim_test() {
+        let header = "    UsEr-aGeNt    ".into();
+        assert_eq!(trim(&header), Bytes::from("UsEr-aGeNt"));
+    }
 
     #[test]
     fn str_intourl() {

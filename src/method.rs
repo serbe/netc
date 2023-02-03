@@ -1,7 +1,8 @@
 use std::fmt;
 
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq, Default)]
 pub enum Method {
+    #[default]
     Get,
     Head,
     Post,
@@ -28,12 +29,6 @@ impl Method {
             Method::Patch => "PATCH",
             Method::Other(s) => s,
         }
-    }
-}
-
-impl Default for Method {
-    fn default() -> Self {
-        Method::Get
     }
 }
 

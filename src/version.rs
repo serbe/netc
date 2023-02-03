@@ -2,10 +2,11 @@ use std::{fmt, str::FromStr};
 
 use crate::Error;
 
-#[derive(PartialEq, Eq, Copy, Clone)]
+#[derive(PartialEq, Eq, Copy, Clone, Default)]
 pub enum Version {
     Http09,
     Http10,
+    #[default]
     Http11,
     H2,
     H3,
@@ -21,12 +22,6 @@ impl Version {
             Version::H2 => "HTTP/2",
             Version::H3 => "HTTP/3",
         }
-    }
-}
-
-impl Default for Version {
-    fn default() -> Self {
-        Version::Http11
     }
 }
 

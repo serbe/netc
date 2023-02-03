@@ -22,24 +22,25 @@
 //    the semantics defined by that header field.  For example, the Date
 //    header field is defined in Section 7.1.1.2 of [RFC7231] as containing
 //    the origination timestamp for the message in which it appears.
-
+// #[warn(soft_unstable)]
 use std::collections::HashMap;
+use std::str::FromStr;
 
 use crate::utils::trim;
 use crate::Error;
 use bytes::Bytes;
 
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct HeaderFields {
     pub(crate) name: Bytes,
     pub(crate) value: Bytes,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Headers(HashMap<Bytes, HeaderFields>);
 
 impl HeaderFields {
-    pub(crate) fn new<T: Into<Bytes>, U: Into<Bytes>>(name: T, value: U) -> Result<Self, Error> {
+    pub fn new<T: Into<Bytes>, U: Into<Bytes>>(name: T, value: U) -> Result<Self, Error> {
         let name: Bytes = trim(&name.into());
         let value = value.into();
         if !name[0].is_ascii_uppercase() && name[0] != b'*' {
@@ -53,6 +54,30 @@ impl HeaderFields {
         }
 
         Ok(HeaderFields { name, value })
+    }
+}
+
+impl FromStr for HeaderFields {
+    type Err = Error;
+
+    fn from_str(str_line: &str) -> Result<HeaderFields, Error> {
+        let b = Bytes::from(str_line.to_owned());
+        let mut sp = b.splitn(2, |pred| pred == &b':');
+        if let (Some(name), Some(mut value)) = (sp.next(), sp.next()) {
+            value = &value[1..];
+            if value[0].is_ascii_whitespace() && value.len() > 1 {
+                value = &value[1..];
+            }
+            HeaderFields::new(name.to_owned(), value.to_owned())
+        } else {
+            Err(Error::ParseHeaders)
+        }
+    }
+}
+
+impl Default for Headers {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -73,17 +98,17 @@ impl Headers {
     }
 
     pub fn get<T: Into<Bytes> + Clone>(&self, name: T) -> Option<&HeaderFields> {
-        let name: Bytes = name.clone().into().to_ascii_uppercase().into();
+        let name: Bytes = name.into().to_ascii_uppercase().into();
         self.0.get(&name)
     }
 
     pub fn remove<T: Into<Bytes> + Clone>(&mut self, name: T) -> Option<HeaderFields> {
-        let name: Bytes = name.clone().into().to_ascii_uppercase().into();
+        let name: Bytes = name.into().to_ascii_uppercase().into();
         self.0.remove(&name)
     }
 
     pub fn get_quality_factor<T: Into<Bytes> + Clone>(&self, name: T) -> Option<f32> {
-        let name: Bytes = name.clone().into().to_ascii_uppercase().into();
+        let name: Bytes = name.into().to_ascii_uppercase().into();
         self.0.get(&name).and_then(header_relative_quality_factor)
     }
 
@@ -98,10 +123,10 @@ impl Headers {
 }
 
 fn header_relative_quality_factor(header: &HeaderFields) -> Option<f32> {
-    let value = String::from_utf8_lossy(&header.value).to_string();
-    if value.is_empty() {
+    if header.value.is_empty() {
         return None;
     };
+    let value = String::from_utf8_lossy(&header.value).to_string();
     value
         .split(';')
         .nth(1)
@@ -112,7 +137,7 @@ fn header_relative_quality_factor(header: &HeaderFields) -> Option<f32> {
 
 #[cfg(test)]
 mod tests {
-    use bytes::BytesMut;
+    // use bytes::BytesMut;
 
     // #[test]
     // fn capitalize_1() {

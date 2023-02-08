@@ -42,15 +42,13 @@ impl FromStr for Version {
 
 impl fmt::Debug for Version {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(self.as_str())
+        write!(f, "{}", self.as_str())
     }
 }
 
 impl fmt::Display for Version {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        let version = self.as_str();
-
-        write!(f, "{version}")
+        write!(f, "{}", self.as_str())
     }
 }
 
@@ -70,12 +68,16 @@ mod tests {
         let version2_expect: Version = "HTTP/2".parse().unwrap();
         let version3 = Version::H3;
         let version3_expect: Version = "HTTP/3".parse().unwrap();
+        let version_error_str = "HTT/4";
+        let version_error = Error::UnsupportedVersion(version_error_str.to_string());
+        let version_error_expect = version_error_str.parse::<Version>();
 
         assert_eq!(version09_expect, version09);
         assert_eq!(version10_expect, version10);
         assert_eq!(version11_expect, version11);
         assert_eq!(version2_expect, version2);
         assert_eq!(version3_expect, version3);
+        assert_eq!(version_error_expect, Err(version_error));
     }
 
     #[test]
@@ -96,5 +98,7 @@ mod tests {
         assert_eq!(version11.as_str(), version11_str);
         assert_eq!(version2.as_str(), version2_str);
         assert_eq!(version3.as_str(), version3_str);
+        assert_eq!(format!("{version11}"), version11_str.to_string());
+        assert_eq!(format!("{version11:?}"), version11_str.to_string());
     }
 }

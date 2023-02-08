@@ -79,6 +79,8 @@ mod tests {
         let method_trace_expect: Method = "TRACE".into();
         let method_patch = Method::Patch;
         let method_patch_expect: Method = "PATCH".into();
+        let method_other = Method::Other("CUSTOM".to_string());
+        let method_other_expect: Method = "CUSTOM".into();
 
         assert_eq!(method_get_expect, method_get);
         assert_eq!(method_head_expect, method_head);
@@ -89,6 +91,7 @@ mod tests {
         assert_eq!(method_options_expect, method_options);
         assert_eq!(method_trace_expect, method_trace);
         assert_eq!(method_patch_expect, method_patch);
+        assert_eq!(method_other_expect, method_other);
     }
 
     #[test]
@@ -111,6 +114,8 @@ mod tests {
         let method_trace_expect = "TRACE";
         let method_patch = Method::Patch;
         let method_patch_expect = "PATCH";
+        let method_other = Method::Other("CUSTOM".to_string());
+        let method_other_expect = "CUSTOM";
 
         assert_eq!(method_get_expect, method_get.as_str());
         assert_eq!(method_head_expect, method_head.as_str());
@@ -121,5 +126,6 @@ mod tests {
         assert_eq!(method_options_expect, method_options.as_str());
         assert_eq!(method_trace_expect, method_trace.as_str());
         assert_eq!(method_patch_expect, method_patch.as_str());
+        assert_eq!(method_other_expect, method_other.as_str());
     }
 }

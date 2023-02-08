@@ -125,6 +125,19 @@ pub(crate) fn absolute_uri(url: &Url) -> &str {
     url.as_str()
 }
 
+pub(crate) fn find_slice<T>(data: &[T], e: &[T]) -> Option<usize>
+where
+    [T]: PartialEq,
+{
+    for i in 0..=data.len() - e.len() {
+        if data[i..(i + e.len())] == *e {
+            return Some(i + e.len());
+        }
+    }
+
+    None
+}
+
 // pub(crate) fn decode(v: Option<&str>) -> Option<String> {
 //     v.filter(|s| !s.is_empty()).map(|s| percent_decode_str(s).decode_utf8().ok()).flatten().map(|v| v.to_string())
 // }
@@ -201,5 +214,33 @@ mod tests {
             array_from_string("text/html;q=0.7,,text/x-dvi"),
             vec!["text/html;q=0.7".to_string(), "text/x-dvi".to_string()]
         );
+    }
+
+    #[test]
+    fn find_slice_1() {
+        const WORDS: [&str; 8] = ["Good", "job", "Great", "work", "Have", "fun", "See", "you"];
+        const SEARCH: [&str; 3] = ["Great", "work", "Have"];
+
+        assert_eq!(find_slice(&WORDS, &SEARCH), Some(5));
+    }
+
+    #[test]
+    fn find_slice_2() {
+        const WORDS: [&str; 10] = [
+            "Test", "again", "Good", "job", "Great", "work", "Have", "fun", "See", "you",
+        ];
+        const SEARCH: [&str; 4] = ["work", "Have", "fun", "See"];
+
+        assert_eq!(find_slice(&WORDS, &SEARCH), Some(9));
+    }
+
+    #[test]
+    fn find_slice_3() {
+        const WORDS: [&str; 10] = [
+            "Test", "again", "Good", "job", "Great", "work", "Have", "fun", "See", "you",
+        ];
+        const SEARCH: [&str; 3] = ["Have", "work", "fun"];
+
+        assert_eq!(find_slice(&WORDS, &SEARCH), None);
     }
 }

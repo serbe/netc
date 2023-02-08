@@ -2,7 +2,7 @@ use std::{io::Write, str};
 
 use bytes::Bytes;
 
-use crate::{Error, Headers, Method, Status, StatusCode, Version};
+use crate::{utils::find_slice, Error, Headers, Method, Status, StatusCode, Version};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Response {
@@ -91,19 +91,6 @@ impl Response {
     }
 }
 
-pub fn find_slice<T>(data: &[T], e: &[T]) -> Option<usize>
-where
-    [T]: PartialEq,
-{
-    for i in 0..=data.len() - e.len() {
-        if data[i..(i + e.len())] == *e {
-            return Some(i + e.len());
-        }
-    }
-
-    None
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -119,14 +106,6 @@ mod tests {
                                            Content-Type: text/html\r\n\
                                            Content-Length: 100\r\n\r\n";
     const BODY: &[u8; 27] = b"<html>hello</html>\r\n\r\nhello";
-
-    #[test]
-    fn find_slice_e() {
-        const WORDS: [&str; 8] = ["Good", "job", "Great", "work", "Have", "fun", "See", "you"];
-        const SEARCH: [&str; 3] = ["Great", "work", "Have"];
-
-        assert_eq!(find_slice(&WORDS, &SEARCH), Some(5));
-    }
 
     #[test]
     fn res_from_head() {

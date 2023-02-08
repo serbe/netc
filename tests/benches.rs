@@ -12,16 +12,15 @@ fn bench_bytes_insertion_and_remove(b: &mut Bencher) {
     let mut header = netc::header::Headers::new();
     let name = "Content-Type";
     let value = "text/html; charset=utf-8";
-    let h_f = "Content-Type: text/html; charset=utf-8";
     b.iter(|| {
         assert_eq!(header.insert(name, value).unwrap(), None);
         assert_eq!(
             header.get(name),
-            Some(&netc::header::HeaderFields::from_str(h_f).unwrap())
+            Some(&netc::header::HeaderFields::new(name, value).unwrap())
         );
         assert_eq!(
             header.remove(name),
-            Some(netc::header::HeaderFields::from_str(h_f).unwrap())
+            Some(netc::header::HeaderFields::new(name, value).unwrap())
         );
     });
 }

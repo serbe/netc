@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 base64 = "0.21"
-bytes = "1.3"
+bytes = "1.4"
 rand = "0.8"
 rscl = "0.1"
 thiserror = "1.0"

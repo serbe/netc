@@ -1,7 +1,4 @@
 #![feature(test)]
-
-use std::str::FromStr;
-
 use netc;
 use test::Bencher;
 

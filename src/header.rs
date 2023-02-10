@@ -118,7 +118,7 @@ impl Headers {
 
     pub fn content_length(&self) -> Option<usize> {
         self.get("Content-Length")
-            .and_then(|v| String::from_utf8_lossy(&v.value).to_string().parse().ok())
+            .and_then(|v| String::from_utf8_lossy(&v.value).parse().ok())
     }
 }
 
@@ -126,7 +126,7 @@ fn header_relative_quality_factor(header: &HeaderFields) -> Option<f32> {
     if header.value.is_empty() {
         return None;
     };
-    let value = String::from_utf8_lossy(&header.value).to_string();
+    let value = String::from_utf8_lossy(&header.value);
     value
         .split(';')
         .nth(1)

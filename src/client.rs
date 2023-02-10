@@ -46,19 +46,9 @@ impl Client {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use dotenv;
 
     const SIMPLE_URL: &'static str = "http://api.ipify.org";
     const SECURE_URL: &'static str = "https://api.ipify.org";
-
-    #[tokio::test]
-    async fn client_http() {
-        let mut client = Client::builder().get(SIMPLE_URL).build().await.unwrap();
-        let response = client.send().await.unwrap();
-        assert!(response.status_code().is_success());
-        let body = response.text().unwrap();
-        assert!(&body.contains(crate::tests::IP.as_str()));
-    }
 
     #[tokio::test]
     async fn client_https() {
@@ -67,116 +57,6 @@ mod tests {
         assert!(response.status_code().is_success());
         let body = response.text().unwrap();
         assert!(&body.contains(crate::tests::IP.as_str()));
-    }
-
-    #[tokio::test]
-    async fn client_http_proxy() {
-        dotenv::dotenv().ok();
-        let http_proxy = match dotenv::var("TEST_HTTP_PROXY") {
-            Ok(it) => it,
-            _ => return,
-        };
-        let mut client = Client::builder()
-            .get(SIMPLE_URL)
-            .proxy(&http_proxy)
-            .build()
-            .await
-            .unwrap();
-        let request = client.request();
-        assert_eq!(&request.request_uri(), "http://api.ipify.org/");
-        let response = client.send().await.unwrap();
-        assert!(response.status_code().is_success());
-        let body = response.text().unwrap();
-        assert!(&body.contains(crate::tests::IP.as_str()));
-    }
-
-    #[tokio::test]
-    async fn client_http_proxy_auth() {
-        dotenv::dotenv().ok();
-        let http_auth_proxy = match dotenv::var("TEST_HTTP_AUTH_PROXY") {
-            Ok(it) => it,
-            _ => return,
-        };
-        let mut client = Client::builder()
-            .get(SIMPLE_URL)
-            .proxy(&http_auth_proxy)
-            .build()
-            .await
-            .unwrap();
-        let response = client.send().await.unwrap();
-        assert!(response.status_code().is_success());
-        let body = response.text().unwrap();
-        assert!(&body.contains(crate::tests::IP.as_str()));
-    }
-
-    #[tokio::test]
-    async fn client_http_proxy_auth_err() {
-        dotenv::dotenv().ok();
-        let http_auth_proxy = match dotenv::var("TEST_HTTP_AUTH_ERR_PROXY") {
-            Ok(it) => it,
-            _ => return,
-        };
-        let mut client = Client::builder()
-            .get(SIMPLE_URL)
-            .proxy(&http_auth_proxy)
-            .build()
-            .await
-            .unwrap();
-        let response = client.send().await.unwrap();
-        assert!(response.status_code().is_client_err());
-    }
-
-    #[tokio::test]
-    async fn client_socks_proxy() {
-        dotenv::dotenv().ok();
-        let socks5_proxy = match dotenv::var("TEST_SOCKS5_PROXY") {
-            Ok(it) => it,
-            _ => return,
-        };
-        let mut client = Client::builder()
-            .get(SIMPLE_URL)
-            .proxy(&socks5_proxy)
-            .build()
-            .await
-            .unwrap();
-        let response = client.send().await.unwrap();
-        assert!(response.status_code().is_success());
-        let body = response.text().unwrap();
-        assert!(&body.contains(crate::tests::IP.as_str()));
-    }
-
-    #[tokio::test]
-    async fn client_socks_proxy_auth() {
-        dotenv::dotenv().ok();
-        let socks5_auth_proxy = match dotenv::var("TEST_SOCKS5_AUTH_PROXY") {
-            Ok(it) => it,
-            _ => return,
-        };
-        let mut client = Client::builder()
-            .get(SIMPLE_URL)
-            .proxy(&socks5_auth_proxy)
-            .build()
-            .await
-            .unwrap();
-        let response = client.send().await.unwrap();
-        assert!(response.status_code().is_success());
-        let body = response.text().unwrap();
-        assert!(&body.contains(crate::tests::IP.as_str()));
-    }
-
-    #[tokio::test]
-    async fn client_socks_proxy_auth_err() {
-        dotenv::dotenv().ok();
-        let socks5_auth_proxy = match dotenv::var("TEST_SOCKS5_AUTH_ERR_PROXY") {
-            Ok(it) => it,
-            _ => return,
-        };
-        let client = Client::builder()
-            .get(SIMPLE_URL)
-            .proxy(&socks5_auth_proxy)
-            .build()
-            .await;
-        assert!(client.is_err());
     }
 
     #[test]

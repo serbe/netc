@@ -240,7 +240,6 @@ mod tests {
     #[tokio::test]
     async fn delete_client() {
         let url = format!("{}{}", HTTPBIN, "delete");
-        dbg!(&url);
         let mut client = delete(&url)
             .unwrap()
             .header(ACCEPT, ACCEPT_JSON)
@@ -259,7 +258,6 @@ mod tests {
     #[tokio::test]
     async fn get_client() {
         let url = format!("{}{}", HTTPBIN, "get");
-        dbg!(&url);
         let client_builder = get(&url).unwrap().header(ACCEPT, ACCEPT_JSON);
         let mut client = client_builder.build().await.unwrap();
         let response = client.send().await.unwrap();

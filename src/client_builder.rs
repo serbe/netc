@@ -213,7 +213,7 @@ impl ClientBuilder {
     where
         S: ToString + ?Sized,
     {
-        self.header("Content-Type", &value.to_string())
+        self.header("Content-Type", value)
     }
 }
 

@@ -194,6 +194,47 @@ mod tests {
     }
 
     #[test]
+    fn quality_empty() {
+        assert_eq!(relative_quality_factor(""), None);
+    }
+
+    #[test]
+    fn host_header_host_port() {
+        let url = Url::parse("http://127.0.0.1:1010").unwrap();
+        assert_eq!(&host_header(&url), "127.0.0.1:1010");
+    }
+
+    #[test]
+    fn host_header_host() {
+        let url = Url::parse("http://127.0.0.1").unwrap();
+        assert_eq!(&host_header(&url), "127.0.0.1");
+    }
+
+    #[test]
+    fn host_header_no_host() {
+        let url = Url::parse("data:text/plain,Stuff").unwrap();
+        assert_eq!(host_header(&url), String::new());
+    }
+
+    #[test]
+    fn abs_path_query() {
+        let url = Url::parse("https://example.com/products?page=2").unwrap();
+        assert_eq!(&abs_path(&url), "/products?page=2");
+    }
+
+    #[test]
+    fn abs_path_fragment() {
+        let url = Url::parse("https://example.com/data.csv#row=4").unwrap();
+        assert_eq!(&abs_path(&url), "/data.csv#row=4");
+    }
+
+    #[test]
+    fn abs_path_query_fragment() {
+        let url = Url::parse("https://example.com/data.csv#row=4?page=2").unwrap();
+        assert_eq!(&abs_path(&url), "/data.csv#row=4?page=2");
+    }
+
+    #[test]
     fn string2array_1() {
         assert!(array_from_string("").is_empty());
     }

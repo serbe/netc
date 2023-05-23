@@ -50,8 +50,9 @@ impl HttpStream {
     }
 
     pub async fn socks(proxy: &Url, target: &Url) -> Result<Self, Error> {
-        let stream = socks5::connect_uri(proxy, target).await?;
-        HttpStream::maybe_ssl(target, stream).await
+        let mut client = socks5::SocksClient::new(proxy.clone(), target.clone()).await?;
+        client.handshake().await?;
+        HttpStream::maybe_ssl(target, client.stream).await
     }
 
     async fn maybe_ssl(url: &Url, stream: TcpStream) -> Result<Self, Error> {

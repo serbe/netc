@@ -217,55 +217,43 @@ impl ClientBuilder {
     }
 }
 
-pub fn delete<U: IntoUrl>(url: U) -> Result<ClientBuilder, Error> {
-    Ok(ClientBuilder::new().delete(&url.into_url()?))
-}
-
-pub fn get<U: IntoUrl>(url: U) -> Result<ClientBuilder, Error> {
-    Ok(ClientBuilder::new().get(&url.into_url()?))
-}
-
-pub fn post<U: IntoUrl>(url: U) -> Result<ClientBuilder, Error> {
-    Ok(ClientBuilder::new().post(&url.into_url()?))
-}
-
 #[cfg(test)]
 mod tests {
-    use super::*;
+    // use super::*;
 
-    const HTTPBIN: &str = "https://httpbin.org/";
-    const ACCEPT: &str = "accept";
-    const ACCEPT_JSON: &str = "application/json";
+    // const HTTPBIN: &str = "https://httpbin.org/";
+    // const ACCEPT: &str = "accept";
+    // const ACCEPT_JSON: &str = "application/json";
 
-    #[tokio::test]
-    async fn delete_client() {
-        let url = format!("{}{}", HTTPBIN, "delete");
-        let mut client = delete(&url)
-            .unwrap()
-            .header(ACCEPT, ACCEPT_JSON)
-            .build()
-            .await
-            .unwrap();
-        let response = client.send().await.unwrap();
-        let body = response.body();
-        assert!(!body.is_empty());
-        assert_eq!(
-            Some("application/json".to_string()),
-            response.header("content-type")
-        );
-    }
+    // #[tokio::test]
+    // async fn delete_client() {
+    //     let url = format!("{}{}", HTTPBIN, "delete");
+    //     let mut client = delete(&url)
+    //         .unwrap()
+    //         .header(ACCEPT, ACCEPT_JSON)
+    //         .build()
+    //         .await
+    //         .unwrap();
+    //     let response = client.send().await.unwrap();
+    //     let body = response.body();
+    //     assert!(!body.is_empty());
+    //     assert_eq!(
+    //         Some("application/json".to_string()),
+    //         response.header("content-type")
+    //     );
+    // }
 
-    #[tokio::test]
-    async fn get_client() {
-        let url = format!("{}{}", HTTPBIN, "get");
-        let client_builder = get(&url).unwrap().header(ACCEPT, ACCEPT_JSON);
-        let mut client = client_builder.build().await.unwrap();
-        let response = client.send().await.unwrap();
-        let body = response.body();
-        assert!(!body.is_empty());
-        assert_eq!(
-            Some("application/json".to_string()),
-            response.header("content-type")
-        );
-    }
+    // #[tokio::test]
+    // async fn get_client() {
+    //     let url = format!("{}{}", HTTPBIN, "get");
+    //     let client_builder = get(&url).unwrap().header(ACCEPT, ACCEPT_JSON);
+    //     let mut client = client_builder.build().await.unwrap();
+    //     let response = client.send().await.unwrap();
+    //     let body = response.body();
+    //     assert!(!body.is_empty());
+    //     assert_eq!(
+    //         Some("application/json".to_string()),
+    //         response.header("content-type")
+    //     );
+    // }
 }

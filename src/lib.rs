@@ -17,8 +17,10 @@ pub mod stream;
 mod utils;
 pub mod version;
 
+use utils::IntoUrl;
+
 pub use crate::client::Client;
-pub use crate::client_builder::{get, post, ClientBuilder};
+pub use crate::client_builder::ClientBuilder;
 pub use crate::error::Error;
 pub use crate::headers::Headers;
 pub use crate::method::Method;
@@ -43,6 +45,18 @@ pub(crate) fn my_ip() -> String {
     let body = String::from_utf8(buf).unwrap();
     let split: Vec<&str> = body.splitn(2, "\r\n\r\n").collect();
     split[1].to_string()
+}
+
+pub async fn delete<U: IntoUrl>(url: U) -> Result<Response, Error> {
+    ClientBuilder::new().delete(url).build().await?.send().await
+}
+
+pub async fn get<U: IntoUrl>(url: U) -> Result<Response, Error> {
+    ClientBuilder::new().get(url).build().await?.send().await
+}
+
+pub async fn post<U: IntoUrl>(url: U) -> Result<Response, Error> {
+    ClientBuilder::new().post(url).build().await?.send().await
 }
 
 #[cfg(test)]

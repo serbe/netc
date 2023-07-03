@@ -1,12 +1,15 @@
+use async_recursion::async_recursion;
 use bytes::Bytes;
+use url::Url;
 
-use crate::{ClientBuilder, Error, Headers, HttpStream, Request, Response};
+use crate::{client_builder::Config, ClientBuilder, Error, Headers, HttpStream, Request, Response};
 
 #[derive(Debug)]
 pub struct Client {
     pub(crate) request: Request,
     pub(crate) stream: HttpStream,
     pub(crate) response: Option<Response>,
+    pub(crate) config: Config,
 }
 
 impl Client {
@@ -14,18 +17,43 @@ impl Client {
         ClientBuilder::default()
     }
 
-    pub fn new(request: Request, stream: HttpStream, response: Option<Response>) -> Client {
+    pub fn new(
+        request: Request,
+        stream: HttpStream,
+        response: Option<Response>,
+        config: Config,
+    ) -> Client {
         Client {
             request,
             stream,
             response,
+            config,
         }
     }
 
+    #[async_recursion]
     pub async fn send(&mut self) -> Result<Response, Error> {
         self.stream.send_msg(&self.request.to_vec()).await?;
         let mut response = self.stream.get_response().await?;
         response.method = self.request.method.clone();
+        if response.status_code().is_redirect() {
+            if let Some(location) = response.headers().get("Location") {
+                let redirect_url = if let Ok(new_url) = Url::parse(&location) {
+                    new_url
+                } else {
+                    let mut current_url = self.request().url();
+                    current_url.set_path(&location);
+                    current_url
+                };
+                self.redirect()?;
+                return ClientBuilder::from_client(self)
+                    .url(&redirect_url)
+                    .build()
+                    .await?
+                    .send()
+                    .await;
+            }
+        };
         self.response = Some(response.clone());
         Ok(response)
     }
@@ -40,6 +68,19 @@ impl Client {
 
     pub fn request(&self) -> Request {
         self.request.clone()
+    }
+
+    pub fn redirects(&self) -> usize {
+        self.config.redirects
+    }
+
+    pub(crate) fn redirect(&mut self) -> Result<(), Error> {
+        self.config.redirects += 1;
+        if self.config.redirects >= self.config.max_redirects {
+            Err(Error::MaxRedirects)
+        } else {
+            Ok(())
+        }
     }
 }
 

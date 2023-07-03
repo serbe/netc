@@ -5,6 +5,33 @@ use url::Url;
 
 use crate::{utils::IntoUrl, Client, Error, Headers, HttpStream, Method, Request, Version};
 
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct Config {
+    // pub nodelay: bool,
+    pub timeout: Option<Duration>,
+    pub connect_timeout: Option<Duration>,
+    pub redirects: usize,
+    pub max_redirects: usize,
+}
+
+impl Config {
+    fn new() -> Self {
+        Config {
+            // nodelay: true
+            timeout: None,
+            connect_timeout: None,
+            redirects: 0,
+            max_redirects: 10,
+        }
+    }
+}
+
+impl Default for Config {
+    fn default() -> Self {
+        Config::new()
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub struct ClientBuilder {
     pub(crate) url: Option<Url>,
@@ -13,9 +40,7 @@ pub struct ClientBuilder {
     pub(crate) version: Version,
     pub(crate) body: Option<Bytes>,
     pub(crate) proxy: Option<Url>,
-    pub(crate) nodelay: bool,
-    pub(crate) timeout: Option<Duration>,
-    pub(crate) connect_timeout: Option<Duration>,
+    pub(crate) config: Config,
 }
 
 impl Default for ClientBuilder {
@@ -34,9 +59,19 @@ impl ClientBuilder {
             version: Version::Http11,
             body: None,
             proxy: None,
-            nodelay: false,
-            timeout: None,
-            connect_timeout: None,
+            config: Config::new(),
+        }
+    }
+
+    pub fn from_client(client: &Client) -> Self {
+        ClientBuilder {
+            url: Some(client.request.url.clone()),
+            headers: client.request.headers.clone(),
+            method: client.request.method.clone(),
+            version: client.request.version,
+            body: client.request.body.clone(),
+            proxy: client.request.proxy.clone(),
+            config: client.config.clone(),
         }
     }
 
@@ -49,7 +84,7 @@ impl ClientBuilder {
         request.version(self.version);
         request.opt_body(self.body);
         let stream = HttpStream::from_request(&request).await?;
-        Ok(Client::new(request, stream, None))
+        Ok(Client::new(request, stream, None, self.config))
     }
 
     pub fn url<U: IntoUrl>(mut self, value: U) -> ClientBuilder {
@@ -174,18 +209,23 @@ impl ClientBuilder {
         }
     }
 
-    pub fn tcp_nodelay(mut self) -> ClientBuilder {
-        self.nodelay = true;
-        self
-    }
+    // pub fn tcp_nodelay(mut self) -> ClientBuilder {
+    //     self.config.nodelay = true;
+    //     self
+    // }
 
     pub fn timeout(mut self, timeout: Duration) -> ClientBuilder {
-        self.timeout = Some(timeout);
+        self.config.timeout = Some(timeout);
         self
     }
 
     pub fn connect_timeout(mut self, timeout: Duration) -> ClientBuilder {
-        self.connect_timeout = Some(timeout);
+        self.config.connect_timeout = Some(timeout);
+        self
+    }
+
+    pub fn max_redirects(mut self, max_redirects: usize) -> ClientBuilder {
+        self.config.max_redirects = max_redirects;
         self
     }
 

@@ -200,8 +200,9 @@ mod tests {
             .build()
             .await
             .unwrap();
-        let code = StatusCode::from_u16(302).unwrap();
+        let code = StatusCode::from_u16(200).unwrap();
         let response = client.send().await.unwrap();
         assert_eq!(response.status_code(), code);
+        assert!(client.redirects() > 0);
     }
 }

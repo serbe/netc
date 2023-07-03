@@ -58,6 +58,8 @@ pub enum Error {
     HeaderWrongNameStart,
     #[error("Header name must contain ascii alphanumeric or -")]
     HeaderWrongName,
+    #[error("Maximum number of redirects reached")]
+    MaxRedirects,
 }
 
 impl PartialEq for Error {
@@ -108,6 +110,7 @@ impl PartialEq for Error {
             }
             (Error::HeaderWrongNameStart, Error::HeaderWrongNameStart) => true,
             (Error::HeaderWrongName, Error::HeaderWrongName) => true,
+            (Error::MaxRedirects, Error::MaxRedirects) => true,
             _ => false,
         }
     }

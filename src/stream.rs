@@ -262,13 +262,15 @@ mod tests {
     use super::*;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
+    const HTTP: &str = "http://httpbin.smp.io/ip";
+    const HTTPS: &str = "https://httpbin.smp.io/ip";
+
+    const HTTPREQ: &'static [u8; 42] = b"GET /ip HTTP/1.0\r\nHost: httpbin.smp.io\r\n\r\n";
+
     #[tokio::test]
     async fn http_stream() {
-        let mut client = HttpStream::new("http://api.ipify.org").await.unwrap();
-        client
-            .send_msg(b"GET / HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
-            .await
-            .unwrap();
+        let mut client = HttpStream::new(HTTP).await.unwrap();
+        client.send_msg(HTTPREQ).await.unwrap();
         let mut buf = Vec::new();
         client.read_to_end(&mut buf).await.unwrap();
         let body = String::from_utf8(buf).unwrap();
@@ -277,11 +279,8 @@ mod tests {
 
     #[tokio::test]
     async fn https_stream() {
-        let mut client = HttpStream::new("https://api.ipify.org").await.unwrap();
-        client
-            .write_all(b"GET / HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
-            .await
-            .unwrap();
+        let mut client = HttpStream::new(HTTPS).await.unwrap();
+        client.write_all(HTTPREQ).await.unwrap();
         client.flush().await.unwrap();
         let mut buf = Vec::new();
         client.read_to_end(&mut buf).await.unwrap();
@@ -297,10 +296,7 @@ mod tests {
             _ => return,
         };
         let mut client = HttpStream::new(&http_proxy).await.unwrap();
-        client
-            .write_all(b"GET http://api.ipify.org/ HTTP/1.0\r\nHost: api.ipify.org\r\n\r\n")
-            .await
-            .unwrap();
+        client.write_all(HTTPREQ).await.unwrap();
         client.flush().await.unwrap();
         let mut buf = Vec::new();
         client.read_to_end(&mut buf).await.unwrap();

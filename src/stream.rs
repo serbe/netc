@@ -1,7 +1,5 @@
 use std::{
-    fmt,
-    io,
-    // io::Write,
+    fmt, io,
     pin::Pin,
     sync::Arc,
     task::{Context, Poll},
@@ -180,14 +178,6 @@ impl From<TlsStream<TcpStream>> for HttpStream {
 }
 
 impl AsyncRead for HttpStream {
-    // // #[inline]
-    // unsafe fn prepare_uninitialized_buffer(&self, buf: &mut [std::mem::MaybeUninit<u8>]) -> bool {
-    //     match self {
-    //         HttpStream::Http(s) => s.prepare_uninitialized_buffer(buf),
-    //         HttpStream::Https(s) => s.prepare_uninitialized_buffer(buf),
-    //     }
-    // }
-
     // #[inline]
     fn poll_read(
         self: Pin<&mut Self>,
@@ -199,18 +189,6 @@ impl AsyncRead for HttpStream {
             HttpStream::Https(s) => Pin::new(s).poll_read(cx, buf),
         }
     }
-
-    // // #[inline]
-    // fn poll_read_buf<B: BufMut>(
-    //     self: Pin<&mut Self>,
-    //     cx: &mut Context<'_>,
-    //     buf: &mut B,
-    // ) -> Poll<Result<usize, io::Error>> {
-    //     match Pin::get_mut(self) {
-    //         HttpStream::Http(s) => Pin::new(s).poll_read_buf(cx, buf),
-    //         HttpStream::Https(s) => Pin::new(s).poll_read_buf(cx, buf),
-    //     }
-    // }
 }
 
 impl AsyncWrite for HttpStream {
@@ -241,18 +219,6 @@ impl AsyncWrite for HttpStream {
             HttpStream::Https(s) => Pin::new(s).poll_shutdown(cx),
         }
     }
-
-    // // #[inline]
-    // fn poll_write_buf<B: Buf>(
-    //     self: Pin<&mut Self>,
-    //     cx: &mut Context<'_>,
-    //     buf: &mut B,
-    // ) -> Poll<Result<usize, io::Error>> {
-    //     match Pin::get_mut(self) {
-    //         HttpStream::Http(s) => Pin::new(s).poll_write_buf(cx, buf),
-    //         HttpStream::Https(s) => Pin::new(s).poll_write_buf(cx, buf),
-    //     }
-    // }
 }
 
 #[cfg(test)]

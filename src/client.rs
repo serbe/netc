@@ -1,5 +1,5 @@
-use async_recursion::async_recursion;
 use bytes::Bytes;
+use futures::{future::BoxFuture, FutureExt};
 use url::Url;
 
 use crate::{client_builder::Config, ClientBuilder, Error, Headers, HttpStream, Request, Response};
@@ -31,31 +31,33 @@ impl Client {
         }
     }
 
-    #[async_recursion]
-    pub async fn send(&mut self) -> Result<Response, Error> {
-        self.stream.send_msg(&self.request.to_vec()).await?;
-        let mut response = self.stream.get_response().await?;
-        response.method = self.request.method.clone();
-        if response.status_code().is_redirect() {
-            if let Some(location) = response.headers().get("Location") {
-                let redirect_url = if let Ok(new_url) = Url::parse(&location) {
-                    new_url
-                } else {
-                    let mut current_url = self.request().url();
-                    current_url.set_path(&location);
-                    current_url
-                };
-                self.redirect()?;
-                return ClientBuilder::from_client(self)
-                    .url(&redirect_url)
-                    .build()
-                    .await?
-                    .send()
-                    .await;
-            }
-        };
-        self.response = Some(response.clone());
-        Ok(response)
+    pub fn send(&mut self) -> BoxFuture<'_, Result<Response, Error>> {
+        async {
+            self.stream.send_msg(&self.request.to_vec()).await?;
+            let mut response = self.stream.get_response().await?;
+            response.method = self.request.method.clone();
+            if response.status_code().is_redirect() {
+                if let Some(location) = response.headers().get("Location") {
+                    let redirect_url = if let Ok(new_url) = Url::parse(&location) {
+                        new_url
+                    } else {
+                        let mut current_url = self.request().url();
+                        current_url.set_path(&location);
+                        current_url
+                    };
+                    self.redirect()?;
+                    return ClientBuilder::from_client(self)
+                        .url(&redirect_url)
+                        .build()
+                        .await?
+                        .send()
+                        .await;
+                }
+            };
+            self.response = Some(response.clone());
+            Ok(response)
+        }
+        .boxed()
     }
 
     pub fn body(&self) -> Option<Bytes> {

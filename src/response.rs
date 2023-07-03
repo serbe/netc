@@ -93,6 +93,8 @@ impl Response {
 
 #[cfg(test)]
 mod tests {
+    use httpmock::{Method::GET, MockServer};
+
     use super::*;
     use crate::{status::StatusCode, Client};
 
@@ -183,26 +185,58 @@ mod tests {
 
     #[tokio::test]
     async fn res_status_code_200() {
-        let mut client = Client::builder()
-            .get("https://httpbin.org/status/200")
-            .build()
-            .await
-            .unwrap();
-        let code = StatusCode::from_u16(200).unwrap();
+        let path = "/foo";
+        let server = MockServer::start_async().await;
+        let mock = server
+            .mock_async(|when, then| {
+                when.method(GET).path(path);
+                then.status(200)
+                    .header("content-type", "text/html; charset=UTF-8")
+                    .body("GET");
+            })
+            .await;
+        let url = server.url(path);
+        let mut client = Client::builder().get(&url).build().await.unwrap();
         let response = client.send().await.unwrap();
-        assert_eq!(response.status_code(), code);
+        assert_eq!(response.status_code().as_u16(), 200);
+        mock.assert_async().await;
     }
 
     #[tokio::test]
     async fn res_status_code_302() {
-        let mut client = Client::builder()
-            .get("https://httpbin.org/status/302")
-            .build()
-            .await
-            .unwrap();
-        let code = StatusCode::from_u16(200).unwrap();
+        let redirect_path = "/redirectPath";
+        let final_path = "/finalPath";
+
+        let redirect_server = MockServer::start_async().await;
+        let final_server = MockServer::start_async().await;
+
+        let redirect_url = redirect_server.url(redirect_path);
+        let final_url = final_server.url(final_path);
+
+        let redirect_mock = redirect_server
+            .mock_async(|when, then| {
+                when.method(GET).path(redirect_path);
+                then.status(302).header("Location", final_url);
+            })
+            .await;
+
+        let final_mock = final_server
+            .mock_async(|when, then| {
+                when.method(GET).path(final_path);
+                then.status(200)
+                    .header("content-type", "text/html; charset=UTF-8")
+                    .body("GET");
+            })
+            .await;
+
+        let mut client = Client::builder().get(&redirect_url).build().await.unwrap();
         let response = client.send().await.unwrap();
-        assert_eq!(response.status_code(), code);
-        assert!(client.redirects() > 0);
+        assert_eq!(response.status_code().as_u16(), 200);
+        let body = response.text().unwrap();
+        assert_eq!(&body, "GET");
+        assert!(client.redirects() == 1);
+
+        redirect_mock.assert_async().await;
+        final_mock.assert_async().await;
     }
 }

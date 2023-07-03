@@ -19,7 +19,7 @@ async fn test_delete_client() {
     assert_eq!(response.status_code().as_u16(), 201);
     let body = response.text().unwrap();
     assert_eq!(&body, "DELETE");
-    mock.assert();
+    mock.assert_async().await;
 }
 
 #[tokio::test]
@@ -40,7 +40,7 @@ async fn test_get_client() {
     assert_eq!(response.status_code().as_u16(), 200);
     let body = response.text().unwrap();
     assert_eq!(&body, "GET");
-    mock.assert();
+    mock.assert_async().await;
 }
 
 #[tokio::test]
@@ -70,7 +70,7 @@ async fn test_http_proxy() {
     let response = client.send().await.unwrap();
     assert!(response.status_code().is_success());
     assert_eq!(&response.text().unwrap(), test_var);
-    mock.assert();
+    mock.assert_async().await;
 }
 
 #[tokio::test]
@@ -100,7 +100,7 @@ async fn test_http_proxy_auth() {
     let response = client.send().await.unwrap();
     assert!(response.status_code().is_success());
     assert_eq!(&response.text().unwrap(), test_var);
-    mock.assert();
+    mock.assert_async().await;
 }
 
 #[tokio::test]
@@ -150,7 +150,7 @@ async fn test_socks_proxy() {
     let response = client.send().await.unwrap();
     assert!(response.status_code().is_success());
     assert_eq!(&response.text().unwrap(), test_var);
-    mock.assert();
+    mock.assert_async().await;
 }
 
 #[tokio::test]
@@ -212,7 +212,7 @@ async fn test_socks_proxy_auth() {
     let response = client.send().await.unwrap();
     assert!(response.status_code().is_success());
     assert_eq!(&response.text().unwrap(), test_var);
-    mock.assert();
+    mock.assert_async().await;
 }
 
 #[tokio::test]

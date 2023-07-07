@@ -7,7 +7,7 @@ use crate::{utils::IntoUrl, Client, Error, Headers, HttpStream, Method, Request,
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Config {
-    // pub nodelay: bool,
+    pub nodelay: bool,
     pub timeout: Option<Duration>,
     pub connect_timeout: Option<Duration>,
     pub redirects: usize,
@@ -17,7 +17,7 @@ pub struct Config {
 impl Config {
     fn new() -> Self {
         Config {
-            // nodelay: true
+            nodelay: false,
             timeout: None,
             connect_timeout: None,
             redirects: 0,
@@ -83,7 +83,10 @@ impl ClientBuilder {
         request.method(self.method);
         request.version(self.version);
         request.opt_body(self.body);
-        let stream = HttpStream::from_request(&request).await?;
+        let mut stream = HttpStream::from_request(&request).await?;
+        if self.config.nodelay {
+            stream.set_nodelay(true)?;
+        };
         Ok(Client::new(request, stream, None, self.config))
     }
 
@@ -209,10 +212,10 @@ impl ClientBuilder {
         }
     }
 
-    // pub fn tcp_nodelay(mut self) -> ClientBuilder {
-    //     self.config.nodelay = true;
-    //     self
-    // }
+    pub fn set_nodelay(mut self, nodelay: bool) -> ClientBuilder {
+        self.config.nodelay = nodelay;
+        self
+    }
 
     pub fn timeout(mut self, timeout: Duration) -> ClientBuilder {
         self.config.timeout = Some(timeout);

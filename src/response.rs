@@ -96,7 +96,7 @@ mod tests {
     use httpmock::{Method::GET, MockServer};
 
     use super::*;
-    use crate::{status::StatusCode, Client};
+    use crate::{get, status::StatusCode, Client};
 
     const RESPONSE: &[u8; 129] = b"HTTP/1.1 200 OK\r\n\
                                          Date: Sat, 11 Jan 2003 02:44:04 GMT\r\n\
@@ -196,8 +196,7 @@ mod tests {
             })
             .await;
         let url = server.url(path);
-        let mut client = Client::builder().get(&url).build().await.unwrap();
-        let response = client.send().await.unwrap();
+        let response = get(&url).await.unwrap();
         assert_eq!(response.status_code().as_u16(), 200);
         mock.assert_async().await;
     }

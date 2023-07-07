@@ -6,7 +6,7 @@ use std::{
 };
 
 use bytes::{BufMut, Bytes};
-use rscl::socks5;
+use rscl::SocksClient;
 use tokio::{
     io::{AsyncRead, AsyncReadExt, AsyncWrite, AsyncWriteExt, ReadBuf},
     net::TcpStream,
@@ -48,9 +48,8 @@ impl HttpStream {
     }
 
     pub async fn socks(proxy: &Url, target: &Url) -> Result<Self, Error> {
-        let mut client = socks5::SocksClient::new(proxy.clone(), target.clone()).await?;
-        client.handshake().await?;
-        HttpStream::maybe_ssl(target, client.stream).await
+        let client = SocksClient::connect(proxy, target).await?;
+        HttpStream::maybe_ssl(target, client.stream()).await
     }
 
     async fn maybe_ssl(url: &Url, stream: TcpStream) -> Result<Self, Error> {
@@ -153,6 +152,13 @@ impl HttpStream {
             return Err(Error::InvalidChunkEOL);
         }
         Ok(body.into())
+    }
+
+    pub fn set_nodelay(&mut self, nodelay: bool) -> Result<(), Error> {
+        if let HttpStream::Http(s) = self {
+            s.set_nodelay(nodelay)?
+        };
+        Ok(())
     }
 }
 

@@ -13,7 +13,7 @@ use tokio::{
 };
 use tokio_rustls::{
     client::TlsStream,
-    rustls::{client::ServerName, ClientConfig, OwnedTrustAnchor, RootCertStore},
+    rustls::{pki_types::ServerName, ClientConfig, RootCertStore},
     TlsConnector,
 };
 use url::Url;
@@ -55,23 +55,17 @@ impl HttpStream {
     async fn maybe_ssl(url: &Url, stream: TcpStream) -> Result<Self, Error> {
         if url.scheme() == "https" {
             let mut root_store = RootCertStore::empty();
-            root_store.add_trust_anchors(webpki_roots::TLS_SERVER_ROOTS.iter().map(|ta| {
-                OwnedTrustAnchor::from_subject_spki_name_constraints(
-                    ta.subject,
-                    ta.spki,
-                    ta.name_constraints,
-                )
-            }));
+            root_store.extend(webpki_roots::TLS_SERVER_ROOTS.iter().cloned());
 
             let config = ClientConfig::builder()
-                .with_safe_defaults()
                 .with_root_certificates(root_store)
                 .with_no_client_auth();
 
             let connector = TlsConnector::from(Arc::new(config));
             let host = url.host_str().unwrap_or("");
             let server_name = ServerName::try_from(host)
-                .map_err(|_| Error::InvalidDnsNameError(host.to_string()))?;
+                .map_err(|_| Error::InvalidDnsNameError(host.to_string()))?
+                .to_owned();
             let stream = connector.connect(server_name, stream).await?;
             Ok(HttpStream::from(stream))
         } else {
@@ -134,7 +128,7 @@ impl HttpStream {
         let mut body = Vec::new();
         loop {
             match self.read_chunk_line().await? {
-                size if size == 0 => break,
+                0 => break,
                 size => {
                     let mut buf = vec![0u8; size];
                     self.read_exact(&mut buf).await?;
@@ -297,11 +291,11 @@ mod tests {
 
     #[tokio::test]
     async fn chunked_body() {
-        let mut client = HttpStream::new("https://www.socks-proxy.net/")
+        let mut client = HttpStream::new("https://anglesharp.azurewebsites.net/Chunked")
             .await
             .unwrap();
         client
-            .send_msg(b"GET / HTTP/1.1\r\nHost: www.socks-proxy.net\r\n\r\n")
+            .send_msg(b"GET /Chunked HTTP/1.1\r\nHost: anglesharp.azurewebsites.net\r\n\r\n")
             .await
             .unwrap();
         let response = client.get_response().await.unwrap();

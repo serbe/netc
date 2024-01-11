@@ -1,5 +1,6 @@
 use base64::{engine::general_purpose::STANDARD, Engine};
 use bytes::Bytes;
+use std::fmt::Write;
 use url::Url;
 
 use crate::{utils::request_uri, Headers, Method, Version};
@@ -118,8 +119,10 @@ impl Request {
         let headers: String = self
             .headers
             .iter()
-            .map(|(k, v)| format!("{}: {}{}", k, v, "\r\n"))
-            .collect();
+            .fold(String::new(), |mut output, (k, v)| {
+                let _ = write!(output, "{}: {}\r\n", k, v);
+                output
+            });
 
         let mut request_msg = (self.request_line() + &headers + "\r\n")
             .as_bytes()

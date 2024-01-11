@@ -1,7 +1,7 @@
 // https://tools.ietf.org/html/rfc7230#section-3.2
 use std::{
     collections::{hash_map, HashMap},
-    fmt::{Display, Formatter},
+    fmt::{Display, Formatter, Write},
     str::FromStr,
 };
 
@@ -127,10 +127,10 @@ impl From<Headers> for HashMap<String, String> {
 
 impl Display for Headers {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
-        let headers: String = self
-            .iter()
-            .map(|(key, val)| format!("  {key}: {val}\r\n"))
-            .collect();
+        let headers: String = self.iter().fold(String::new(), |mut output, (key, val)| {
+            let _ = write!(output, "  {key}: {val}\r\n");
+            output
+        });
 
         write!(f, "{{\r\n{headers}}}")
     }

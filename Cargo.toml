@@ -9,7 +9,7 @@ repository = "https://github.com/serbe/netc/"
 license = "MIT OR Apache-2.0"
 
 [dependencies]
-base64 = "0.21"
+base64 = "0.22"
 bytes = "1.5"
 futures = "0.3"
 rand = "0.8"

@@ -1,68 +1,58 @@
-use httpmock::prelude::*;
+// use httpmock::prelude::*;
 use netc::Client;
+use wiremock::{matchers, Mock, MockServer, ResponseTemplate};
 
 #[tokio::test]
 async fn test_delete_client() {
-    let path = "/bar";
-    let server = MockServer::start_async().await;
-    let mock = server
-        .mock_async(|when, then| {
-            when.method(DELETE).path(path);
-            then.status(201)
-                .header("content-type", "text/html; charset=UTF-8")
-                .body("DELETE");
-        })
+    let mock_server = MockServer::start().await;
+    Mock::given(matchers::method("DELETE"))
+        .respond_with(ResponseTemplate::new(201).set_body_string("DELETE"))
+        .mount(&mock_server)
         .await;
-    let url = server.url(path);
-    let mut client = Client::builder().delete(&url).build().await.unwrap();
+    let mut client = Client::builder()
+        .delete(&mock_server.uri())
+        .build()
+        .await
+        .unwrap();
     let response = client.send().await.unwrap();
     assert_eq!(response.status_code().as_u16(), 201);
     let body = response.text().unwrap();
     assert_eq!(&body, "DELETE");
-    mock.assert_async().await;
 }
 
 #[tokio::test]
 async fn test_get_client() {
-    let path = "/foo";
-    let server = MockServer::start_async().await;
-    let mock = server
-        .mock_async(|when, then| {
-            when.method(GET).path(path);
-            then.status(200)
-                .header("content-type", "text/html; charset=UTF-8")
-                .body("GET");
-        })
+    let mock_server = MockServer::start().await;
+    Mock::given(matchers::method("GET"))
+        .respond_with(ResponseTemplate::new(200).set_body_string("GET"))
+        .mount(&mock_server)
         .await;
-    let url = server.url(path);
-    let mut client = Client::builder().get(&url).build().await.unwrap();
+    let mut client = Client::builder()
+        .get(&mock_server.uri())
+        .build()
+        .await
+        .unwrap();
     let response = client.send().await.unwrap();
     assert_eq!(response.status_code().as_u16(), 200);
     let body = response.text().unwrap();
     assert_eq!(&body, "GET");
-    mock.assert_async().await;
 }
 
 #[tokio::test]
 async fn test_http_proxy() {
     let test_var = "TEST_HTTP_PROXY";
-    let path = format!("/{test_var}");
     dotenv::dotenv().ok();
     let proxy = match dotenv::var(test_var) {
         Ok(it) => it,
         _ => return,
     };
-    let server = MockServer::start_async().await;
-    let mock = server
-        .mock_async(|when, then| {
-            when.method(GET).path(&path);
-            then.status(200)
-                .header("content-type", "text/html; charset=UTF-8")
-                .body(test_var);
-        })
+    let mock_server = MockServer::start().await;
+    Mock::given(matchers::method("GET"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(test_var))
+        .mount(&mock_server)
         .await;
     let mut client = Client::builder()
-        .get(&server.url(&path))
+        .get(&mock_server.uri())
         .proxy(&proxy)
         .build()
         .await
@@ -70,29 +60,23 @@ async fn test_http_proxy() {
     let response = client.send().await.unwrap();
     assert!(response.status_code().is_success());
     assert_eq!(&response.text().unwrap(), test_var);
-    mock.assert_async().await;
 }
 
 #[tokio::test]
 async fn test_http_proxy_auth() {
     let test_var = "TEST_HTTP_AUTH_PROXY";
-    let path = format!("/{test_var}");
     dotenv::dotenv().ok();
     let proxy = match dotenv::var(test_var) {
         Ok(it) => it,
         _ => return,
     };
-    let server = MockServer::start_async().await;
-    let mock = server
-        .mock_async(|when, then| {
-            when.method(GET).path(&path);
-            then.status(200)
-                .header("content-type", "text/html; charset=UTF-8")
-                .body(test_var);
-        })
+    let mock_server = MockServer::start().await;
+    Mock::given(matchers::method("GET"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(test_var))
+        .mount(&mock_server)
         .await;
     let mut client = Client::builder()
-        .get(&server.url(&path))
+        .get(&mock_server.uri())
         .proxy(&proxy)
         .build()
         .await
@@ -100,21 +84,23 @@ async fn test_http_proxy_auth() {
     let response = client.send().await.unwrap();
     assert!(response.status_code().is_success());
     assert_eq!(&response.text().unwrap(), test_var);
-    mock.assert_async().await;
 }
 
 #[tokio::test]
 async fn test_http_proxy_auth_err() {
     let test_var = "TEST_HTTP_AUTH_ERR_PROXY";
-    let path = format!("/{test_var}");
     dotenv::dotenv().ok();
     let proxy = match dotenv::var(test_var) {
         Ok(it) => it,
         _ => return,
     };
-    let server = MockServer::start_async().await;
+    let mock_server = MockServer::start().await;
+    Mock::given(matchers::method("GET"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(test_var))
+        .mount(&mock_server)
+        .await;
     let mut client = Client::builder()
-        .get(&server.url(path))
+        .get(&mock_server.uri())
         .proxy(&proxy)
         .build()
         .await
@@ -126,23 +112,18 @@ async fn test_http_proxy_auth_err() {
 #[tokio::test]
 async fn test_socks_proxy() {
     let test_var = "TEST_SOCKS5_PROXY";
-    let path = format!("/{test_var}");
     dotenv::dotenv().ok();
     let proxy = match dotenv::var(test_var) {
         Ok(it) => it,
         _ => return,
     };
-    let server = MockServer::start_async().await;
-    let mock = server
-        .mock_async(|when, then| {
-            when.method(GET).path(&path);
-            then.status(200)
-                .header("content-type", "text/html; charset=UTF-8")
-                .body(test_var);
-        })
+    let mock_server = MockServer::start().await;
+    Mock::given(matchers::method("GET"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(test_var))
+        .mount(&mock_server)
         .await;
     let mut client = Client::builder()
-        .get(&server.url(&path))
+        .get(&mock_server.uri())
         .proxy(&proxy)
         .build()
         .await
@@ -150,30 +131,25 @@ async fn test_socks_proxy() {
     let response = client.send().await.unwrap();
     assert!(response.status_code().is_success());
     assert_eq!(&response.text().unwrap(), test_var);
-    mock.assert_async().await;
 }
 
 #[tokio::test]
 async fn test_socks_proxy_100_hits() {
     let test_var = "TEST_SOCKS5_PROXY";
-    let path = format!("/{test_var}");
     dotenv::dotenv().ok();
     let proxy = match dotenv::var(test_var) {
         Ok(it) => it,
         _ => return,
     };
-    let server = MockServer::start_async().await;
-    let mock = server
-        .mock_async(|when, then| {
-            when.method(GET).path(&path);
-            then.status(200)
-                .header("content-type", "text/html; charset=UTF-8")
-                .body(test_var);
-        })
+    let mock_server = MockServer::start().await;
+    Mock::given(matchers::method("GET"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(test_var))
+        .up_to_n_times(100)
+        .mount(&mock_server)
         .await;
     for _ in 0..100 {
         let mut client = Client::builder()
-            .get(&server.url(&path))
+            .get(&mock_server.uri())
             .proxy(&proxy)
             .build()
             .await
@@ -182,29 +158,31 @@ async fn test_socks_proxy_100_hits() {
         assert!(response.status_code().is_success());
         assert_eq!(&response.text().unwrap(), test_var);
     }
-    assert_eq!(100, mock.hits_async().await);
+    let mut client = Client::builder()
+        .get(&mock_server.uri())
+        .proxy(&proxy)
+        .build()
+        .await
+        .unwrap();
+    let response = client.send().await.unwrap();
+    assert_eq!(response.status_code().as_u16(), 404);
 }
 
 #[tokio::test]
 async fn test_socks_proxy_auth() {
     let test_var = "TEST_SOCKS5_AUTH_PROXY";
-    let path = format!("/{test_var}");
     dotenv::dotenv().ok();
     let proxy = match dotenv::var(test_var) {
         Ok(it) => it,
         _ => return,
     };
-    let server = MockServer::start_async().await;
-    let mock = server
-        .mock_async(|when, then| {
-            when.method(GET).path(&path);
-            then.status(200)
-                .header("content-type", "text/html; charset=UTF-8")
-                .body(test_var);
-        })
+    let mock_server = MockServer::start().await;
+    Mock::given(matchers::method("GET"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(test_var))
+        .mount(&mock_server)
         .await;
     let mut client = Client::builder()
-        .get(&server.url(&path))
+        .get(&mock_server.uri())
         .proxy(&proxy)
         .build()
         .await
@@ -212,21 +190,23 @@ async fn test_socks_proxy_auth() {
     let response = client.send().await.unwrap();
     assert!(response.status_code().is_success());
     assert_eq!(&response.text().unwrap(), test_var);
-    mock.assert_async().await;
 }
 
 #[tokio::test]
 async fn test_socks_proxy_auth_err() {
     let test_var = "TEST_SOCKS5_AUTH_ERR_PROXY";
-    let path = format!("/{test_var}");
     dotenv::dotenv().ok();
     let proxy = match dotenv::var(test_var) {
         Ok(it) => it,
         _ => return,
     };
-    let server = MockServer::start_async().await;
+    let mock_server = MockServer::start().await;
+    Mock::given(matchers::method("GET"))
+        .respond_with(ResponseTemplate::new(200).set_body_string(test_var))
+        .mount(&mock_server)
+        .await;
     let client = Client::builder()
-        .get(&server.url(&path))
+        .get(&mock_server.uri())
         .proxy(&proxy)
         .build()
         .await;

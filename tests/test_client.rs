@@ -41,8 +41,8 @@ async fn test_get_client() {
 #[tokio::test]
 async fn test_http_proxy() {
     let test_var = "TEST_HTTP_PROXY";
-    dotenv::dotenv().ok();
-    let proxy = match dotenv::var(test_var) {
+    dotenvy::dotenv().ok();
+    let proxy = match dotenvy::var(test_var) {
         Ok(it) => it,
         _ => return,
     };
@@ -65,8 +65,8 @@ async fn test_http_proxy() {
 #[tokio::test]
 async fn test_http_proxy_auth() {
     let test_var = "TEST_HTTP_AUTH_PROXY";
-    dotenv::dotenv().ok();
-    let proxy = match dotenv::var(test_var) {
+    dotenvy::dotenv().ok();
+    let proxy = match dotenvy::var(test_var) {
         Ok(it) => it,
         _ => return,
     };
@@ -89,8 +89,8 @@ async fn test_http_proxy_auth() {
 #[tokio::test]
 async fn test_http_proxy_auth_err() {
     let test_var = "TEST_HTTP_AUTH_ERR_PROXY";
-    dotenv::dotenv().ok();
-    let proxy = match dotenv::var(test_var) {
+    dotenvy::dotenv().ok();
+    let proxy = match dotenvy::var(test_var) {
         Ok(it) => it,
         _ => return,
     };
@@ -112,8 +112,8 @@ async fn test_http_proxy_auth_err() {
 #[tokio::test]
 async fn test_socks_proxy() {
     let test_var = "TEST_SOCKS5_PROXY";
-    dotenv::dotenv().ok();
-    let proxy = match dotenv::var(test_var) {
+    dotenvy::dotenv().ok();
+    let proxy = match dotenvy::var(test_var) {
         Ok(it) => it,
         _ => return,
     };
@@ -136,8 +136,8 @@ async fn test_socks_proxy() {
 #[tokio::test]
 async fn test_socks_proxy_100_hits() {
     let test_var = "TEST_SOCKS5_PROXY";
-    dotenv::dotenv().ok();
-    let proxy = match dotenv::var(test_var) {
+    dotenvy::dotenv().ok();
+    let proxy = match dotenvy::var(test_var) {
         Ok(it) => it,
         _ => return,
     };
@@ -171,8 +171,8 @@ async fn test_socks_proxy_100_hits() {
 #[tokio::test]
 async fn test_socks_proxy_auth() {
     let test_var = "TEST_SOCKS5_AUTH_PROXY";
-    dotenv::dotenv().ok();
-    let proxy = match dotenv::var(test_var) {
+    dotenvy::dotenv().ok();
+    let proxy = match dotenvy::var(test_var) {
         Ok(it) => it,
         _ => return,
     };
@@ -195,8 +195,8 @@ async fn test_socks_proxy_auth() {
 #[tokio::test]
 async fn test_socks_proxy_auth_err() {
     let test_var = "TEST_SOCKS5_AUTH_ERR_PROXY";
-    dotenv::dotenv().ok();
-    let proxy = match dotenv::var(test_var) {
+    dotenvy::dotenv().ok();
+    let proxy = match dotenvy::var(test_var) {
         Ok(it) => it,
         _ => return,
     };

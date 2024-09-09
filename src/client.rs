@@ -89,6 +89,7 @@ impl Client {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::tests::ip_str;
 
     const SIMPLE_URL: &'static str = "http://api.ipify.org";
     const SECURE_URL: &'static str = "https://api.ipify.org";
@@ -99,7 +100,7 @@ mod tests {
         let response = client.send().await.unwrap();
         assert!(response.status_code().is_success());
         let body = response.text().unwrap();
-        assert!(&body.contains(crate::tests::IP.as_str()));
+        assert!(&body.contains(ip_str()));
     }
 
     #[test]

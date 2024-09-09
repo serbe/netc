@@ -224,6 +224,7 @@ mod tests {
     // use crate::utils::base64_auth;
 
     use super::*;
+    use crate::tests::ip_str;
     use tokio::io::{AsyncReadExt, AsyncWriteExt};
 
     const HTTP: &str = "http://httpbin.smp.io/ip";
@@ -238,7 +239,7 @@ mod tests {
         let mut buf = Vec::new();
         client.read_to_end(&mut buf).await.unwrap();
         let body = String::from_utf8(buf).unwrap();
-        assert!(&body.contains(crate::tests::IP.as_str()));
+        assert!(&body.contains(ip_str()));
     }
 
     #[tokio::test]
@@ -249,13 +250,13 @@ mod tests {
         let mut buf = Vec::new();
         client.read_to_end(&mut buf).await.unwrap();
         let body = String::from_utf8(buf).unwrap();
-        assert!(&body.contains(crate::tests::IP.as_str()));
+        assert!(&body.contains(ip_str()));
     }
 
     #[tokio::test]
     async fn http_stream_http_proxy() {
-        dotenv::dotenv().ok();
-        let http_proxy = match dotenv::var("TEST_HTTP_PROXY") {
+        dotenvy::dotenv().ok();
+        let http_proxy = match dotenvy::var("TEST_HTTP_PROXY") {
             Ok(it) => it,
             _ => return,
         };
@@ -265,14 +266,14 @@ mod tests {
         let mut buf = Vec::new();
         client.read_to_end(&mut buf).await.unwrap();
         let body = String::from_utf8(buf).unwrap();
-        assert!(&body.contains(crate::tests::IP.as_str()));
+        assert!(&body.contains(ip_str()));
     }
 
     // #[tokio::test]
     // async fn http_stream_auth_http_proxy() {
-    //     dotenv::dotenv().ok();
+    //     dotenvy::dotenv().ok();
 
-    //     let http_proxy = match dotenv::var("TEST_HTTP_AUTH_PROXY") {
+    //     let http_proxy = match dotenvy::var("TEST_HTTP_AUTH_PROXY") {
     //         Ok(it) => it,
     //         _ => return,
     //     };

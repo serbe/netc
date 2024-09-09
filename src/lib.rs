@@ -61,9 +61,13 @@ pub async fn post<U: IntoUrl>(url: U) -> Result<Response, Error> {
 
 #[cfg(test)]
 mod tests {
-    use once_cell::sync::Lazy;
+    use std::sync::OnceLock;
 
-    pub static IP: Lazy<String> = Lazy::new(|| crate::my_ip());
+    static IP: OnceLock<String> = OnceLock::new();
+
+    pub fn ip_str() -> &'static str {
+        IP.get_or_init(|| crate::my_ip())
+    }
 }
 
 // OCTET          = <any 8-bit sequence of data>

@@ -10,11 +10,11 @@ license = "MIT OR Apache-2.0"
 
 [dependencies]
 base64 = "0.22"
-bytes = "1.7"
+bytes = "1.8"
 futures = "0.3"
 rand = "0.8"
 rscl = "0.1"
-thiserror = "1.0"
+thiserror = "2.0"
 tokio = { version = "1", features = ["net", "io-util"] }
 tokio-rustls = "0.26"
 url = "2.5"

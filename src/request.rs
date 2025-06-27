@@ -120,7 +120,7 @@ impl Request {
             .headers
             .iter()
             .fold(String::new(), |mut output, (k, v)| {
-                let _ = write!(output, "{}: {}\r\n", k, v);
+                let _ = write!(output, "{k}: {v}\r\n");
                 output
             });
 

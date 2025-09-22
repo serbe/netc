@@ -41,7 +41,7 @@ impl Headers {
         headers
     }
 
-    pub fn iter(&self) -> hash_map::Iter<String, String> {
+    pub fn iter(&self) -> hash_map::Iter<'_, String, String> {
         self.0.iter()
     }
 

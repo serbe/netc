@@ -26,8 +26,8 @@
 use std::collections::HashMap;
 use std::str::FromStr;
 
-use crate::utils::trim;
 use crate::Error;
+use crate::utils::trim;
 use bytes::Bytes;
 
 #[derive(Clone, Debug, PartialEq, Eq)]

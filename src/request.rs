@@ -1,9 +1,9 @@
-use base64::{engine::general_purpose::STANDARD, Engine};
+use base64::{Engine, engine::general_purpose::STANDARD};
 use bytes::Bytes;
 use std::fmt::Write;
 use url::Url;
 
-use crate::{utils::request_uri, Headers, Method, Version};
+use crate::{Headers, Method, Version, utils::request_uri};
 
 #[derive(Clone, Debug)]
 pub struct Request {

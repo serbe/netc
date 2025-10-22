@@ -1,16 +1,16 @@
 // https://tools.ietf.org/html/rfc7230#section-3.2
 use std::{
-    collections::{hash_map, HashMap},
+    collections::{HashMap, hash_map},
     fmt::{Display, Formatter, Write},
     str::FromStr,
 };
 
-use base64::{engine::general_purpose::STANDARD, Engine};
+use base64::{Engine, engine::general_purpose::STANDARD};
 use url::Url;
 
 use crate::{
-    utils::{array_from_string, host_header, relative_quality_factor},
     Error,
+    utils::{array_from_string, host_header, relative_quality_factor},
 };
 
 #[derive(Debug, PartialEq, Eq, Clone)]

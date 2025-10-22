@@ -12,13 +12,13 @@ use tokio::{
     net::TcpStream,
 };
 use tokio_rustls::{
-    client::TlsStream,
-    rustls::{pki_types::ServerName, ClientConfig, RootCertStore},
     TlsConnector,
+    client::TlsStream,
+    rustls::{ClientConfig, RootCertStore, pki_types::ServerName},
 };
 use url::Url;
 
-use crate::{utils::IntoUrl, Error, Request, Response};
+use crate::{Error, Request, Response, utils::IntoUrl};
 
 const CHUNK_MAX_LINE_LENGTH: usize = 4096;
 const HEADERS_MAX_LENGTH: usize = 4096;

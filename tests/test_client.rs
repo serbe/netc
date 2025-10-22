@@ -1,6 +1,6 @@
 // use httpmock::prelude::*;
 use netc::Client;
-use wiremock::{matchers, Mock, MockServer, ResponseTemplate};
+use wiremock::{Mock, MockServer, ResponseTemplate, matchers};
 
 #[tokio::test]
 async fn test_delete_client() {

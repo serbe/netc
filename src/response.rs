@@ -2,7 +2,7 @@ use std::{io::Write, str};
 
 use bytes::Bytes;
 
-use crate::{utils::find_slice, Error, Headers, Method, Status, StatusCode, Version};
+use crate::{Error, Headers, Method, Status, StatusCode, Version, utils::find_slice};
 
 #[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Response {
@@ -93,7 +93,7 @@ impl Response {
 
 #[cfg(test)]
 mod tests {
-    use wiremock::{matchers, Mock, MockServer, ResponseTemplate};
+    use wiremock::{Mock, MockServer, ResponseTemplate, matchers};
 
     use super::*;
     use crate::{get, status::StatusCode};

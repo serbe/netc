@@ -1,8 +1,8 @@
 use bytes::Bytes;
-use futures::{future::BoxFuture, FutureExt};
+use futures::{FutureExt, future::BoxFuture};
 use url::Url;
 
-use crate::{client_builder::Config, ClientBuilder, Error, Headers, HttpStream, Request, Response};
+use crate::{ClientBuilder, Error, Headers, HttpStream, Request, Response, client_builder::Config};
 
 #[derive(Debug)]
 pub struct Client {
@@ -36,23 +36,23 @@ impl Client {
             self.stream.send_msg(&self.request.to_vec()).await?;
             let mut response = self.stream.get_response().await?;
             response.method = self.request.method.clone();
-            if response.status_code().is_redirect() {
-                if let Some(location) = response.headers().get("Location") {
-                    let redirect_url = if let Ok(new_url) = Url::parse(&location) {
-                        new_url
-                    } else {
-                        let mut current_url = self.request().url();
-                        current_url.set_path(&location);
-                        current_url
-                    };
-                    self.redirect()?;
-                    return ClientBuilder::from_client(self)
-                        .url(&redirect_url)
-                        .build()
-                        .await?
-                        .send()
-                        .await;
-                }
+            if response.status_code().is_redirect()
+                && let Some(location) = response.headers().get("Location")
+            {
+                let redirect_url = if let Ok(new_url) = Url::parse(&location) {
+                    new_url
+                } else {
+                    let mut current_url = self.request().url();
+                    current_url.set_path(&location);
+                    current_url
+                };
+                self.redirect()?;
+                return ClientBuilder::from_client(self)
+                    .url(&redirect_url)
+                    .build()
+                    .await?
+                    .send()
+                    .await;
             };
             self.response = Some(response.clone());
             Ok(response)

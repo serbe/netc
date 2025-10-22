@@ -1,7 +1,7 @@
 [package]
 authors = ["serbe <serbenv@gmail.com>"]
 description = "Rust http client library"
-edition = "2021"
+edition = "2024"
 name = "netc"
 version = "0.1.10"
 readme = "README.md"

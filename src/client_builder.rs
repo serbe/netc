@@ -3,7 +3,7 @@ use std::{convert::TryInto, time::Duration};
 use bytes::Bytes;
 use url::Url;
 
-use crate::{utils::IntoUrl, Client, Error, Headers, HttpStream, Method, Request, Version};
+use crate::{Client, Error, Headers, HttpStream, Method, Request, Version, utils::IntoUrl};
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Config {
